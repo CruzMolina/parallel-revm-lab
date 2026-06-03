@@ -69,6 +69,7 @@ pub struct WorkloadConfig {
     pub kind: WorkloadKind,
     pub tx_count: usize,
     pub requested_conflict: f64,
+    pub vm_steps: u64,
     pub accounts: u64,
     pub contracts: u64,
     pub hot_slots: u64,
@@ -81,6 +82,7 @@ impl WorkloadConfig {
             kind,
             tx_count,
             requested_conflict,
+            vm_steps: 0,
             accounts: 256,
             contracts: 64,
             hot_slots: 4,
@@ -93,6 +95,7 @@ impl WorkloadConfig {
             kind: self.kind,
             tx_count: self.tx_count,
             requested_conflict: self.requested_conflict.clamp(0.0, 1.0),
+            vm_steps: self.vm_steps,
             accounts: self.accounts.max(2),
             contracts: self.contracts.max(1),
             hot_slots: self.hot_slots.max(1),
@@ -138,7 +141,7 @@ pub fn generate_workload(config: WorkloadConfig) -> Workload {
                 _ => TxKind::Noop,
             },
         };
-        txs.push(Tx::new(id as u64, tx_kind));
+        txs.push(Tx::new(id as u64, tx_kind).with_vm_steps(config.vm_steps));
     }
 
     let conflict_pairs = count_conflict_pairs(&txs);

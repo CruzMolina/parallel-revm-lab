@@ -1,0 +1,58 @@
+{
+  "version": "0.1.0",
+  "workload": "storage",
+  "tx_count": 1000,
+  "requested_conflict": 0.0,
+  "observed_conflict": 0.0004904904904904905,
+  "vm_steps": 50000,
+  "seed": 42,
+  "threads": 4,
+  "rust_version": "rustc 1.92.0 (ded5c06cf 2025-12-08)",
+  "modes": [
+    {
+      "mode": "sequential",
+      "elapsed_ns": 92910708,
+      "tx_per_sec": 10763.02206199957,
+      "speedup_vs_sequential": null,
+      "state_hash": "1940c0cfba64e3cb",
+      "declared_conflict_pairs": 245,
+      "scheduler_deferrals": 0,
+      "validation_failures": 0,
+      "reexecuted_txs": 0,
+      "reexecution_percent": 0.0,
+      "wave_count": 0,
+      "max_wave_width": 0,
+      "deterministic_passed": true
+    },
+    {
+      "mode": "access-list",
+      "elapsed_ns": 28748042,
+      "tx_per_sec": 34784.97770387284,
+      "speedup_vs_sequential": 3.23189690623104,
+      "state_hash": "1940c0cfba64e3cb",
+      "declared_conflict_pairs": 245,
+      "scheduler_deferrals": 245,
+      "validation_failures": 0,
+      "reexecuted_txs": 0,
+      "reexecution_percent": 0.0,
+      "wave_count": 4,
+      "max_wave_width": 793,
+      "deterministic_passed": true
+    },
+    {
+      "mode": "optimistic",
+      "elapsed_ns": 43135833,
+      "tx_per_sec": 23182.582332419548,
+      "speedup_vs_sequential": 2.153910137773391,
+      "state_hash": "1940c0cfba64e3cb",
+      "declared_conflict_pairs": 245,
+      "scheduler_deferrals": 0,
+      "validation_failures": 173,
+      "reexecuted_txs": 173,
+      "reexecution_percent": 17.299999999999997,
+      "wave_count": 1,
+      "max_wave_width": 1000,
+      "deterministic_passed": true
+    }
+  ]
+}

@@ -79,3 +79,50 @@ Updated benchmark snapshot:
 - sequential: 1,437,384.65 synthetic tx/s, hash `ac90d19c91175700`.
 - access-list: 16,435.95 synthetic tx/s, 0.011x vs sequential, 309 waves, hash matched.
 - optimistic: 1,206,029.67 synthetic tx/s, 0.839x vs sequential, 731 re-executions, hash matched.
+
+## 2026-06-03 Skeptical Review
+
+Plan:
+- Inspect public docs and `crates/executor` from a skeptical protocol-engineering angle.
+- Run the requested validation gates before changing behavior.
+- Fix only material issues with minimal diffs.
+- Invariant improved: benchmark metrics should not imply scheduler behavior for modes that do not schedule waves.
+- Validation command: rerun the requested gates after the patch.
+
+Result:
+- Initial requested gates passed before changes.
+- Found one material public-polish issue: sequential reports claimed `wave_count: 1` and `max_wave_width: tx_count`, which implied wave scheduling for the sequential baseline.
+- Fixed sequential metrics to report zero wave fields and added `sequential_metrics_do_not_claim_wave_scheduling`.
+- Clarified `docs/correctness.md` to mention the canonical-order deferred barrier in the access-list scheduler.
+- Re-ran the requested gates after the patch; all passed.
+- Refreshed `reports/mixed-c50.json` with the current release binary.
+
+Updated benchmark snapshot:
+- sequential: 1,413,010.15 synthetic tx/s, hash `ac90d19c91175700`, zero wave metrics.
+- access-list: 16,937.54 synthetic tx/s, 0.012x vs sequential, 309 waves, hash matched.
+- optimistic: 1,375,042.97 synthetic tx/s, 0.973x vs sequential, 731 re-executions, hash matched.
+
+## 2026-06-03 Release Repair
+
+Plan:
+- Fix correctness-test/docs mismatch by making property tests compare full final `State` values.
+- Split ambiguous report metrics into declared conflicts, scheduler deferrals, validation failures, re-executions, and wave shape.
+- Add `--vm-steps` for deterministic synthetic interpreter work and document both cheap and heavier benchmark cases from real reports.
+- Keep `revm` integration notes honest and avoid broken feature-gated code.
+- Validation command: full required release gate after reports/docs are refreshed.
+
+Result:
+- Property tests now compare both final state hashes and full final `State` values.
+- Reports now include `declared_conflict_pairs`, `scheduler_deferrals`, `validation_failures`, `reexecuted_txs`, `wave_count`, and `max_wave_width`.
+- Added `--vm-steps` to `bench`, `verify`, and `inspect`; the synthetic CPU loop does not affect state semantics.
+- Generated `reports/mixed-c50.json` for cheap mixed transactions and `reports/storage-c0-vmsteps.json` for heavier low-contention storage transactions.
+- Did not add `revm` code; `docs/revm-integration-notes.md` explains that no clean smoke adapter was included.
+- `cargo fmt --all -- --check`: passed.
+- `cargo clippy --workspace --all-targets --all-features -- -D warnings`: passed.
+- `cargo test --workspace --all-features`: passed.
+- `cargo run -p parallel-revm-lab -- verify --workload mixed --txs 100 --conflicts 0.0,0.2,0.5,0.7,0.95 --threads 1,2,4 --seed-start 1 --seed-end 20`: passed, 300 workload/thread combinations.
+- `cargo run --release -p parallel-revm-lab -- bench --workload mixed --txs 1000 --conflict 0.5 --mode all --threads 4 --seed 42 --out reports/mixed-c50.json --trace reports/mixed-c50.trace.json`: passed.
+
+Current benchmark snapshot:
+- cheap mixed c50: access-list 0.013x and optimistic 0.840x vs sequential; overhead dominates.
+- heavier storage c0 with `vm_steps=50000`: access-list 3.232x and optimistic 2.154x vs sequential; parallelism wins under low contention.

@@ -41,6 +41,8 @@ struct BenchArgs {
     threads: usize,
     #[arg(long, default_value_t = 42)]
     seed: u64,
+    #[arg(long, default_value_t = 0)]
+    vm_steps: u64,
     #[arg(long)]
     out: PathBuf,
     #[arg(long)]
@@ -61,6 +63,8 @@ struct VerifyArgs {
     seed_start: u64,
     #[arg(long, default_value_t = 5)]
     seed_end: u64,
+    #[arg(long, default_value_t = 0)]
+    vm_steps: u64,
 }
 
 #[derive(Debug, Args)]
@@ -73,6 +77,8 @@ struct InspectArgs {
     conflict: f64,
     #[arg(long, default_value_t = 42)]
     seed: u64,
+    #[arg(long, default_value_t = 0)]
+    vm_steps: u64,
 }
 
 fn main() -> Result<()> {
@@ -84,7 +90,8 @@ fn main() -> Result<()> {
 }
 
 fn bench(args: BenchArgs) -> Result<()> {
-    let config = WorkloadConfig::new(args.workload, args.txs, args.conflict, args.seed);
+    let mut config = WorkloadConfig::new(args.workload, args.txs, args.conflict, args.seed);
+    config.vm_steps = args.vm_steps;
     let workload = generate_workload(config);
     let report = benchmark_report(
         &workload,
@@ -94,7 +101,7 @@ fn bench(args: BenchArgs) -> Result<()> {
     )?;
 
     if report.modes.iter().any(|mode| !mode.deterministic_passed) {
-        bail!("parallel execution produced a state hash mismatch; report was not written");
+        bail!("parallel execution produced a state mismatch; report was not written");
     }
 
     write_json(&args.out, &report)?;
@@ -133,16 +140,13 @@ fn verify(args: VerifyArgs) -> Result<()> {
 
     for seed in args.seed_start..=args.seed_end {
         for conflict in &conflicts {
-            let workload = generate_workload(WorkloadConfig::new(
-                args.workload,
-                args.txs,
-                *conflict,
-                seed,
-            ));
+            let mut config = WorkloadConfig::new(args.workload, args.txs, *conflict, seed);
+            config.vm_steps = args.vm_steps;
+            let workload = generate_workload(config);
             let sequential = run_sequential(&workload.initial_state, &workload.txs);
             for threads in &thread_counts {
                 let access = run_access_list(&workload.initial_state, &workload.txs, *threads)?;
-                if access.state_hash != sequential.state_hash {
+                if access.final_state != sequential.final_state {
                     bail!(
                         "access-list mismatch workload={} seed={} conflict={} threads={} sequential={} access-list={}",
                         args.workload,
@@ -155,7 +159,7 @@ fn verify(args: VerifyArgs) -> Result<()> {
                 }
 
                 let optimistic = run_optimistic(&workload.initial_state, &workload.txs, *threads)?;
-                if optimistic.state_hash != sequential.state_hash {
+                if optimistic.final_state != sequential.final_state {
                     bail!(
                         "optimistic mismatch workload={} seed={} conflict={} threads={} sequential={} optimistic={}",
                         args.workload,
@@ -179,15 +183,13 @@ fn verify(args: VerifyArgs) -> Result<()> {
 }
 
 fn inspect(args: InspectArgs) -> Result<()> {
-    let workload = generate_workload(WorkloadConfig::new(
-        args.workload,
-        args.txs,
-        args.conflict,
-        args.seed,
-    ));
+    let mut config = WorkloadConfig::new(args.workload, args.txs, args.conflict, args.seed);
+    config.vm_steps = args.vm_steps;
+    let workload = generate_workload(config);
     println!("workload: {}", workload.config.kind);
     println!("txs: {}", workload.txs.len());
     println!("seed: {}", workload.config.seed);
+    println!("vm_steps: {}", workload.config.vm_steps);
     println!(
         "requested_conflict: {:.3}",
         workload.config.requested_conflict

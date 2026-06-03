@@ -35,6 +35,8 @@ fn tiny_bench_all_writes_report() {
             "2",
             "--seed",
             "42",
+            "--vm-steps",
+            "8",
             "--out",
             report.to_str().unwrap(),
             "--trace",
@@ -50,6 +52,7 @@ fn tiny_bench_all_writes_report() {
 
     let json = std::fs::read_to_string(report).unwrap();
     assert!(json.contains("\"modes\""));
+    assert!(json.contains("\"vm_steps\": 8"));
     assert!(json.contains("\"deterministic_passed\": true"));
     let trace_json = std::fs::read_to_string(trace).unwrap();
     assert!(trace_json.contains("traceEvents"));

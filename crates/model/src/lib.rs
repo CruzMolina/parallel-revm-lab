@@ -226,6 +226,7 @@ pub enum TxKind {
 pub struct Tx {
     pub id: u64,
     pub kind: TxKind,
+    pub vm_steps: u64,
     pub declared_reads: ReadSet,
     pub declared_writes: WriteSet,
 }
@@ -236,9 +237,15 @@ impl Tx {
         Self {
             id,
             kind,
+            vm_steps: 0,
             declared_reads,
             declared_writes,
         }
+    }
+
+    pub fn with_vm_steps(mut self, vm_steps: u64) -> Self {
+        self.vm_steps = vm_steps;
+        self
     }
 
     pub fn conflicts_with(&self, other: &Self) -> bool {
@@ -298,6 +305,8 @@ impl ExecutionOutcome {
 }
 
 pub fn execute_tx(state: &State, tx: &Tx) -> ExecutionOutcome {
+    simulate_vm_steps(tx.id, tx.vm_steps);
+
     let mut reads = BTreeMap::new();
     let mut delta = TxDelta::new();
     let mut read_key = |key: AccessKey| {
@@ -497,6 +506,15 @@ fn stable_fnv1a64(bytes: &[u8]) -> u64 {
         hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
     }
     hash
+}
+
+fn simulate_vm_steps(tx_id: u64, steps: u64) {
+    let mut acc = tx_id ^ 0x9e37_79b9_7f4a_7c15;
+    for step in 0..steps {
+        acc = acc.wrapping_mul(0xbf58_476d_1ce4_e5b9).rotate_left(17)
+            ^ step.wrapping_add(tx_id.rotate_left((step % 31) as u32));
+    }
+    std::hint::black_box(acc);
 }
 
 #[cfg(test)]

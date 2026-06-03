@@ -21,6 +21,8 @@ The state hash is an explicit FNV-1a 64-bit hash over canonical bytes. It avoids
 - `HotPool`: reads/writes one shared pool slot and one account balance to create contention.
 - `Noop`: touches no state.
 
+Each transaction can also carry `vm_steps`, an optional deterministic CPU loop that simulates interpreter work. It does not read or write state and does not change transaction semantics.
+
 Invalid or insufficient operations return deterministic outcomes instead of panicking.
 
 ## Sequential Baseline
@@ -43,6 +45,16 @@ This favors correctness over maximum speed. High contention can cause many re-ex
 
 Worker execution order never determines final state. Both parallel executors commit in canonical transaction order. JSON report fields are struct ordered, and state/access structures use deterministic ordering.
 
+## Metrics
+
+Reports avoid a single ambiguous conflict counter:
+
+- `declared_conflict_pairs`: pairwise conflicts implied by declared access sets.
+- `scheduler_deferrals`: access-list deferral decisions while forming waves. This can exceed `declared_conflict_pairs` because the same transaction can be deferred across multiple waves.
+- `validation_failures`: optimistic read-validation failures.
+- `reexecuted_txs`: optimistic transactions re-executed after validation failure.
+- `wave_count` and `max_wave_width`: access-list wave shape, or optimistic batch shape.
+
 ## Concurrency Choice
 
 The project uses Rayon `ThreadPoolBuilder` rather than custom queues or shared mutable concurrent state. Rayon provides reliable parallel iteration while the model keeps mutation in a deterministic commit phase. Because no custom concurrency primitive is introduced, loom tests are not included.
@@ -51,4 +63,5 @@ The project uses Rayon `ThreadPoolBuilder` rather than custom queues or shared m
 
 - Synthetic access lists make scheduler behavior inspectable, but do not prove real EVM access-list extraction.
 - The optimistic executor currently speculates from one snapshot per run, which is simple and honest but not throughput-optimal for very long batches.
+- `vm_steps` is only deterministic CPU work for exploring scheduling overhead versus execution cost.
 - The state hash is stable and deterministic, but not a cryptographic commitment.

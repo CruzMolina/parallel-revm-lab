@@ -53,7 +53,9 @@ pub enum ExecutorError {
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct ExecutionMetrics {
     pub elapsed_ns: u128,
-    pub conflicts_detected: u64,
+    pub declared_conflict_pairs: u64,
+    pub scheduler_deferrals: u64,
+    pub validation_failures: u64,
     pub reexecuted_txs: u64,
     pub wave_count: u64,
     pub max_wave_width: usize,
@@ -74,6 +76,7 @@ pub struct BenchmarkReport {
     pub tx_count: usize,
     pub requested_conflict: f64,
     pub observed_conflict: f64,
+    pub vm_steps: u64,
     pub seed: u64,
     pub threads: usize,
     pub rust_version: Option<String>,
@@ -87,7 +90,9 @@ pub struct ModeReport {
     pub tx_per_sec: f64,
     pub speedup_vs_sequential: Option<f64>,
     pub state_hash: String,
-    pub conflicts_detected: u64,
+    pub declared_conflict_pairs: u64,
+    pub scheduler_deferrals: u64,
+    pub validation_failures: u64,
     pub reexecuted_txs: u64,
     pub reexecution_percent: f64,
     pub wave_count: u64,
@@ -110,8 +115,9 @@ pub fn run_sequential(initial_state: &State, txs: &[Tx]) -> ExecutionResult {
         state_hash,
         metrics: ExecutionMetrics {
             elapsed_ns,
-            wave_count: if txs.is_empty() { 0 } else { 1 },
-            max_wave_width: txs.len(),
+            declared_conflict_pairs: count_conflict_pairs(txs),
+            wave_count: 0,
+            max_wave_width: 0,
             ..ExecutionMetrics::default()
         },
     }
@@ -189,7 +195,8 @@ pub fn run_access_list(
         state_hash,
         metrics: ExecutionMetrics {
             elapsed_ns,
-            conflicts_detected: scheduler_conflicts,
+            declared_conflict_pairs: count_conflict_pairs(txs),
+            scheduler_deferrals: scheduler_conflicts,
             wave_count,
             max_wave_width,
             ..ExecutionMetrics::default()
@@ -232,10 +239,12 @@ pub fn run_optimistic(
         state_hash,
         metrics: ExecutionMetrics {
             elapsed_ns,
-            conflicts_detected: count_conflict_pairs(txs),
+            declared_conflict_pairs: count_conflict_pairs(txs),
+            validation_failures: reexecuted_txs,
             reexecuted_txs,
             wave_count: if txs.is_empty() { 0 } else { 1 },
             max_wave_width: txs.len(),
+            ..ExecutionMetrics::default()
         },
     })
 }
@@ -248,7 +257,6 @@ pub fn benchmark_report(
 ) -> Result<BenchmarkReport, ExecutorError> {
     let sequential = run_sequential(&workload.initial_state, &workload.txs);
     let sequential_elapsed = sequential.metrics.elapsed_ns.max(1);
-    let sequential_hash = sequential.state_hash;
     let mut reports = Vec::new();
 
     match mode {
@@ -257,7 +265,7 @@ pub fn benchmark_report(
         }
         ExecutionMode::AccessList => {
             let result = run_access_list(&workload.initial_state, &workload.txs, threads)?;
-            let passed = result.state_hash == sequential_hash;
+            let passed = result.final_state == sequential.final_state;
             reports.push(mode_report(
                 &result,
                 workload.txs.len(),
@@ -267,7 +275,7 @@ pub fn benchmark_report(
         }
         ExecutionMode::Optimistic => {
             let result = run_optimistic(&workload.initial_state, &workload.txs, threads)?;
-            let passed = result.state_hash == sequential_hash;
+            let passed = result.final_state == sequential.final_state;
             reports.push(mode_report(
                 &result,
                 workload.txs.len(),
@@ -281,7 +289,7 @@ pub fn benchmark_report(
                 run_access_list(&workload.initial_state, &workload.txs, threads)?,
                 run_optimistic(&workload.initial_state, &workload.txs, threads)?,
             ] {
-                let passed = result.state_hash == sequential_hash;
+                let passed = result.final_state == sequential.final_state;
                 reports.push(mode_report(
                     &result,
                     workload.txs.len(),
@@ -298,6 +306,7 @@ pub fn benchmark_report(
         tx_count: workload.txs.len(),
         requested_conflict: workload.config.requested_conflict,
         observed_conflict: workload.observed_conflict,
+        vm_steps: workload.config.vm_steps,
         seed: workload.config.seed,
         threads: threads.max(1),
         rust_version,
@@ -321,6 +330,9 @@ pub fn trace_json(report: &BenchmarkReport) -> serde_json::Value {
             "args": {
                 "state_hash": mode.state_hash,
                 "deterministic_passed": mode.deterministic_passed,
+                "declared_conflict_pairs": mode.declared_conflict_pairs,
+                "scheduler_deferrals": mode.scheduler_deferrals,
+                "validation_failures": mode.validation_failures,
                 "reexecuted_txs": mode.reexecuted_txs,
                 "wave_count": mode.wave_count
             }
@@ -361,7 +373,9 @@ fn mode_report(
         tx_per_sec,
         speedup_vs_sequential,
         state_hash: result.state_hash.to_string(),
-        conflicts_detected: result.metrics.conflicts_detected,
+        declared_conflict_pairs: result.metrics.declared_conflict_pairs,
+        scheduler_deferrals: result.metrics.scheduler_deferrals,
+        validation_failures: result.metrics.validation_failures,
         reexecuted_txs: result.metrics.reexecuted_txs,
         reexecution_percent,
         wave_count: result.metrics.wave_count,
@@ -425,9 +439,45 @@ mod tests {
         let report = benchmark_report(&workload, ExecutionMode::All, 2, None).unwrap();
         assert_eq!(report.modes.len(), 3);
         assert!(report.modes.iter().all(|mode| mode.deterministic_passed));
+        assert!(report
+            .modes
+            .iter()
+            .all(|mode| mode.declared_conflict_pairs == workload.conflict_pairs));
+        assert_eq!(report.modes[0].scheduler_deferrals, 0);
+        assert!(report.modes[1].scheduler_deferrals > 0);
+        assert_eq!(
+            report.modes[2].validation_failures,
+            report.modes[2].reexecuted_txs
+        );
         assert!(serde_json::to_string_pretty(&report)
             .unwrap()
-            .contains("state_hash"));
+            .contains("declared_conflict_pairs"));
+    }
+
+    #[test]
+    fn sequential_metrics_do_not_claim_wave_scheduling() {
+        let workload = generate_workload(WorkloadConfig::new(WorkloadKind::Mixed, 10, 0.5, 7));
+        let sequential = run_sequential(&workload.initial_state, &workload.txs);
+
+        assert_eq!(sequential.metrics.wave_count, 0);
+        assert_eq!(sequential.metrics.max_wave_width, 0);
+    }
+
+    #[test]
+    fn vm_steps_add_cost_without_changing_state_semantics() {
+        let cheap = generate_workload(WorkloadConfig::new(WorkloadKind::Storage, 40, 0.0, 9));
+        let mut heavy_config = WorkloadConfig::new(WorkloadKind::Storage, 40, 0.0, 9);
+        heavy_config.vm_steps = 32;
+        let heavy = generate_workload(heavy_config);
+
+        assert_eq!(cheap.initial_state, heavy.initial_state);
+        assert_eq!(cheap.txs.len(), heavy.txs.len());
+        assert!(heavy.txs.iter().all(|tx| tx.vm_steps == 32));
+
+        let cheap_final = run_sequential(&cheap.initial_state, &cheap.txs);
+        let heavy_final = run_sequential(&heavy.initial_state, &heavy.txs);
+        assert_eq!(cheap_final.final_state, heavy_final.final_state);
+        assert_eq!(cheap_final.state_hash, heavy_final.state_hash);
     }
 
     proptest! {
@@ -459,7 +509,9 @@ mod tests {
             let access = run_access_list(&workload.initial_state, &workload.txs, 3).unwrap();
             let optimistic = run_optimistic(&workload.initial_state, &workload.txs, 3).unwrap();
             prop_assert_eq!(sequential.state_hash, access.state_hash);
+            prop_assert_eq!(&sequential.final_state, &access.final_state);
             prop_assert_eq!(sequential.state_hash, optimistic.state_hash);
+            prop_assert_eq!(&sequential.final_state, &optimistic.final_state);
         }
     }
 }

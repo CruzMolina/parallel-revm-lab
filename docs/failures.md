@@ -13,3 +13,17 @@
 - Root cause: the wave builder admitted later transactions that were independent of the current wave but conflicted with earlier transactions already deferred to the next wave, effectively moving them before a conflicting predecessor.
 - Fix: track access sets for earlier deferred transactions and prevent later conflicting transactions from joining the current wave.
 - Test added: existing fixed, high-contention, and proptest sequential-equivalence tests cover the repaired invariant. The generated proptest regression seed is checked in under `crates/executor/proptest-regressions/lib.txt`.
+
+## Correctness Docs Outran Property Tests
+
+- Symptom: `docs/correctness.md` said property tests compared full final `State` values, but the proptest assertions only compared final state hashes.
+- Root cause: fixed examples compared full state, while the randomized property test stopped at the hash invariant.
+- Fix: property tests now compare both state hashes and full final `State` values for access-list and optimistic execution.
+- Test added: strengthened existing `random_small_workloads_match_sequential` proptest assertions.
+
+## Ambiguous Conflict Metric
+
+- Symptom: reports used a single `conflicts_detected` field for both access-list scheduler behavior and optimistic declared conflict counts.
+- Root cause: scheduler deferrals, declared access-set conflicts, and optimistic validation failures were collapsed into one field.
+- Fix: report schema now splits `declared_conflict_pairs`, `scheduler_deferrals`, `validation_failures`, `reexecuted_txs`, `wave_count`, and `max_wave_width`.
+- Test added: benchmark report test asserts split metric consistency.

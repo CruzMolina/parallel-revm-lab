@@ -16,7 +16,7 @@ State hashes are stable across process runs because state is stored in determini
 
 ## Conflict Model
 
-Two transactions conflict if either writes a key the other reads or writes. Read/read overlap is allowed. Access-list waves are pairwise independent under this model before they execute in parallel.
+Two transactions conflict if either writes a key the other reads or writes. Read/read overlap is allowed. Access-list waves are pairwise independent under this model before they execute in parallel. The scheduler also preserves canonical order by preventing later transactions from entering a wave when they conflict with an earlier transaction already deferred out of that wave.
 
 ## Re-Execution Strategy
 
@@ -32,10 +32,11 @@ Covered edge cases include:
 - deterministic insufficient-balance behavior
 - no-op transactions
 - storage writes that optionally skip prior reads
+- `vm_steps` synthetic CPU work that does not affect state semantics
 
 ## Property Testing
 
-`crates/executor` uses `proptest` to generate small seeded workloads across all workload kinds and conflict levels. Each case asserts that access-list and optimistic execution produce the same final hash as sequential execution.
+`crates/executor` uses `proptest` to generate small seeded workloads across all workload kinds and conflict levels. Each case asserts that access-list and optimistic execution produce the same final hash and the same full final `State` as sequential execution.
 
 ## What The Tests Do Not Prove
 
