@@ -28,6 +28,7 @@
   "top_hot_contracts": [
     {
       "address": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789",
+      "label": "unknown",
       "touching_txs": 2,
       "unique_slots": 4,
       "gas_of_touching_txs": 485390,
@@ -35,6 +36,7 @@
     },
     {
       "address": "0x976a4d13a41581c5eda72c493038ac10cadf5e46",
+      "label": "unknown",
       "touching_txs": 10,
       "unique_slots": 1,
       "gas_of_touching_txs": 1189217,
@@ -42,6 +44,7 @@
     },
     {
       "address": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0",
+      "label": "unknown",
       "touching_txs": 9,
       "unique_slots": 2,
       "gas_of_touching_txs": 880556,
@@ -49,6 +52,7 @@
     },
     {
       "address": "0x22aee3699b6a0fed71490c103bd4e5f3309891d5",
+      "label": "unknown",
       "touching_txs": 9,
       "unique_slots": 1,
       "gas_of_touching_txs": 979811,
@@ -56,6 +60,7 @@
     },
     {
       "address": "0x57135dd4b832645955422b28291302d697ea0900",
+      "label": "unknown",
       "touching_txs": 8,
       "unique_slots": 1,
       "gas_of_touching_txs": 671150,
@@ -63,6 +68,7 @@
     },
     {
       "address": "0x498581ff718922c3f8e6a244956af099b2652b2b",
+      "label": "unknown",
       "touching_txs": 7,
       "unique_slots": 6,
       "gas_of_touching_txs": 847377,
@@ -70,6 +76,7 @@
     },
     {
       "address": "0x0f12cb1f3e37375af09a248ca97c4a3eedf2f494",
+      "label": "unknown",
       "touching_txs": 6,
       "unique_slots": 1,
       "gas_of_touching_txs": 637971,
@@ -77,6 +84,7 @@
     },
     {
       "address": "0x4c9f68e780523feb4c9bb1aad2e5cc3b6476892b",
+      "label": "unknown",
       "touching_txs": 6,
       "unique_slots": 1,
       "gas_of_touching_txs": 637971,
@@ -84,6 +92,7 @@
     },
     {
       "address": "0x5b8bf0cd0fa5bf970ebe558d7551a668dadf3570",
+      "label": "unknown",
       "touching_txs": 6,
       "unique_slots": 1,
       "gas_of_touching_txs": 787046,
@@ -91,6 +100,7 @@
     },
     {
       "address": "0x7631e2b08317f227bb2916ed0e9d69c64d73bdcd",
+      "label": "unknown",
       "touching_txs": 6,
       "unique_slots": 1,
       "gas_of_touching_txs": 687791,
@@ -101,6 +111,7 @@
     {
       "key": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789:0x0000000000000000000000000000000000000000000000000000000000000002",
       "address": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789",
+      "address_label": "unknown",
       "slot": "0x0000000000000000000000000000000000000000000000000000000000000002",
       "touching_txs": 2,
       "gas_of_touching_txs": 485390,
@@ -109,6 +120,7 @@
     {
       "key": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789:0x33a26eb216320a51847a061c8f256bd98ae96e1a1d67d2bbc4cd8c61adad2df0",
       "address": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789",
+      "address_label": "unknown",
       "slot": "0x33a26eb216320a51847a061c8f256bd98ae96e1a1d67d2bbc4cd8c61adad2df0",
       "touching_txs": 2,
       "gas_of_touching_txs": 485390,
@@ -117,6 +129,7 @@
     {
       "key": "0x976a4d13a41581c5eda72c493038ac10cadf5e46:0x0000000000000000000000000000000000000000000000000000000000000006",
       "address": "0x976a4d13a41581c5eda72c493038ac10cadf5e46",
+      "address_label": "unknown",
       "slot": "0x0000000000000000000000000000000000000000000000000000000000000006",
       "touching_txs": 10,
       "gas_of_touching_txs": 1189217,
@@ -125,6 +138,7 @@
     {
       "key": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0:0x0000000000000000000000000000000000000000000000000000000000000000",
       "address": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0",
+      "address_label": "unknown",
       "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "touching_txs": 9,
       "gas_of_touching_txs": 880556,
@@ -133,6 +147,7 @@
     {
       "key": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0:0x0000000000000000000000000000000000000000000000000000000000000001",
       "address": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0",
+      "address_label": "unknown",
       "slot": "0x0000000000000000000000000000000000000000000000000000000000000001",
       "touching_txs": 9,
       "gas_of_touching_txs": 880556,
@@ -141,6 +156,7 @@
     {
       "key": "0x22aee3699b6a0fed71490c103bd4e5f3309891d5:0x0000000000000000000000000000000000000000000000000000000000000006",
       "address": "0x22aee3699b6a0fed71490c103bd4e5f3309891d5",
+      "address_label": "unknown",
       "slot": "0x0000000000000000000000000000000000000000000000000000000000000006",
       "touching_txs": 9,
       "gas_of_touching_txs": 979811,
@@ -149,6 +165,7 @@
     {
       "key": "0x57135dd4b832645955422b28291302d697ea0900:0x0000000000000000000000000000000000000000000000000000000000000006",
       "address": "0x57135dd4b832645955422b28291302d697ea0900",
+      "address_label": "unknown",
       "slot": "0x0000000000000000000000000000000000000000000000000000000000000006",
       "touching_txs": 8,
       "gas_of_touching_txs": 671150,
@@ -157,6 +174,7 @@
     {
       "key": "0x0f12cb1f3e37375af09a248ca97c4a3eedf2f494:0x0000000000000000000000000000000000000000000000000000000000000000",
       "address": "0x0f12cb1f3e37375af09a248ca97c4a3eedf2f494",
+      "address_label": "unknown",
       "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "touching_txs": 6,
       "gas_of_touching_txs": 637971,
@@ -165,6 +183,7 @@
     {
       "key": "0x498581ff718922c3f8e6a244956af099b2652b2b:0x934ff9aed835597de93bbfd6474d60d33c1e72493b62f8e1615cfda0908eeaef",
       "address": "0x498581ff718922c3f8e6a244956af099b2652b2b",
+      "address_label": "unknown",
       "slot": "0x934ff9aed835597de93bbfd6474d60d33c1e72493b62f8e1615cfda0908eeaef",
       "touching_txs": 6,
       "gas_of_touching_txs": 637971,
@@ -173,6 +192,7 @@
     {
       "key": "0x4c9f68e780523feb4c9bb1aad2e5cc3b6476892b:0x0000000000000000000000000000000000000000000000000000000000000000",
       "address": "0x4c9f68e780523feb4c9bb1aad2e5cc3b6476892b",
+      "address_label": "unknown",
       "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "touching_txs": 6,
       "gas_of_touching_txs": 637971,
@@ -269,6 +289,188 @@
       "interpretation": "mixed dependency/worker-bound: dependencies and idle capacity both matter"
     }
   ],
+  "scheduler_ablation": [
+    {
+      "strategy": "canonical",
+      "workers": 1,
+      "makespan": 3584277,
+      "speedup_vs_canonical_one_worker": 1.0,
+      "idle_percentage": 0.0,
+      "ready_queue_wait_units": 41012734,
+      "critical_path_bound": 563160,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "baseline canonical tx-order ready queue"
+    },
+    {
+      "strategy": "canonical",
+      "workers": 2,
+      "makespan": 2002461,
+      "speedup_vs_canonical_one_worker": 1.7899359837719686,
+      "idle_percentage": 10.503200811401571,
+      "ready_queue_wait_units": 19321248,
+      "critical_path_bound": 563160,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "baseline canonical tx-order ready queue"
+    },
+    {
+      "strategy": "canonical",
+      "workers": 4,
+      "makespan": 1181384,
+      "speedup_vs_canonical_one_worker": 3.033964401075349,
+      "idle_percentage": 24.15088997311628,
+      "ready_queue_wait_units": 8547257,
+      "critical_path_bound": 563160,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "baseline canonical tx-order ready queue"
+    },
+    {
+      "strategy": "canonical",
+      "workers": 8,
+      "makespan": 760948,
+      "speedup_vs_canonical_one_worker": 4.710278494719744,
+      "idle_percentage": 41.121518816003196,
+      "ready_queue_wait_units": 2668930,
+      "critical_path_bound": 563160,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "baseline canonical tx-order ready queue"
+    },
+    {
+      "strategy": "canonical",
+      "workers": 16,
+      "makespan": 581067,
+      "speedup_vs_canonical_one_worker": 6.168440128246829,
+      "idle_percentage": 61.44724919845732,
+      "ready_queue_wait_units": 566808,
+      "critical_path_bound": 563160,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "baseline canonical tx-order ready queue"
+    },
+    {
+      "strategy": "gas_lpt",
+      "workers": 1,
+      "makespan": 3584277,
+      "speedup_vs_canonical_one_worker": 1.0,
+      "idle_percentage": 0.0,
+      "ready_queue_wait_units": 59876415,
+      "critical_path_bound": 563160,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "gas_lpt does not improve canonical order for this observed dependency graph"
+    },
+    {
+      "strategy": "gas_lpt",
+      "workers": 2,
+      "makespan": 1793885,
+      "speedup_vs_canonical_one_worker": 1.9980528294734612,
+      "idle_percentage": 0.09735852632693846,
+      "ready_queue_wait_units": 28671856,
+      "critical_path_bound": 563160,
+      "improvement_vs_canonical_percent": 10.415983132755144,
+      "preserves_dependencies": true,
+      "interpretation": "gas_lpt improves the observed schedule by 10.42% vs canonical at the same worker count"
+    },
+    {
+      "strategy": "gas_lpt",
+      "workers": 4,
+      "makespan": 905480,
+      "speedup_vs_canonical_one_worker": 3.9584275743252197,
+      "idle_percentage": 1.0393106418695057,
+      "ready_queue_wait_units": 13118331,
+      "critical_path_bound": 563160,
+      "improvement_vs_canonical_percent": 23.354303088580853,
+      "preserves_dependencies": true,
+      "interpretation": "gas_lpt improves the observed schedule by 23.35% vs canonical at the same worker count"
+    },
+    {
+      "strategy": "gas_lpt",
+      "workers": 8,
+      "makespan": 563160,
+      "speedup_vs_canonical_one_worker": 6.364580225868314,
+      "idle_percentage": 20.44274717664607,
+      "ready_queue_wait_units": 4539256,
+      "critical_path_bound": 563160,
+      "improvement_vs_canonical_percent": 25.9923148493721,
+      "preserves_dependencies": true,
+      "interpretation": "at critical-path lower bound under observed dependencies"
+    },
+    {
+      "strategy": "gas_lpt",
+      "workers": 16,
+      "makespan": 563160,
+      "speedup_vs_canonical_one_worker": 6.364580225868314,
+      "idle_percentage": 60.22137358832303,
+      "ready_queue_wait_units": 646156,
+      "critical_path_bound": 563160,
+      "improvement_vs_canonical_percent": 3.081744445993319,
+      "preserves_dependencies": true,
+      "interpretation": "at critical-path lower bound under observed dependencies"
+    },
+    {
+      "strategy": "critical_path",
+      "workers": 1,
+      "makespan": 3584277,
+      "speedup_vs_canonical_one_worker": 1.0,
+      "idle_percentage": 0.0,
+      "ready_queue_wait_units": 60701974,
+      "critical_path_bound": 563160,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "critical_path does not improve canonical order for this observed dependency graph"
+    },
+    {
+      "strategy": "critical_path",
+      "workers": 2,
+      "makespan": 1805167,
+      "speedup_vs_canonical_one_worker": 1.9855653244270475,
+      "idle_percentage": 0.7217337786476266,
+      "ready_queue_wait_units": 29428570,
+      "critical_path_bound": 563160,
+      "improvement_vs_canonical_percent": 9.852576404733975,
+      "preserves_dependencies": true,
+      "interpretation": "critical_path improves the observed schedule by 9.85% vs canonical at the same worker count"
+    },
+    {
+      "strategy": "critical_path",
+      "workers": 4,
+      "makespan": 920966,
+      "speedup_vs_canonical_one_worker": 3.8918668007288,
+      "idle_percentage": 2.7033299817800005,
+      "ready_queue_wait_units": 13608232,
+      "critical_path_bound": 563160,
+      "improvement_vs_canonical_percent": 22.043467661657854,
+      "preserves_dependencies": true,
+      "interpretation": "critical_path improves the observed schedule by 22.04% vs canonical at the same worker count"
+    },
+    {
+      "strategy": "critical_path",
+      "workers": 8,
+      "makespan": 563160,
+      "speedup_vs_canonical_one_worker": 6.364580225868314,
+      "idle_percentage": 20.44274717664607,
+      "ready_queue_wait_units": 4539256,
+      "critical_path_bound": 563160,
+      "improvement_vs_canonical_percent": 25.9923148493721,
+      "preserves_dependencies": true,
+      "interpretation": "at critical-path lower bound under observed dependencies"
+    },
+    {
+      "strategy": "critical_path",
+      "workers": 16,
+      "makespan": 563160,
+      "speedup_vs_canonical_one_worker": 6.364580225868314,
+      "idle_percentage": 60.22137358832303,
+      "ready_queue_wait_units": 646156,
+      "critical_path_bound": 563160,
+      "improvement_vs_canonical_percent": 3.081744445993319,
+      "preserves_dependencies": true,
+      "interpretation": "at critical-path lower bound under observed dependencies"
+    }
+  ],
   "blocks": [
     {
       "block_number": 38014901,
@@ -292,6 +494,7 @@
         {
           "key": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789:0x0000000000000000000000000000000000000000000000000000000000000002",
           "address": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789",
+          "address_label": "unknown",
           "slot": "0x0000000000000000000000000000000000000000000000000000000000000002",
           "touching_txs": 2,
           "gas_of_touching_txs": 485390,
@@ -300,6 +503,7 @@
         {
           "key": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789:0x33a26eb216320a51847a061c8f256bd98ae96e1a1d67d2bbc4cd8c61adad2df0",
           "address": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789",
+          "address_label": "unknown",
           "slot": "0x33a26eb216320a51847a061c8f256bd98ae96e1a1d67d2bbc4cd8c61adad2df0",
           "touching_txs": 2,
           "gas_of_touching_txs": 485390,
@@ -308,6 +512,7 @@
         {
           "key": "0x976a4d13a41581c5eda72c493038ac10cadf5e46:0x0000000000000000000000000000000000000000000000000000000000000006",
           "address": "0x976a4d13a41581c5eda72c493038ac10cadf5e46",
+          "address_label": "unknown",
           "slot": "0x0000000000000000000000000000000000000000000000000000000000000006",
           "touching_txs": 10,
           "gas_of_touching_txs": 1189217,
@@ -316,6 +521,7 @@
         {
           "key": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0:0x0000000000000000000000000000000000000000000000000000000000000000",
           "address": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0",
+          "address_label": "unknown",
           "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
           "touching_txs": 9,
           "gas_of_touching_txs": 880556,
@@ -324,6 +530,7 @@
         {
           "key": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0:0x0000000000000000000000000000000000000000000000000000000000000001",
           "address": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0",
+          "address_label": "unknown",
           "slot": "0x0000000000000000000000000000000000000000000000000000000000000001",
           "touching_txs": 9,
           "gas_of_touching_txs": 880556,
@@ -333,6 +540,7 @@
       "top_hot_contracts": [
         {
           "address": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789",
+          "label": "unknown",
           "touching_txs": 2,
           "unique_slots": 4,
           "gas_of_touching_txs": 485390,
@@ -340,6 +548,7 @@
         },
         {
           "address": "0x976a4d13a41581c5eda72c493038ac10cadf5e46",
+          "label": "unknown",
           "touching_txs": 10,
           "unique_slots": 1,
           "gas_of_touching_txs": 1189217,
@@ -347,6 +556,7 @@
         },
         {
           "address": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0",
+          "label": "unknown",
           "touching_txs": 9,
           "unique_slots": 2,
           "gas_of_touching_txs": 880556,
@@ -354,6 +564,7 @@
         },
         {
           "address": "0x22aee3699b6a0fed71490c103bd4e5f3309891d5",
+          "label": "unknown",
           "touching_txs": 9,
           "unique_slots": 1,
           "gas_of_touching_txs": 979811,
@@ -361,6 +572,7 @@
         },
         {
           "address": "0x57135dd4b832645955422b28291302d697ea0900",
+          "label": "unknown",
           "touching_txs": 8,
           "unique_slots": 1,
           "gas_of_touching_txs": 671150,
@@ -669,6 +881,36 @@
       ]
     }
   ],
+  "warning_summary": [
+    {
+      "warning": "25 of 25 analyzed txs: Provider support for debug_traceTransaction and JavaScript tracers varies",
+      "count": 25
+    },
+    {
+      "warning": "25 of 25 analyzed txs: read coverage is incomplete",
+      "count": 25
+    },
+    {
+      "warning": "25 of 25 analyzed txs: tracer records SLOAD/SSTORE storage observations only",
+      "count": 25
+    },
+    {
+      "warning": "2 of 25 analyzed txs: tracer reported faults",
+      "count": 2
+    },
+    {
+      "warning": "Provider trace completeness varies; verify tracer support before making claims",
+      "count": 1
+    },
+    {
+      "warning": "block 38014901: collection truncated to 25 of 436 transactions by --max-transactions",
+      "count": 1
+    },
+    {
+      "warning": "gas-weighted scheduling is theoretical, not measured throughput",
+      "count": 1
+    }
+  ],
   "warnings": [
     "Provider trace completeness varies; verify tracer support before making claims",
     "block 38014901: collection truncated to 25 of 436 transactions by --max-transactions",
@@ -751,5 +993,5 @@
     "block 38014901: tx_index 9: Provider support for debug_traceTransaction and JavaScript tracers varies.",
     "block 38014901: tx_index 9: trace marks read information as incomplete"
   ],
-  "deterministic_hash": "00509cb2a53d93ac"
+  "deterministic_hash": "e59c2967676a44d3"
 }

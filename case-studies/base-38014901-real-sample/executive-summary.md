@@ -12,6 +12,7 @@
 - Accesses: 680
 - Conflict pairs: 1 (0.333%)
 - Overlapping transactions: 22 (88.000%)
+- Overlap is broader than serialization: read-compatible overlap can be high even when write-dependent conflict pairs and waves stay low.
 - Waves: 2
 - Max wave width: 24
 - Critical path by tx count: 2
@@ -30,6 +31,28 @@
 | 8 | 760948 | 4.710x | 41.12% | mixed dependency/worker-bound: dependencies and idle capacity both matter |
 | 16 | 581067 | 6.168x | 61.45% | mixed dependency/worker-bound: dependencies and idle capacity both matter |
 
+## Scheduler Ablation
+
+All strategies preserve observed dependencies; they only change deterministic ready-queue priority.
+
+| strategy | workers | makespan | speedup vs canonical 1-worker | idle | ready wait | critical-path bound | improvement vs canonical | deps preserved |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `canonical` | 1 | 3584277 | 1.000x | 0.00% | 41012734 | 563160 | 0.00% | true |
+| `canonical` | 2 | 2002461 | 1.790x | 10.50% | 19321248 | 563160 | 0.00% | true |
+| `canonical` | 4 | 1181384 | 3.034x | 24.15% | 8547257 | 563160 | 0.00% | true |
+| `canonical` | 8 | 760948 | 4.710x | 41.12% | 2668930 | 563160 | 0.00% | true |
+| `canonical` | 16 | 581067 | 6.168x | 61.45% | 566808 | 563160 | 0.00% | true |
+| `gas_lpt` | 1 | 3584277 | 1.000x | 0.00% | 59876415 | 563160 | 0.00% | true |
+| `gas_lpt` | 2 | 1793885 | 1.998x | 0.10% | 28671856 | 563160 | 10.42% | true |
+| `gas_lpt` | 4 | 905480 | 3.958x | 1.04% | 13118331 | 563160 | 23.35% | true |
+| `gas_lpt` | 8 | 563160 | 6.365x | 20.44% | 4539256 | 563160 | 25.99% | true |
+| `gas_lpt` | 16 | 563160 | 6.365x | 60.22% | 646156 | 563160 | 3.08% | true |
+| `critical_path` | 1 | 3584277 | 1.000x | 0.00% | 60701974 | 563160 | 0.00% | true |
+| `critical_path` | 2 | 1805167 | 1.986x | 0.72% | 29428570 | 563160 | 9.85% | true |
+| `critical_path` | 4 | 920966 | 3.892x | 2.70% | 13608232 | 563160 | 22.04% | true |
+| `critical_path` | 8 | 563160 | 6.365x | 20.44% | 4539256 | 563160 | 25.99% | true |
+| `critical_path` | 16 | 563160 | 6.365x | 60.22% | 646156 | 563160 | 3.08% | true |
+
 ## Worst Serializing Transactions
 
 | block | tx | wave | conflicts | duration | tx hash |
@@ -39,116 +62,48 @@
 
 ## Hot Contracts
 
-| contract | txs | unique slots | gas covered | conflict contribution |
-| --- | ---: | ---: | ---: | ---: |
-| `0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789` | 2 | 4 | 485390 | 2 |
-| `0x976a4d13a41581c5eda72c493038ac10cadf5e46` | 10 | 1 | 1189217 | 0 |
-| `0x20cb8f872ae894f7c9e32e621c186e5afce82fd0` | 9 | 2 | 880556 | 0 |
-| `0x22aee3699b6a0fed71490c103bd4e5f3309891d5` | 9 | 1 | 979811 | 0 |
-| `0x57135dd4b832645955422b28291302d697ea0900` | 8 | 1 | 671150 | 0 |
-| `0x498581ff718922c3f8e6a244956af099b2652b2b` | 7 | 6 | 847377 | 0 |
-| `0x0f12cb1f3e37375af09a248ca97c4a3eedf2f494` | 6 | 1 | 637971 | 0 |
-| `0x4c9f68e780523feb4c9bb1aad2e5cc3b6476892b` | 6 | 1 | 637971 | 0 |
-| `0x5b8bf0cd0fa5bf970ebe558d7551a668dadf3570` | 6 | 1 | 787046 | 0 |
-| `0x7631e2b08317f227bb2916ed0e9d69c64d73bdcd` | 6 | 1 | 687791 | 0 |
+Labels are convenience metadata for readability; they are not part of analysis correctness.
+
+| contract | label | txs | unique slots | gas covered | conflict contribution |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789` | unknown | 2 | 4 | 485390 | 2 |
+| `0x976a4d13a41581c5eda72c493038ac10cadf5e46` | unknown | 10 | 1 | 1189217 | 0 |
+| `0x20cb8f872ae894f7c9e32e621c186e5afce82fd0` | unknown | 9 | 2 | 880556 | 0 |
+| `0x22aee3699b6a0fed71490c103bd4e5f3309891d5` | unknown | 9 | 1 | 979811 | 0 |
+| `0x57135dd4b832645955422b28291302d697ea0900` | unknown | 8 | 1 | 671150 | 0 |
+| `0x498581ff718922c3f8e6a244956af099b2652b2b` | unknown | 7 | 6 | 847377 | 0 |
+| `0x0f12cb1f3e37375af09a248ca97c4a3eedf2f494` | unknown | 6 | 1 | 637971 | 0 |
+| `0x4c9f68e780523feb4c9bb1aad2e5cc3b6476892b` | unknown | 6 | 1 | 637971 | 0 |
+| `0x5b8bf0cd0fa5bf970ebe558d7551a668dadf3570` | unknown | 6 | 1 | 787046 | 0 |
+| `0x7631e2b08317f227bb2916ed0e9d69c64d73bdcd` | unknown | 6 | 1 | 687791 | 0 |
 
 ## Hot Storage Slots
 
-| slot | txs | gas covered | conflict contribution |
-| --- | ---: | ---: | ---: |
-| `0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789:0x0000000000000000000000000000000000000000000000000000000000000002` | 2 | 485390 | 1 |
-| `0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789:0x33a26eb216320a51847a061c8f256bd98ae96e1a1d67d2bbc4cd8c61adad2df0` | 2 | 485390 | 1 |
-| `0x976a4d13a41581c5eda72c493038ac10cadf5e46:0x0000000000000000000000000000000000000000000000000000000000000006` | 10 | 1189217 | 0 |
-| `0x20cb8f872ae894f7c9e32e621c186e5afce82fd0:0x0000000000000000000000000000000000000000000000000000000000000000` | 9 | 880556 | 0 |
-| `0x20cb8f872ae894f7c9e32e621c186e5afce82fd0:0x0000000000000000000000000000000000000000000000000000000000000001` | 9 | 880556 | 0 |
-| `0x22aee3699b6a0fed71490c103bd4e5f3309891d5:0x0000000000000000000000000000000000000000000000000000000000000006` | 9 | 979811 | 0 |
-| `0x57135dd4b832645955422b28291302d697ea0900:0x0000000000000000000000000000000000000000000000000000000000000006` | 8 | 671150 | 0 |
-| `0x0f12cb1f3e37375af09a248ca97c4a3eedf2f494:0x0000000000000000000000000000000000000000000000000000000000000000` | 6 | 637971 | 0 |
-| `0x498581ff718922c3f8e6a244956af099b2652b2b:0x934ff9aed835597de93bbfd6474d60d33c1e72493b62f8e1615cfda0908eeaef` | 6 | 637971 | 0 |
-| `0x4c9f68e780523feb4c9bb1aad2e5cc3b6476892b:0x0000000000000000000000000000000000000000000000000000000000000000` | 6 | 637971 | 0 |
+| slot | address label | txs | gas covered | conflict contribution |
+| --- | --- | ---: | ---: | ---: |
+| `0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789:0x0000000000000000000000000000000000000000000000000000000000000002` | unknown | 2 | 485390 | 1 |
+| `0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789:0x33a26eb216320a51847a061c8f256bd98ae96e1a1d67d2bbc4cd8c61adad2df0` | unknown | 2 | 485390 | 1 |
+| `0x976a4d13a41581c5eda72c493038ac10cadf5e46:0x0000000000000000000000000000000000000000000000000000000000000006` | unknown | 10 | 1189217 | 0 |
+| `0x20cb8f872ae894f7c9e32e621c186e5afce82fd0:0x0000000000000000000000000000000000000000000000000000000000000000` | unknown | 9 | 880556 | 0 |
+| `0x20cb8f872ae894f7c9e32e621c186e5afce82fd0:0x0000000000000000000000000000000000000000000000000000000000000001` | unknown | 9 | 880556 | 0 |
+| `0x22aee3699b6a0fed71490c103bd4e5f3309891d5:0x0000000000000000000000000000000000000000000000000000000000000006` | unknown | 9 | 979811 | 0 |
+| `0x57135dd4b832645955422b28291302d697ea0900:0x0000000000000000000000000000000000000000000000000000000000000006` | unknown | 8 | 671150 | 0 |
+| `0x0f12cb1f3e37375af09a248ca97c4a3eedf2f494:0x0000000000000000000000000000000000000000000000000000000000000000` | unknown | 6 | 637971 | 0 |
+| `0x498581ff718922c3f8e6a244956af099b2652b2b:0x934ff9aed835597de93bbfd6474d60d33c1e72493b62f8e1615cfda0908eeaef` | unknown | 6 | 637971 | 0 |
+| `0x4c9f68e780523feb4c9bb1aad2e5cc3b6476892b:0x0000000000000000000000000000000000000000000000000000000000000000` | unknown | 6 | 637971 | 0 |
 
-## Warnings
+## Warning Summary
 
+- Data covers partial source transaction set: 25 of 436 transactions (5.734%).
+- 25 of 25 analyzed txs: Provider support for debug_traceTransaction and JavaScript tracers varies
+- 25 of 25 analyzed txs: read coverage is incomplete
+- 25 of 25 analyzed txs: tracer records SLOAD/SSTORE storage observations only
+- 2 of 25 analyzed txs: tracer reported faults
 - Provider trace completeness varies; verify tracer support before making claims
 - block 38014901: collection truncated to 25 of 436 transactions by --max-transactions
-- block 38014901: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical
-- block 38014901: tx_index 0: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 0: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 0: trace marks read information as incomplete
-- block 38014901: tx_index 10: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 10: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 10: trace marks read information as incomplete
-- block 38014901: tx_index 11: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 11: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 11: trace marks read information as incomplete
-- block 38014901: tx_index 12: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 12: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 12: trace marks read information as incomplete
-- block 38014901: tx_index 13: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 13: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 13: trace marks read information as incomplete
-- block 38014901: tx_index 14: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 14: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 14: trace marks read information as incomplete
-- block 38014901: tx_index 15: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 15: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 15: trace marks read information as incomplete
-- block 38014901: tx_index 16: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 16: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 16: trace marks read information as incomplete
-- block 38014901: tx_index 17: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 17: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 17: trace marks read information as incomplete
-- block 38014901: tx_index 18: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 18: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 18: trace marks read information as incomplete
-- block 38014901: tx_index 19: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 19: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 19: trace marks read information as incomplete
-- block 38014901: tx_index 1: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 1: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 1: trace marks read information as incomplete
-- block 38014901: tx_index 20: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 20: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 20: trace marks read information as incomplete
-- block 38014901: tx_index 21: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 21: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 21: trace marks read information as incomplete
-- block 38014901: tx_index 22: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 22: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 22: trace marks read information as incomplete
-- block 38014901: tx_index 23: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 23: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 23: debug tracer reported 5 fault(s)
-- block 38014901: tx_index 23: trace marks read information as incomplete
-- block 38014901: tx_index 24: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 24: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 24: trace marks read information as incomplete
-- block 38014901: tx_index 2: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 2: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 2: trace marks read information as incomplete
-- block 38014901: tx_index 3: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 3: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 3: trace marks read information as incomplete
-- block 38014901: tx_index 4: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 4: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 4: trace marks read information as incomplete
-- block 38014901: tx_index 5: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 5: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 5: trace marks read information as incomplete
-- block 38014901: tx_index 6: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 6: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 6: debug tracer reported 8 fault(s)
-- block 38014901: tx_index 6: trace marks read information as incomplete
-- block 38014901: tx_index 7: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 7: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 7: trace marks read information as incomplete
-- block 38014901: tx_index 8: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 8: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 8: trace marks read information as incomplete
-- block 38014901: tx_index 9: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- block 38014901: tx_index 9: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- block 38014901: tx_index 9: trace marks read information as incomplete
+- gas-weighted scheduling is theoretical, not measured throughput
+
+Full per-transaction warnings are preserved in `dossier.json`.
 
 ## What This Proves
 
@@ -156,4 +111,4 @@ This dossier shows deterministic access-contention structure, hot-state concentr
 
 ## What This Does Not Prove
 
-It is not production TPS, not Ggas/s, not full block replay, and not proof that observed access hints are complete Ethereum access lists.
+It is not production TPS, not Ggas/s, does not execute/replay full EVM state transitions, and is not proof that observed access hints are complete Ethereum access lists.

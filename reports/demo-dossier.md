@@ -59,29 +59,30 @@ All strategies preserve observed dependencies; they only change deterministic re
 
 ## Hot Contracts
 
-| contract | txs | unique slots | gas covered | conflict contribution |
-| --- | ---: | ---: | ---: | ---: |
-| `0x1111111111111111111111111111111111111111` | 4 | 2 | 410 | 1 |
-| `0x3333333333333333333333333333333333333333` | 2 | 1 | 185 | 1 |
-| `0x2222222222222222222222222222222222222222` | 1 | 1 | 50 | 0 |
+Labels are convenience metadata for readability; they are not part of analysis correctness.
+
+| contract | label | txs | unique slots | gas covered | conflict contribution |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `0x1111111111111111111111111111111111111111` | unknown | 4 | 2 | 410 | 1 |
+| `0x3333333333333333333333333333333333333333` | unknown | 2 | 1 | 185 | 1 |
+| `0x2222222222222222222222222222222222222222` | unknown | 1 | 1 | 50 | 0 |
 
 ## Hot Storage Slots
 
-| slot | txs | gas covered | conflict contribution |
-| --- | ---: | ---: | ---: |
-| `0x1111111111111111111111111111111111111111:0x0000000000000000000000000000000000000000000000000000000000000000` | 3 | 330 | 1 |
-| `0x3333333333333333333333333333333333333333:0x0000000000000000000000000000000000000000000000000000000000000007` | 2 | 185 | 1 |
-| `0x1111111111111111111111111111111111111111:0x0000000000000000000000000000000000000000000000000000000000000002` | 1 | 80 | 0 |
-| `0x2222222222222222222222222222222222222222:0x0000000000000000000000000000000000000000000000000000000000000001` | 1 | 50 | 0 |
+| slot | address label | txs | gas covered | conflict contribution |
+| --- | --- | ---: | ---: | ---: |
+| `0x1111111111111111111111111111111111111111:0x0000000000000000000000000000000000000000000000000000000000000000` | unknown | 3 | 330 | 1 |
+| `0x3333333333333333333333333333333333333333:0x0000000000000000000000000000000000000000000000000000000000000007` | unknown | 2 | 185 | 1 |
+| `0x1111111111111111111111111111111111111111:0x0000000000000000000000000000000000000000000000000000000000000002` | unknown | 1 | 80 | 0 |
+| `0x2222222222222222222222222222222222222222:0x0000000000000000000000000000000000000000000000000000000000000001` | unknown | 1 | 50 | 0 |
 
 ## Warning Summary
 
-- 7 of 7 analyzed txs: trace marks read information as incomplete
-- Synthetic demo fixture; do not cite as real-chain evidence.
-- block 900000001: Block uses a synthetic number and is not a Base RPC capture.
-- block 900000001: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical
-- block 900000002: Block uses a synthetic number and is not a Base RPC capture.
-- block 900000002: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical
+- 7 of 7 analyzed txs: read coverage is incomplete
+- Synthetic demo fixture; do not cite as real-chain evidence
+- block 900000001: Block uses a synthetic number and is not a Base RPC capture
+- block 900000002: Block uses a synthetic number and is not a Base RPC capture
+- gas-weighted scheduling is theoretical, not measured throughput
 
 Full per-transaction warnings are preserved in `dossier.json`.
 
@@ -91,4 +92,4 @@ This dossier shows deterministic access-contention structure, hot-state concentr
 
 ## What This Does Not Prove
 
-It is not production TPS, not Ggas/s, not full block replay, and not proof that observed access hints are complete Ethereum access lists.
+It is not production TPS, not Ggas/s, does not execute/replay full EVM state transitions, and is not proof that observed access hints are complete Ethereum access lists.

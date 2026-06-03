@@ -56,6 +56,7 @@ pub struct TracePackDossier {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct HotContractDossier {
     pub address: String,
+    pub label: String,
     pub touching_txs: usize,
     pub unique_slots: usize,
     pub gas_of_touching_txs: Option<u64>,
@@ -66,6 +67,7 @@ pub struct HotContractDossier {
 pub struct HotSlotDossier {
     pub key: String,
     pub address: String,
+    pub address_label: String,
     pub slot: String,
     pub touching_txs: usize,
     pub gas_of_touching_txs: Option<u64>,
@@ -403,6 +405,28 @@ pub fn analyze_trace_pack(pack: &TracePack, workers: &[usize]) -> TracePackDossi
     dossier
 }
 
+pub fn apply_contract_labels(dossier: &mut TracePackDossier, labels: &BTreeMap<String, String>) {
+    let normalized = labels
+        .iter()
+        .map(|(address, label)| (address.to_ascii_lowercase(), label.clone()))
+        .collect::<BTreeMap<_, _>>();
+    for item in &mut dossier.top_hot_contracts {
+        item.label = contract_label(&item.address, &normalized);
+    }
+    for item in &mut dossier.top_hot_storage_slots {
+        item.address_label = contract_label(&item.address, &normalized);
+    }
+    for block in &mut dossier.blocks {
+        for item in &mut block.top_hot_contracts {
+            item.label = contract_label(&item.address, &normalized);
+        }
+        for item in &mut block.top_hot_slots {
+            item.address_label = contract_label(&item.address, &normalized);
+        }
+    }
+    dossier.deterministic_hash = dossier_hash(dossier);
+}
+
 pub fn render_dossier_markdown(dossier: &TracePackDossier) -> String {
     let mut out = String::new();
     out.push_str(&format!(
@@ -499,22 +523,24 @@ pub fn render_dossier_markdown(dossier: &TracePackDossier) -> String {
             ));
         }
     }
-    out.push_str("\n## Hot Contracts\n\n| contract | txs | unique slots | gas covered | conflict contribution |\n| --- | ---: | ---: | ---: | ---: |\n");
+    out.push_str("\n## Hot Contracts\n\nLabels are convenience metadata for readability; they are not part of analysis correctness.\n\n| contract | label | txs | unique slots | gas covered | conflict contribution |\n| --- | --- | ---: | ---: | ---: | ---: |\n");
     for item in &dossier.top_hot_contracts {
         out.push_str(&format!(
-            "| `{}` | {} | {} | {} | {} |\n",
+            "| `{}` | {} | {} | {} | {} | {} |\n",
             item.address,
+            item.label,
             item.touching_txs,
             item.unique_slots,
             option_u64(item.gas_of_touching_txs),
             item.conflict_contribution
         ));
     }
-    out.push_str("\n## Hot Storage Slots\n\n| slot | txs | gas covered | conflict contribution |\n| --- | ---: | ---: | ---: |\n");
+    out.push_str("\n## Hot Storage Slots\n\n| slot | address label | txs | gas covered | conflict contribution |\n| --- | --- | ---: | ---: | ---: |\n");
     for item in &dossier.top_hot_storage_slots {
         out.push_str(&format!(
-            "| `{}` | {} | {} | {} |\n",
+            "| `{}` | {} | {} | {} | {} |\n",
             item.key,
+            item.address_label,
             item.touching_txs,
             option_u64(item.gas_of_touching_txs),
             item.conflict_contribution
@@ -522,12 +548,15 @@ pub fn render_dossier_markdown(dossier: &TracePackDossier) -> String {
     }
     if !dossier.warning_summary.is_empty() {
         out.push_str("\n## Warning Summary\n\n");
+        if let Some(note) = coverage_summary_line(dossier) {
+            out.push_str(&format!("- {note}\n"));
+        }
         for warning in &dossier.warning_summary {
             out.push_str(&format!("- {}\n", warning.warning));
         }
         out.push_str("\nFull per-transaction warnings are preserved in `dossier.json`.\n");
     }
-    out.push_str("\n## What This Proves\n\nThis dossier shows deterministic access-contention structure, hot-state concentration, gas-weighted theoretical scheduling bounds where gas is available, and worker-count sensitivity for the supplied trace pack.\n\n## What This Does Not Prove\n\nIt is not production TPS, not Ggas/s, not full block replay, and not proof that observed access hints are complete Ethereum access lists.\n");
+    out.push_str("\n## What This Proves\n\nThis dossier shows deterministic access-contention structure, hot-state concentration, gas-weighted theoretical scheduling bounds where gas is available, and worker-count sensitivity for the supplied trace pack.\n\n## What This Does Not Prove\n\nIt is not production TPS, not Ggas/s, does not execute/replay full EVM state transitions, and is not proof that observed access hints are complete Ethereum access lists.\n");
     out
 }
 
@@ -552,8 +581,9 @@ pub fn render_dossier_html(dossier: &TracePackDossier, command: &str) -> String 
         .iter()
         .map(|item| {
             format!(
-                "<tr><td><code>{}</code></td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>",
+                "<tr><td><code>{}</code></td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>",
                 escape_html(&item.address),
+                escape_html(&item.label),
                 item.touching_txs,
                 item.unique_slots,
                 option_u64(item.gas_of_touching_txs),
@@ -567,8 +597,9 @@ pub fn render_dossier_html(dossier: &TracePackDossier, command: &str) -> String 
         .iter()
         .map(|item| {
             format!(
-                "<tr><td><code>{}</code></td><td>{}</td><td>{}</td><td>{}</td></tr>",
+                "<tr><td><code>{}</code></td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>",
                 escape_html(&item.key),
+                escape_html(&item.address_label),
                 item.touching_txs,
                 option_u64(item.gas_of_touching_txs),
                 item.conflict_contribution
@@ -576,12 +607,17 @@ pub fn render_dossier_html(dossier: &TracePackDossier, command: &str) -> String 
         })
         .collect::<Vec<_>>()
         .join("");
-    let warnings = dossier
-        .warning_summary
-        .iter()
-        .map(|warning| format!("<li>{}</li>", escape_html(&warning.warning)))
-        .collect::<Vec<_>>()
-        .join("");
+    let mut warning_items = Vec::new();
+    if let Some(note) = coverage_summary_line(dossier) {
+        warning_items.push(format!("<li>{}</li>", escape_html(&note)));
+    }
+    warning_items.extend(
+        dossier
+            .warning_summary
+            .iter()
+            .map(|warning| format!("<li>{}</li>", escape_html(&warning.warning))),
+    );
+    let warnings = warning_items.join("");
     let scheduler_rows = dossier
         .scheduler_ablation
         .iter()
@@ -618,7 +654,7 @@ pub fn render_dossier_html(dossier: &TracePackDossier, command: &str) -> String 
         .collect::<Vec<_>>()
         .join("");
     format!(
-        "<!doctype html><html><head><meta charset=\"utf-8\"><title>Contention Dossier</title><style>body{{font-family:system-ui,sans-serif;margin:32px;line-height:1.45;max-width:1180px}}.badge{{display:inline-block;border:1px solid #999;padding:3px 8px;border-radius:4px}}.cards{{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:18px 0}}.card{{border:1px solid #ddd;padding:12px;border-radius:6px}}table{{border-collapse:collapse;width:100%;margin:12px 0 24px}}td,th{{border:1px solid #ddd;padding:6px;text-align:left;vertical-align:top}}code{{font-size:12px}}</style></head><body><h1>Contention Dossier</h1><p><span class=\"badge\">{}</span></p><p>{} blocks {}-{}</p><div class=\"cards\"><div class=\"card\"><b>txs</b><br>{}</div><div class=\"card\"><b>coverage</b><br>{}</div><div class=\"card\"><b>conflicts</b><br>{} ({:.3}%)</div><div class=\"card\"><b>overlap</b><br>{} ({:.3}%)</div><div class=\"card\"><b>waves</b><br>{} / max width {}</div><div class=\"card\"><b>tx ceiling</b><br>{:.3}x</div><div class=\"card\"><b>gas ceiling</b><br>{}</div></div><p>Overlap is broader than serialization: read-compatible overlap can be high even when write-dependent conflict pairs and waves stay low.</p><h2>Worker Simulation</h2><table><tr><th>workers</th><th>makespan</th><th>speedup</th><th>idle</th><th>interpretation</th></tr>{}</table><h2>Scheduler Ablation</h2><p>Strategies preserve observed dependencies and only change deterministic ready-queue priority.</p><table><tr><th>strategy</th><th>workers</th><th>makespan</th><th>speedup vs canonical 1-worker</th><th>idle</th><th>ready wait</th><th>critical path</th><th>improvement</th><th>deps</th></tr>{}</table><h2>Worst Serializing Transactions</h2><table><tr><th>block</th><th>tx</th><th>wave</th><th>conflicts</th><th>duration</th><th>tx hash</th></tr>{}</table><h2>Hot Contracts</h2><table><tr><th>contract</th><th>txs</th><th>unique slots</th><th>gas covered</th><th>conflicts</th></tr>{}</table><h2>Hot Storage Slots</h2><table><tr><th>slot</th><th>txs</th><th>gas covered</th><th>conflicts</th></tr>{}</table><h2>Warning Summary</h2><ul>{}</ul><p>Full per-transaction warnings are preserved in <code>dossier.json</code>.</p><h2>Commands</h2><pre>{}</pre><h2>What This Does Not Prove</h2><p>This is a theoretical scheduling and contention model over observed trace-pack accesses. It is not production TPS, not Ggas/s, not full block replay, and not a complete Ethereum access-list generator.</p></body></html>",
+        "<!doctype html><html><head><meta charset=\"utf-8\"><title>Contention Dossier</title><style>body{{font-family:system-ui,sans-serif;margin:32px;line-height:1.45;max-width:1180px}}.badge{{display:inline-block;border:1px solid #999;padding:3px 8px;border-radius:4px}}.cards{{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:18px 0}}.card{{border:1px solid #ddd;padding:12px;border-radius:6px}}table{{border-collapse:collapse;width:100%;margin:12px 0 24px}}td,th{{border:1px solid #ddd;padding:6px;text-align:left;vertical-align:top}}code{{font-size:12px}}</style></head><body><h1>Contention Dossier</h1><p><span class=\"badge\">{}</span></p><p>{} blocks {}-{}</p><div class=\"cards\"><div class=\"card\"><b>txs</b><br>{}</div><div class=\"card\"><b>coverage</b><br>{}</div><div class=\"card\"><b>conflicts</b><br>{} ({:.3}%)</div><div class=\"card\"><b>overlap</b><br>{} ({:.3}%)</div><div class=\"card\"><b>waves</b><br>{} / max width {}</div><div class=\"card\"><b>tx ceiling</b><br>{:.3}x</div><div class=\"card\"><b>gas ceiling</b><br>{}</div></div><p>Overlap is broader than serialization: read-compatible overlap can be high even when write-dependent conflict pairs and waves stay low.</p><h2>Worker Simulation</h2><table><tr><th>workers</th><th>makespan</th><th>speedup</th><th>idle</th><th>interpretation</th></tr>{}</table><h2>Scheduler Ablation</h2><p>Strategies preserve observed dependencies and only change deterministic ready-queue priority.</p><table><tr><th>strategy</th><th>workers</th><th>makespan</th><th>speedup vs canonical 1-worker</th><th>idle</th><th>ready wait</th><th>critical path</th><th>improvement</th><th>deps</th></tr>{}</table><h2>Worst Serializing Transactions</h2><table><tr><th>block</th><th>tx</th><th>wave</th><th>conflicts</th><th>duration</th><th>tx hash</th></tr>{}</table><h2>Hot Contracts</h2><p>Labels are convenience metadata for readability; they are not part of analysis correctness.</p><table><tr><th>contract</th><th>label</th><th>txs</th><th>unique slots</th><th>gas covered</th><th>conflicts</th></tr>{}</table><h2>Hot Storage Slots</h2><table><tr><th>slot</th><th>address label</th><th>txs</th><th>gas covered</th><th>conflicts</th></tr>{}</table><h2>Warning Summary</h2><ul>{}</ul><p>Full per-transaction warnings are preserved in <code>dossier.json</code>.</p><h2>Commands</h2><pre>{}</pre><h2>What This Does Not Prove</h2><p>This is a theoretical scheduling and contention model over observed trace-pack accesses. It is not production TPS, not Ggas/s, does not execute/replay full EVM state transitions, and is not a complete Ethereum access-list generator.</p></body></html>",
         escape_html(&dossier.provenance),
         escape_html(&dossier.chain),
         dossier.start_block,
@@ -673,11 +709,13 @@ pub fn dossier_schedule_trace_json(dossier: &TracePackDossier) -> serde_json::Va
 
 pub fn render_hot_contracts_csv(dossier: &TracePackDossier) -> String {
     let mut out =
-        "address,touching_txs,unique_slots,gas_of_touching_txs,conflict_contribution\n".to_owned();
+        "address,label,touching_txs,unique_slots,gas_of_touching_txs,conflict_contribution\n"
+            .to_owned();
     for item in &dossier.top_hot_contracts {
         out.push_str(&format!(
-            "{},{},{},{},{}\n",
+            "{},{},{},{},{},{}\n",
             item.address,
+            csv_cell(&item.label),
             item.touching_txs,
             item.unique_slots,
             option_u64(item.gas_of_touching_txs),
@@ -689,12 +727,14 @@ pub fn render_hot_contracts_csv(dossier: &TracePackDossier) -> String {
 
 pub fn render_hot_slots_csv(dossier: &TracePackDossier) -> String {
     let mut out =
-        "key,address,slot,touching_txs,gas_of_touching_txs,conflict_contribution\n".to_owned();
+        "key,address,address_label,slot,touching_txs,gas_of_touching_txs,conflict_contribution\n"
+            .to_owned();
     for item in &dossier.top_hot_storage_slots {
         out.push_str(&format!(
-            "{},{},{},{},{},{}\n",
+            "{},{},{},{},{},{},{}\n",
             item.key,
             item.address,
+            csv_cell(&item.address_label),
             item.slot,
             item.touching_txs,
             option_u64(item.gas_of_touching_txs),
@@ -963,9 +1003,11 @@ fn warning_summary(warnings: &[String], tx_count: usize) -> Vec<WarningSummary> 
     let mut range_warnings = Vec::new();
     for warning in warnings {
         if let Some(message) = tx_specific_warning_message(warning) {
-            *tx_messages.entry(message.to_owned()).or_insert(0) += 1;
+            *tx_messages
+                .entry(normalized_warning_message(message))
+                .or_insert(0) += 1;
         } else {
-            range_warnings.push(warning.clone());
+            range_warnings.push(normalized_warning_message(warning));
         }
     }
 
@@ -992,6 +1034,20 @@ fn tx_specific_warning_message(warning: &str) -> Option<&str> {
     let (_, rest) = warning.split_once(": tx_index ")?;
     let (_, message) = rest.split_once(": ")?;
     Some(message)
+}
+
+fn normalized_warning_message(message: &str) -> String {
+    if message == "Geth JavaScript tracer records SLOAD/SSTORE storage observations only." {
+        "tracer records SLOAD/SSTORE storage observations only".to_owned()
+    } else if message == "trace marks read information as incomplete" {
+        "read coverage is incomplete".to_owned()
+    } else if message.starts_with("debug tracer reported ") {
+        "tracer reported faults".to_owned()
+    } else if message.contains("gas-weighted scheduling is theoretical") {
+        "gas-weighted scheduling is theoretical, not measured throughput".to_owned()
+    } else {
+        message.trim_end_matches('.').to_owned()
+    }
 }
 
 fn overlapping_tx_count(trace: &BlockAccessTrace) -> usize {
@@ -1630,6 +1686,7 @@ impl HotAccumulator {
             .iter()
             .map(|(address, txs)| HotContractDossier {
                 address: address.clone(),
+                label: "unknown".to_owned(),
                 touching_txs: txs.len(),
                 unique_slots: self
                     .contract_slots
@@ -1661,6 +1718,7 @@ impl HotAccumulator {
                 HotSlotDossier {
                     key: key.clone(),
                     address: address.to_owned(),
+                    address_label: "unknown".to_owned(),
                     slot: slot.to_owned(),
                     touching_txs: txs.len(),
                     gas_of_touching_txs: gas_available
@@ -1777,12 +1835,33 @@ fn option_u64(value: Option<u64>) -> String {
         .unwrap_or_else(|| "unavailable".to_owned())
 }
 
+fn coverage_summary_line(dossier: &TracePackDossier) -> Option<String> {
+    match (dossier.source_tx_count, dossier.tx_coverage_percentage) {
+        (Some(source), Some(coverage)) if source == dossier.tx_count => Some(format!(
+            "Data covers full source transaction set: {} of {} transactions ({coverage:.3}%).",
+            dossier.tx_count, source
+        )),
+        (Some(source), Some(coverage)) => Some(format!(
+            "Data covers partial source transaction set: {} of {} transactions ({coverage:.3}%).",
+            dossier.tx_count, source
+        )),
+        _ => None,
+    }
+}
+
 fn csv_cell(value: &str) -> String {
     if value.contains([',', '"', '\n']) {
         format!("\"{}\"", value.replace('"', "\"\""))
     } else {
         value.to_owned()
     }
+}
+
+fn contract_label(address: &str, labels: &BTreeMap<String, String>) -> String {
+    labels
+        .get(&address.to_ascii_lowercase())
+        .cloned()
+        .unwrap_or_else(|| "unknown".to_owned())
 }
 
 fn dossier_hash(dossier: &TracePackDossier) -> String {
@@ -1919,10 +1998,52 @@ mod tests {
 
         assert_eq!(dossier.top_hot_storage_slots[0].touching_txs, 3);
         assert_eq!(dossier.top_hot_storage_slots[0].conflict_contribution, 3);
+        assert_eq!(dossier.top_hot_contracts[0].label, "unknown");
+        assert_eq!(dossier.top_hot_storage_slots[0].address_label, "unknown");
         assert_eq!(
             dossier.contention_concentration.top_1_conflict_percent,
             100.0
         );
+    }
+
+    #[test]
+    fn contract_labels_are_deterministic_and_do_not_change_metrics() {
+        let mut dossier = analyze_trace_pack(&demo_pack(), &[1, 2, 4]);
+        let conflict_pair_count = dossier.conflict_pair_count;
+        let wave_count = dossier.wave_count;
+        let gas_path = dossier.gas_weighted_critical_path;
+        let mut labels = BTreeMap::new();
+        labels.insert(
+            "0X1111111111111111111111111111111111111111".to_owned(),
+            "Known Test Contract".to_owned(),
+        );
+
+        apply_contract_labels(&mut dossier, &labels);
+        let left_hash = dossier.deterministic_hash.clone();
+        apply_contract_labels(&mut dossier, &labels);
+
+        assert_eq!(dossier.top_hot_contracts[0].label, "Known Test Contract");
+        assert_eq!(
+            dossier.top_hot_storage_slots[0].address_label,
+            "Known Test Contract"
+        );
+        assert_eq!(dossier.conflict_pair_count, conflict_pair_count);
+        assert_eq!(dossier.wave_count, wave_count);
+        assert_eq!(dossier.gas_weighted_critical_path, gas_path);
+        assert_eq!(dossier.deterministic_hash, left_hash);
+    }
+
+    #[test]
+    fn missing_contract_labels_fall_back_to_unknown() {
+        let mut dossier = analyze_trace_pack(&demo_pack(), &[1]);
+
+        apply_contract_labels(&mut dossier, &BTreeMap::new());
+
+        assert_eq!(dossier.top_hot_contracts[0].label, "unknown");
+        assert_eq!(dossier.top_hot_storage_slots[0].address_label, "unknown");
+        let markdown = render_dossier_markdown(&dossier);
+        assert!(markdown.contains("Labels are convenience metadata"));
+        assert!(markdown.contains("| `0x1111111111111111111111111111111111111111` | unknown |"));
     }
 
     #[test]
@@ -1997,9 +2118,8 @@ mod tests {
         assert!(dossier.warnings.iter().any(|warning| {
             warning.contains("block 1: tx_index 0: trace marks read information as incomplete")
         }));
-        assert!(
-            markdown.contains("4 of 4 analyzed txs: trace marks read information as incomplete")
-        );
+        assert!(markdown.contains("4 of 4 analyzed txs: read coverage is incomplete"));
+        assert!(markdown.contains("Data covers full source transaction set: 4 of 4"));
         assert!(
             !markdown.contains("block 1: tx_index 0: trace marks read information as incomplete")
         );

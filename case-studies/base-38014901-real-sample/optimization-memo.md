@@ -29,4 +29,4 @@ The top conflict-contributing contract is `0x5ff137d4b0fdcd49dca30c7cf57e578a026
 
 ## What This Analysis Cannot Prove
 
-This is not a production execution client, not full block replay, not a complete EVM dependency extractor, and not a TPS or Ggas/s benchmark. The sample covers only 25 of 436 block transactions, and the tracer observes storage opcodes only.
+This is not a production execution client, does not execute/replay full EVM state transitions, is not a complete EVM dependency extractor, and is not a TPS or Ggas/s benchmark. The sample covers only 25 of 436 block transactions, and the tracer observes storage opcodes only.

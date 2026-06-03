@@ -1,0 +1,16 @@
+strategy,workers,makespan,speedup_vs_canonical_one_worker,idle_percentage,ready_queue_wait_units,critical_path_bound,improvement_vs_canonical_percent,preserves_dependencies,interpretation
+canonical,1,3584277,1.000000,0.000000,41012734,563160,0.000000,true,baseline canonical tx-order ready queue
+canonical,2,2002461,1.789936,10.503201,19321248,563160,0.000000,true,baseline canonical tx-order ready queue
+canonical,4,1181384,3.033964,24.150890,8547257,563160,0.000000,true,baseline canonical tx-order ready queue
+canonical,8,760948,4.710278,41.121519,2668930,563160,0.000000,true,baseline canonical tx-order ready queue
+canonical,16,581067,6.168440,61.447249,566808,563160,0.000000,true,baseline canonical tx-order ready queue
+gas_lpt,1,3584277,1.000000,0.000000,59876415,563160,0.000000,true,gas_lpt does not improve canonical order for this observed dependency graph
+gas_lpt,2,1793885,1.998053,0.097359,28671856,563160,10.415983,true,gas_lpt improves the observed schedule by 10.42% vs canonical at the same worker count
+gas_lpt,4,905480,3.958428,1.039311,13118331,563160,23.354303,true,gas_lpt improves the observed schedule by 23.35% vs canonical at the same worker count
+gas_lpt,8,563160,6.364580,20.442747,4539256,563160,25.992315,true,at critical-path lower bound under observed dependencies
+gas_lpt,16,563160,6.364580,60.221374,646156,563160,3.081744,true,at critical-path lower bound under observed dependencies
+critical_path,1,3584277,1.000000,0.000000,60701974,563160,0.000000,true,critical_path does not improve canonical order for this observed dependency graph
+critical_path,2,1805167,1.985565,0.721734,29428570,563160,9.852576,true,critical_path improves the observed schedule by 9.85% vs canonical at the same worker count
+critical_path,4,920966,3.891867,2.703330,13608232,563160,22.043468,true,critical_path improves the observed schedule by 22.04% vs canonical at the same worker count
+critical_path,8,563160,6.364580,20.442747,4539256,563160,25.992315,true,at critical-path lower bound under observed dependencies
+critical_path,16,563160,6.364580,60.221374,646156,563160,3.081744,true,at critical-path lower bound under observed dependencies

@@ -14,8 +14,8 @@ This case study analyzes one real Base block with compact normalized traces coll
 - Gas-weighted critical path: 16,951,990 gas units.
 - Theoretical gas ceiling: 4.227x.
 - Canonical 16-worker simulated speedup: 4.227x, essentially at the gas critical-path bound.
-- Top hot contract by conflict contribution: `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913`.
-- Top hot storage slot by conflict contribution: `0x4200000000000000000000000000000000000006:0x0d52ad225b9f8da090dc37c741705dabc30f648dce00d7b0cab66994a1261ea6`.
+- Top hot contract by conflict contribution: Base USDC, `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913`.
+- Top hot storage address by conflict contribution: Base WETH, `0x4200000000000000000000000000000000000006`.
 
 High overlap does not mean the block is mostly serialized. In this block, many transactions share at least one observed access key, but the write-dependent conflict graph leaves substantial wave-level parallelism.
 
@@ -30,10 +30,12 @@ High overlap does not mean the block is mostly serialized. In this block, many t
 - `worker-simulation.csv`: canonical worker simulation for 1/2/4/8/16 workers.
 - `scheduler-ablation.csv`: canonical, gas-LPT, and critical-path scheduler comparison.
 - `access-hints.json` and `access-hints.md`: observed access hints, not production access lists.
-- `trace-derived-benchmark.json`: synthetic execution benchmark that reuses observed access topology.
+- `trace-derived-bench.json`: synthetic execution benchmark that reuses observed access topology.
 - `optimization-memo.md`: short engineering interpretation and next steps.
 - `provenance.md`: collection command shape, limitations, and data handling notes.
 
 ## Caveats
 
-This is a Rust protocol-engineering case study over observed SLOAD/SSTORE-style storage traces. It is not production client throughput, not Ggas/s, not full EVM replay, and not a complete Ethereum access-list generator.
+Contract labels are static convenience metadata for readability; they are not part of analysis correctness.
+
+This is a Rust protocol-engineering case study over observed SLOAD/SSTORE-style storage traces. It is not production client throughput, not Ggas/s, does not execute/replay full EVM state transitions, and is not a complete Ethereum access-list generator.

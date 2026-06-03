@@ -76,7 +76,7 @@ Covered edge cases include:
 - They do not prove the non-cryptographic state hash is collision resistant.
 - Trace analyzer tests do not prove provider RPC traces are complete.
 - The Geth parser tests do not prove every Geth trace shape.
-- The revm smoke tests do not prove full block replay or account/code/balance extraction.
+- The revm smoke tests do not prove full EVM block/state replay or account/code/balance extraction.
 - Worker simulation tests prove deterministic scheduling over the modeled dependency graph, not real executor performance.
 
 They do prove the central lab invariant for the implemented synthetic model: parallel modes are sequentially equivalent across fixed, randomized, and high-contention workloads.

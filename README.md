@@ -1,59 +1,21 @@
-# parallel-revm-lab
+# parallel-revm-lab: deterministic parallel execution and real EVM contention analysis in Rust
 
-Deterministic parallel execution and EVM contention analysis in Rust.
+Full real Base block trace-backed dossier.
+Deterministic scheduler/correctness lab.
+`revm` storage-access smoke bridge.
 
-This repository is a protocol-engineering lab for studying deterministic parallel execution, EVM-shaped state contention, offline trace packs, hot-state bottlenecks, and theoretical scheduling ceilings. It is not a production execution client, does not replay full blocks, and does not claim production TPS or Ggas/s.
+This repository is a protocol-engineering lab for studying deterministic parallel execution, EVM-shaped state contention, offline trace packs, hot-state bottlenecks, and theoretical scheduling ceilings. It is not a production execution client, does not execute/replay full EVM state transitions, and does not claim production TPS or Ggas/s.
 
-## Working Commands
+## Open This First
 
-Verify the synthetic scheduler invariant:
-
-```sh
-cargo run -p parallel-revm-lab -- verify \
-  --workload mixed \
-  --txs 100 \
-  --conflicts 0.0,0.2,0.5,0.7,0.95 \
-  --threads 1,2,4 \
-  --seed-start 1 \
-  --seed-end 20
-```
-
-Analyze the committed demo trace pack:
-
-```sh
-cargo run -p parallel-revm-lab -- analyze-trace-pack \
-  --trace-dir trace-packs/demo-mini \
-  --workers 1,2,4,8 \
-  --out reports/demo-dossier.json \
-  --markdown reports/demo-dossier.md \
-  --html reports/demo-dossier.html \
-  --trace reports/demo-schedule.trace.json
-```
-
-Run the heavy low-contention synthetic benchmark snapshot:
-
-```sh
-cargo run --release -p parallel-revm-lab -- bench \
-  --workload storage \
-  --txs 1000 \
-  --conflict 0.0 \
-  --mode all \
-  --threads 4 \
-  --seed 42 \
-  --vm-steps 50000 \
-  --out reports/storage-c0-vmsteps.json
-```
-
-## Real Base Case Study
-
-Real Base trace-backed case study available:
-
+- `REVIEW_PACKET.md`
 - `case-studies/base-38014901-execution-dossier/executive-summary.md`
-- `case-studies/base-38014901-execution-dossier/dossier.html`
 - `case-studies/base-38014901-execution-dossier/optimization-memo.md`
-- `trace-packs/base-38014901-full/`
+- `case-studies/base-38014901-execution-dossier/dossier.html`
 
-This is a full-block real trace-backed analysis of Base block `38014901`.
+## Full-Block Base Case Study
+
+This is a full-block real trace-backed analysis of Base block `38014901`, collected as compact normalized trace-pack data under `trace-packs/base-38014901-full/`.
 
 Headline findings:
 
@@ -74,12 +36,12 @@ Headline findings:
 | theoretical ceiling by gas | 4.227x |
 | canonical 16-worker simulated speedup | 4.227x |
 | critical-path scheduler speedup at 4 workers | 4.000x |
-| top hot contract | `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913` |
-| top conflict slot | `0x4200000000000000000000000000000000000006:0x0d52ad225b9f8da090dc37c741705dabc30f648dce00d7b0cab66994a1261ea6` |
+| top hot contract | Base USDC, `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913` |
+| top conflict slot | Base WETH address, `0x4200000000000000000000000000000000000006:0x0d52ad225b9f8da090dc37c741705dabc30f648dce00d7b0cab66994a1261ea6` |
 
-The block has high observed key overlap but substantially less write-dependent serialization: 92.431% of transactions shared at least one observed key, while pairwise conflicts were 5.327%. Scheduler ablation shows critical-path ready-queue priority improving the canonical schedule by 7.460% at 4 workers and reaching the gas critical-path bound at 8 and 16 workers.
+High observed overlap did not directly translate into serialization: this repo separates shared-key overlap, write-related dependency edges, gas-weighted critical path, and worker scheduling effects.
 
-Caveat: the tracer records observed storage accesses, not complete EVM access lists, and the schedule is theoretical. The trace-derived benchmark is synthetic execution over observed topology, not full block replay.
+Scheduler ablation shows critical-path ready-queue priority improving the canonical schedule by 7.460% at 4 workers and reaching the gas critical-path bound at 8 and 16 workers. Caveat: the tracer records observed storage accesses, not complete EVM access lists, and the schedule is theoretical. The trace-derived benchmark is synthetic execution over observed topology; it does not execute/replay full EVM state transitions.
 
 The larger public target range remains:
 
@@ -88,6 +50,55 @@ The larger public target range remains:
 - end block `38014910`
 
 No full-range real Base report is committed for that range. A dry run found 3,676 transactions across those ten blocks, so full tracing was deferred rather than committing a large, slow, partial artifact.
+
+## Working Commands
+
+Fast no-secret reviewer path:
+
+```sh
+just reviewer-demo
+```
+
+Analyze the committed full-block trace pack:
+
+```sh
+cargo run -p parallel-revm-lab -- analyze-trace-pack \
+  --trace-dir trace-packs/base-38014901-full \
+  --workers 1,2,4,8,16 \
+  --out case-studies/base-38014901-execution-dossier/dossier.json \
+  --markdown case-studies/base-38014901-execution-dossier/executive-summary.md \
+  --html case-studies/base-38014901-execution-dossier/dossier.html \
+  --trace case-studies/base-38014901-execution-dossier/schedule.trace.json
+```
+
+Verify the synthetic scheduler invariant:
+
+```sh
+cargo run -p parallel-revm-lab -- verify \
+  --workload mixed \
+  --txs 100 \
+  --conflicts 0.0,0.2,0.5,0.7,0.95 \
+  --threads 1,2,4 \
+  --seed-start 1 \
+  --seed-end 20
+```
+
+Run the trace-derived synthetic benchmark:
+
+```sh
+cargo run -p parallel-revm-lab -- bench-trace-pack \
+  --trace-dir trace-packs/base-38014901-full \
+  --mode all \
+  --threads 1,2,4,8 \
+  --vm-steps-per-gas 1 \
+  --out case-studies/base-38014901-execution-dossier/trace-derived-bench.json
+```
+
+Run the `revm` storage-observation smoke tests:
+
+```sh
+cargo test -p parallel-revm-lab-revm-smoke --all-features
+```
 
 ## Offline Demo Dossier
 
@@ -186,7 +197,7 @@ cargo run --release -p parallel-revm-lab -- bench-trace-pack \
   --mode all \
   --threads 1,2,4,8,16 \
   --vm-steps-per-gas 1 \
-  --out case-studies/base-38014901-execution-dossier/trace-derived-benchmark.json
+  --out case-studies/base-38014901-execution-dossier/trace-derived-bench.json
 ```
 
 ## What Is Real Vs Synthetic
@@ -197,7 +208,7 @@ cargo run --release -p parallel-revm-lab -- bench-trace-pack \
 | demo trace pack | synthetic/demo fixture | dossier schema, gas-weighted scheduling, hot-state analysis | Base mainnet behavior |
 | Geth tracer | optional RPC collection tool | compact storage observation path where providers support JS tracers | provider-wide trace compatibility |
 | real Base block | user-collected RPC trace pack | real observed storage contention for Base block 38014901 | full-range representativeness or production throughput |
-| revm smoke | real `revm` bytecode | inspector storage observations can feed trace packs and dossiers | full block replay |
+| revm smoke | real `revm` bytecode | inspector storage observations can feed trace packs and dossiers | full EVM block/state replay |
 
 ## What It Demonstrates
 
@@ -220,6 +231,8 @@ cargo test --workspace --all-features
 If `just` is installed:
 
 ```sh
+just reviewer-demo
+just reviewer-validate
 just validate
 ```
 
@@ -242,6 +255,10 @@ just validate
 - `crates/revm-smoke`: minimal revm bytecode smoke bridge with trace-pack emitter.
 - `crates/cli`: `parallel-revm-lab` command-line interface.
 - `tracers/geth-storage-access-tracer.js`: compact Geth JS storage tracer.
+- `labels/base-known-contracts.json`: optional static contract labels for report readability.
+- `REVIEW_PACKET.md`: concise reviewer entry point.
+- `docs/reproducibility.md`: offline and live reproduction paths.
+- `docs/reviewer-guide.md`: skeptical-review questions and answers.
 - `trace-packs/demo-mini`: committed synthetic demo trace pack.
 - `trace-packs/base-38014901-full`: committed compact real Base block trace pack.
 - `case-studies/base-38014901-execution-dossier`: committed full-block real Base dossier.
@@ -250,11 +267,13 @@ just validate
 
 ## What To Review In 90 Seconds
 
-1. `case-studies/base-38014901-execution-dossier/executive-summary.md`
-2. `case-studies/base-38014901-execution-dossier/optimization-memo.md`
-3. `case-studies/base-38014901-execution-dossier/dossier.html`
-4. `case-studies/demo-trace-pack/summary.md`
-5. `crates/trace-model/src/trace_pack.rs`
-6. `crates/analyzer/src/dossier.rs`
-7. `crates/cli/src/main.rs`
-8. `tracers/geth-storage-access-tracer.js`
+1. `REVIEW_PACKET.md`
+2. `case-studies/base-38014901-execution-dossier/executive-summary.md`
+3. `case-studies/base-38014901-execution-dossier/optimization-memo.md`
+4. `case-studies/base-38014901-execution-dossier/dossier.html`
+5. `docs/reviewer-guide.md`
+6. `crates/trace-model/src/trace_pack.rs`
+7. `crates/analyzer/src/dossier.rs`
+8. `crates/executor/src/lib.rs`
+9. `crates/revm-smoke/src/lib.rs`
+10. `tracers/geth-storage-access-tracer.js`

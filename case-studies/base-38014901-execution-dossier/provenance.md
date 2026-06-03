@@ -63,7 +63,7 @@ cargo run --release -p parallel-revm-lab -- bench-trace-pack \
   --mode all \
   --threads 1,2,4,8,16 \
   --vm-steps-per-gas 1 \
-  --out case-studies/base-38014901-execution-dossier/trace-derived-benchmark.json
+  --out case-studies/base-38014901-execution-dossier/trace-derived-bench.json
 ```
 
 ## Limitations

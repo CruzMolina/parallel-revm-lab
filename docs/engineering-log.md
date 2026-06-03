@@ -366,7 +366,7 @@ Full-block collection and generation:
 - `cargo run -p parallel-revm-lab -- collect-block-range --chain base --start-block 38014901 --end-block 38014901 --tracer geth-js-storage --out trace-packs/base-38014901-full --resume`: passed; collected 436 transactions for Base block `38014901`.
 - `cargo run -p parallel-revm-lab -- analyze-trace-pack --trace-dir trace-packs/base-38014901-full --workers 1,2,4,8,16 --out case-studies/base-38014901-execution-dossier/dossier.json --markdown case-studies/base-38014901-execution-dossier/executive-summary.md --html case-studies/base-38014901-execution-dossier/dossier.html --trace case-studies/base-38014901-execution-dossier/schedule.trace.json`: passed; 436 txs, 5,052 conflict pairs, 5.327%, gas ceiling 4.227x.
 - `cargo run -p parallel-revm-lab -- recommend-access-lists --trace-dir trace-packs/base-38014901-full --out case-studies/base-38014901-execution-dossier/access-hints.json --markdown case-studies/base-38014901-execution-dossier/access-hints.md`: passed; 436 observed access hints.
-- `cargo run --release -p parallel-revm-lab -- bench-trace-pack --trace-dir trace-packs/base-38014901-full --mode all --threads 1,2,4,8,16 --vm-steps-per-gas 1 --out case-studies/base-38014901-execution-dossier/trace-derived-benchmark.json`: passed; synthetic topology benchmark, 5,052 declared conflict pairs, all modes deterministic.
+- `cargo run --release -p parallel-revm-lab -- bench-trace-pack --trace-dir trace-packs/base-38014901-full --mode all --threads 1,2,4,8,16 --vm-steps-per-gas 1 --out case-studies/base-38014901-execution-dossier/trace-derived-bench.json`: passed; synthetic topology benchmark, 5,052 declared conflict pairs, all modes deterministic.
 
 Full-block headline:
 
@@ -400,3 +400,44 @@ Public-data notes:
 - The full block trace pack is compact normalized output, about 9.1 MB total, not a raw opcode trace dump.
 - The ten-block range remains reproduction notes only; a dry run previously found 3,676 transactions across `38014901-38014910`.
 - The trace-derived benchmark is labeled synthetic and should not be cited as production throughput.
+
+## 2026-06-03 Final Reviewer-Proof Packaging Plan
+
+- Create `REVIEW_PACKET.md` as the first reviewer entry point: concise thesis, 90-second review links, full-block headline numbers, real-vs-synthetic table, validation status, and caveats.
+- Add verified convenience labels for known Base contracts in the top hot tables, limited to Base USDC and Base WETH unless more labels are locally/officially verified. Unknown addresses must render as `unknown`, and labels must not change metrics.
+- Reshape the README first screen around the full-block Base artifact, fast review links, honest caveat wording, and no-secret reviewer commands.
+- Add `just reviewer-demo` and `just reviewer-validate` so a reviewer can exercise the committed trace pack without RPC.
+- Add `docs/reproducibility.md` and `docs/reviewer-guide.md` to answer hard verification questions before they are asked.
+- Polish the full-block optimization memo and regenerate reports from the committed trace pack.
+- Run consistency checks, validation, secret scan, and commit only compact artifacts/source/docs.
+
+## 2026-06-03 Final Reviewer-Proof Packaging Results
+
+Implementation:
+
+- Added `REVIEW_PACKET.md` as the first compact reviewer entry point.
+- Added `labels/base-known-contracts.json` with verified static labels for Base USDC and Base WETH, plus deterministic analyzer/CLI tests for label loading, unknown fallback, and no metric changes.
+- Regenerated full-block, real-sample, demo, and offline reports with explicit label columns, concise warning summaries, scheduler ablation tables, and precise caveat language.
+- Added `docs/reproducibility.md`, `docs/reviewer-guide.md`, `just reviewer-demo`, and `just reviewer-validate`.
+- Rewrote the full-block optimization memo around measured overlap, conflict pairs, gas critical path, scheduler ablation, and concrete execution-client optimization ideas.
+
+Validation:
+
+- `cargo fmt --all -- --check`: passed.
+- `cargo clippy --workspace --all-targets --all-features -- -D warnings`: passed.
+- `cargo test --workspace --all-features`: passed, 73 tests plus doctests.
+- `cargo run -p parallel-revm-lab -- analyze-trace-pack --trace-dir trace-packs/base-38014901-full --workers 1,2,4,8,16 --out case-studies/base-38014901-execution-dossier/dossier.json --markdown case-studies/base-38014901-execution-dossier/executive-summary.md --html case-studies/base-38014901-execution-dossier/dossier.html --trace case-studies/base-38014901-execution-dossier/schedule.trace.json`: passed, 436 txs, 5,052 conflict pairs, gas ceiling 4.227x.
+- `cargo run -p parallel-revm-lab -- recommend-access-lists --trace-dir trace-packs/base-38014901-full --out case-studies/base-38014901-execution-dossier/access-hints.json --markdown case-studies/base-38014901-execution-dossier/access-hints.md`: passed, 436 observed access hints.
+- `cargo run -p parallel-revm-lab -- analyze-trace-pack --trace-dir trace-packs/demo-mini --workers 1,2,4,8 --out reports/demo-dossier.json --markdown reports/demo-dossier.md --html reports/demo-dossier.html --trace reports/demo-schedule.trace.json`: passed, 7 txs, 2 conflict pairs, gas ceiling 1.593x.
+- `cargo run -p parallel-revm-lab -- verify --workload mixed --txs 100 --conflicts 0.0,0.2,0.5,0.7,0.95 --threads 1,2,4 --seed-start 1 --seed-end 20`: passed, 300 workload/thread combinations.
+- `cargo run -p parallel-revm-lab -- bench-trace-pack --trace-dir trace-packs/base-38014901-full --mode all --threads 1,2,4,8 --vm-steps-per-gas 1 --out case-studies/base-38014901-execution-dossier/trace-derived-bench.json`: passed, 436 txs, 5,052 conflict pairs, 4 thread-count runs.
+- `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.246x and optimistic 2.326x vs sequential, all modes state hash `1940c0cfba64e3cb`.
+- `cargo test -p parallel-revm-lab-revm-smoke --all-features`: passed, 4 tests plus doctests.
+- `just reviewer-demo`: passed.
+- `just reviewer-validate`: passed.
+
+Review checks:
+
+- Consistency check: README, review packet, executive summary, optimization memo, dossier JSON/HTML, and CSVs agree on 436 txs, 5,052 conflict pairs, 92.431% overlapping txs, 60 waves, 16,951,990 gas critical path, 4.227x gas ceiling, and Base USDC/Base WETH labels.
+- Secret scan: no committed RPC URL or provider token strings found.
+- Public caveats: reports state this is theoretical scheduling over observed storage accesses, not production TPS/Ggas/s and not full EVM state-transition replay.

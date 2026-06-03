@@ -28,6 +28,7 @@
   "top_hot_contracts": [
     {
       "address": "0x1111111111111111111111111111111111111111",
+      "label": "unknown",
       "touching_txs": 4,
       "unique_slots": 2,
       "gas_of_touching_txs": 410,
@@ -35,6 +36,7 @@
     },
     {
       "address": "0x3333333333333333333333333333333333333333",
+      "label": "unknown",
       "touching_txs": 2,
       "unique_slots": 1,
       "gas_of_touching_txs": 185,
@@ -42,6 +44,7 @@
     },
     {
       "address": "0x2222222222222222222222222222222222222222",
+      "label": "unknown",
       "touching_txs": 1,
       "unique_slots": 1,
       "gas_of_touching_txs": 50,
@@ -52,6 +55,7 @@
     {
       "key": "0x1111111111111111111111111111111111111111:0x0000000000000000000000000000000000000000000000000000000000000000",
       "address": "0x1111111111111111111111111111111111111111",
+      "address_label": "unknown",
       "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "touching_txs": 3,
       "gas_of_touching_txs": 330,
@@ -60,6 +64,7 @@
     {
       "key": "0x3333333333333333333333333333333333333333:0x0000000000000000000000000000000000000000000000000000000000000007",
       "address": "0x3333333333333333333333333333333333333333",
+      "address_label": "unknown",
       "slot": "0x0000000000000000000000000000000000000000000000000000000000000007",
       "touching_txs": 2,
       "gas_of_touching_txs": 185,
@@ -68,6 +73,7 @@
     {
       "key": "0x1111111111111111111111111111111111111111:0x0000000000000000000000000000000000000000000000000000000000000002",
       "address": "0x1111111111111111111111111111111111111111",
+      "address_label": "unknown",
       "slot": "0x0000000000000000000000000000000000000000000000000000000000000002",
       "touching_txs": 1,
       "gas_of_touching_txs": 80,
@@ -76,6 +82,7 @@
     {
       "key": "0x2222222222222222222222222222222222222222:0x0000000000000000000000000000000000000000000000000000000000000001",
       "address": "0x2222222222222222222222222222222222222222",
+      "address_label": "unknown",
       "slot": "0x0000000000000000000000000000000000000000000000000000000000000001",
       "touching_txs": 1,
       "gas_of_touching_txs": 50,
@@ -363,6 +370,7 @@
         {
           "key": "0x1111111111111111111111111111111111111111:0x0000000000000000000000000000000000000000000000000000000000000000",
           "address": "0x1111111111111111111111111111111111111111",
+          "address_label": "unknown",
           "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
           "touching_txs": 2,
           "gas_of_touching_txs": 220,
@@ -371,6 +379,7 @@
         {
           "key": "0x1111111111111111111111111111111111111111:0x0000000000000000000000000000000000000000000000000000000000000002",
           "address": "0x1111111111111111111111111111111111111111",
+          "address_label": "unknown",
           "slot": "0x0000000000000000000000000000000000000000000000000000000000000002",
           "touching_txs": 1,
           "gas_of_touching_txs": 80,
@@ -379,6 +388,7 @@
         {
           "key": "0x2222222222222222222222222222222222222222:0x0000000000000000000000000000000000000000000000000000000000000001",
           "address": "0x2222222222222222222222222222222222222222",
+          "address_label": "unknown",
           "slot": "0x0000000000000000000000000000000000000000000000000000000000000001",
           "touching_txs": 1,
           "gas_of_touching_txs": 50,
@@ -388,6 +398,7 @@
       "top_hot_contracts": [
         {
           "address": "0x1111111111111111111111111111111111111111",
+          "label": "unknown",
           "touching_txs": 3,
           "unique_slots": 2,
           "gas_of_touching_txs": 300,
@@ -395,6 +406,7 @@
         },
         {
           "address": "0x2222222222222222222222222222222222222222",
+          "label": "unknown",
           "touching_txs": 1,
           "unique_slots": 1,
           "gas_of_touching_txs": 50,
@@ -496,6 +508,7 @@
         {
           "key": "0x3333333333333333333333333333333333333333:0x0000000000000000000000000000000000000000000000000000000000000007",
           "address": "0x3333333333333333333333333333333333333333",
+          "address_label": "unknown",
           "slot": "0x0000000000000000000000000000000000000000000000000000000000000007",
           "touching_txs": 2,
           "gas_of_touching_txs": 185,
@@ -504,6 +517,7 @@
         {
           "key": "0x1111111111111111111111111111111111111111:0x0000000000000000000000000000000000000000000000000000000000000000",
           "address": "0x1111111111111111111111111111111111111111",
+          "address_label": "unknown",
           "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
           "touching_txs": 1,
           "gas_of_touching_txs": 110,
@@ -513,6 +527,7 @@
       "top_hot_contracts": [
         {
           "address": "0x3333333333333333333333333333333333333333",
+          "label": "unknown",
           "touching_txs": 2,
           "unique_slots": 1,
           "gas_of_touching_txs": 185,
@@ -520,6 +535,7 @@
         },
         {
           "address": "0x1111111111111111111111111111111111111111",
+          "label": "unknown",
           "touching_txs": 1,
           "unique_slots": 1,
           "gas_of_touching_txs": 110,
@@ -594,27 +610,23 @@
   ],
   "warning_summary": [
     {
-      "warning": "7 of 7 analyzed txs: trace marks read information as incomplete",
+      "warning": "7 of 7 analyzed txs: read coverage is incomplete",
       "count": 7
     },
     {
-      "warning": "Synthetic demo fixture; do not cite as real-chain evidence.",
+      "warning": "Synthetic demo fixture; do not cite as real-chain evidence",
       "count": 1
     },
     {
-      "warning": "block 900000001: Block uses a synthetic number and is not a Base RPC capture.",
+      "warning": "block 900000001: Block uses a synthetic number and is not a Base RPC capture",
       "count": 1
     },
     {
-      "warning": "block 900000001: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical",
+      "warning": "block 900000002: Block uses a synthetic number and is not a Base RPC capture",
       "count": 1
     },
     {
-      "warning": "block 900000002: Block uses a synthetic number and is not a Base RPC capture.",
-      "count": 1
-    },
-    {
-      "warning": "block 900000002: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical",
+      "warning": "gas-weighted scheduling is theoretical, not measured throughput",
       "count": 1
     }
   ],
@@ -632,5 +644,5 @@
     "block 900000002: tx_index 1: trace marks read information as incomplete",
     "block 900000002: tx_index 2: trace marks read information as incomplete"
   ],
-  "deterministic_hash": "e784cf1c8b0e7291"
+  "deterministic_hash": "487c2b3a27d2e830"
 }

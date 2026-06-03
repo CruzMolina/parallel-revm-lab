@@ -5,7 +5,7 @@ use std::process::Command;
 use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use parallel_revm_lab_analyzer::{
-    analyze_block_trace, analyze_trace_pack as analyze_trace_pack_report,
+    analyze_block_trace, analyze_trace_pack as analyze_trace_pack_report, apply_contract_labels,
     dossier_schedule_trace_json, recommend_access_lists, render_access_hints_markdown,
     render_dossier_html, render_dossier_markdown, render_hot_contracts_csv, render_hot_slots_csv,
     render_html_with_command, render_markdown, render_scheduler_ablation_csv,
@@ -557,7 +557,9 @@ fn analyze_trace_pack(args: AnalyzeTracePackArgs) -> Result<()> {
     let pack = TracePack::load_dir(&args.trace_dir)
         .with_context(|| format!("failed to load trace pack {}", args.trace_dir.display()))?;
     let workers = parse_thread_list(&args.workers)?;
-    let dossier = analyze_trace_pack_report(&pack, &workers);
+    let mut dossier = analyze_trace_pack_report(&pack, &workers);
+    let labels = load_optional_contract_labels(Path::new("labels/base-known-contracts.json"))?;
+    apply_contract_labels(&mut dossier, &labels);
     let command = analyze_trace_pack_command(&args);
     write_json(&args.out, &dossier)?;
     write_text(&args.markdown, &render_dossier_markdown(&dossier))?;
@@ -1450,6 +1452,20 @@ where
     serde_json::from_reader(file).with_context(|| format!("failed to read {}", path.display()))
 }
 
+fn load_optional_contract_labels(
+    path: &Path,
+) -> Result<std::collections::BTreeMap<String, String>> {
+    if !path.exists() {
+        return Ok(std::collections::BTreeMap::new());
+    }
+    let raw: std::collections::BTreeMap<String, String> = read_json(path)
+        .with_context(|| format!("failed to load contract labels {}", path.display()))?;
+    Ok(raw
+        .into_iter()
+        .map(|(address, label)| (address.to_ascii_lowercase(), label))
+        .collect())
+}
+
 fn write_text(path: &Path, value: &str) -> Result<()> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)
@@ -1576,6 +1592,32 @@ mod tests {
         assert_eq!(left.txs[0].declared_reads.len(), 1);
         assert_eq!(left.txs[0].declared_writes.len(), 1);
         assert_eq!(trace_pack_source_tx_count(&pack), Some(2));
+    }
+
+    #[test]
+    fn missing_contract_labels_load_as_empty() {
+        let dir = tempfile::tempdir().unwrap();
+        let labels = load_optional_contract_labels(&dir.path().join("missing.json")).unwrap();
+
+        assert!(labels.is_empty());
+    }
+
+    #[test]
+    fn contract_labels_are_loaded_with_lowercase_addresses() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("labels.json");
+        write_text(
+            &path,
+            r#"{"0X833589FCD6EDB6E08F4C7C32D4F71B54BDA02913":"Base USDC"}"#,
+        )
+        .unwrap();
+
+        let labels = load_optional_contract_labels(&path).unwrap();
+
+        assert_eq!(
+            labels.get("0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"),
+            Some(&"Base USDC".to_owned())
+        );
     }
 
     fn test_trace_pack_block(block_number: u64) -> TracePackBlock {

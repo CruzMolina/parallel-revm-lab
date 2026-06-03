@@ -34,6 +34,21 @@ collect-base-dry-run:
 revm-trace-pack-smoke:
     cargo run -p parallel-revm-lab-revm-smoke --example emit_trace_pack
 
+reviewer-demo:
+    @echo "Review packet: REVIEW_PACKET.md"
+    @echo "Full-block dossier: case-studies/base-38014901-execution-dossier/executive-summary.md"
+    cargo run -q -p parallel-revm-lab -- analyze-trace-pack --trace-dir trace-packs/base-38014901-full --workers 1,2,4,8,16 --out /tmp/parallel-revm-lab-review-dossier.json --markdown /tmp/parallel-revm-lab-review-dossier.md --html /tmp/parallel-revm-lab-review-dossier.html --trace /tmp/parallel-revm-lab-review-schedule.trace.json
+    cargo run -q -p parallel-revm-lab -- verify --workload mixed --txs 25 --conflicts 0.0,0.5 --threads 1,2 --seed-start 1 --seed-end 2
+    cargo test -q -p parallel-revm-lab-revm-smoke --all-features
+    @echo "Temporary regenerated report: /tmp/parallel-revm-lab-review-dossier.md"
+
+reviewer-validate:
+    cargo fmt --all -- --check
+    cargo clippy --workspace --all-targets --all-features -- -D warnings
+    cargo test --workspace --all-features
+    cargo run -q -p parallel-revm-lab -- analyze-trace-pack --trace-dir trace-packs/base-38014901-full --workers 1,2,4,8,16 --out /tmp/parallel-revm-lab-review-dossier.json --markdown /tmp/parallel-revm-lab-review-dossier.md --html /tmp/parallel-revm-lab-review-dossier.html --trace /tmp/parallel-revm-lab-review-schedule.trace.json
+    cargo run -q -p parallel-revm-lab -- verify --workload mixed --txs 100 --conflicts 0.0,0.2,0.5,0.7,0.95 --threads 1,2,4 --seed-start 1 --seed-end 20
+
 analyze-fixture-open: analyze-fixture
     open reports/base-mini-trace.html
 

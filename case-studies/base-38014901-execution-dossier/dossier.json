@@ -28,6 +28,7 @@
   "top_hot_contracts": [
     {
       "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+      "label": "Base USDC",
       "touching_txs": 177,
       "unique_slots": 208,
       "gas_of_touching_txs": 34490590,
@@ -35,6 +36,7 @@
     },
     {
       "address": "0x4200000000000000000000000000000000000006",
+      "label": "Base WETH",
       "touching_txs": 153,
       "unique_slots": 117,
       "gas_of_touching_txs": 34105958,
@@ -42,6 +44,7 @@
     },
     {
       "address": "0xb2cc224c1c9fee385f8ad6a55b4d94e92359dc59",
+      "label": "unknown",
       "touching_txs": 47,
       "unique_slots": 54,
       "gas_of_touching_txs": 12020811,
@@ -49,6 +52,7 @@
     },
     {
       "address": "0x827922686190790b37229fd06084350e74485b72",
+      "label": "unknown",
       "touching_txs": 33,
       "unique_slots": 368,
       "gas_of_touching_txs": 15433386,
@@ -56,6 +60,7 @@
     },
     {
       "address": "0x72ab388e2e2f6facef59e3c3fa2c4e29011c2d38",
+      "label": "unknown",
       "touching_txs": 49,
       "unique_slots": 14,
       "gas_of_touching_txs": 6310331,
@@ -63,6 +68,7 @@
     },
     {
       "address": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0",
+      "label": "unknown",
       "touching_txs": 61,
       "unique_slots": 7,
       "gas_of_touching_txs": 8149938,
@@ -70,6 +76,7 @@
     },
     {
       "address": "0xd0b53d9277642d899df5c87a3966a349a798f224",
+      "label": "unknown",
       "touching_txs": 60,
       "unique_slots": 6,
       "gas_of_touching_txs": 11618931,
@@ -77,6 +84,7 @@
     },
     {
       "address": "0x70acdf2ad0bf2402c957154f944c19ef4e1cbae1",
+      "label": "unknown",
       "touching_txs": 37,
       "unique_slots": 34,
       "gas_of_touching_txs": 6010520,
@@ -84,6 +92,7 @@
     },
     {
       "address": "0x22aee3699b6a0fed71490c103bd4e5f3309891d5",
+      "label": "unknown",
       "touching_txs": 54,
       "unique_slots": 52,
       "gas_of_touching_txs": 8636780,
@@ -91,6 +100,7 @@
     },
     {
       "address": "0x4e962bb3889bf030368f56810a9c96b83cb3e778",
+      "label": "unknown",
       "touching_txs": 7,
       "unique_slots": 54,
       "gas_of_touching_txs": 2788929,
@@ -101,6 +111,7 @@
     {
       "key": "0x4200000000000000000000000000000000000006:0x0d52ad225b9f8da090dc37c741705dabc30f648dce00d7b0cab66994a1261ea6",
       "address": "0x4200000000000000000000000000000000000006",
+      "address_label": "Base WETH",
       "slot": "0x0d52ad225b9f8da090dc37c741705dabc30f648dce00d7b0cab66994a1261ea6",
       "touching_txs": 60,
       "gas_of_touching_txs": 7037020,
@@ -109,6 +120,7 @@
     {
       "key": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913:0xb11ac13f71492d75461bf3c1f12c195cbe42b046a859ec6a34848efc0462deda",
       "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+      "address_label": "Base USDC",
       "slot": "0xb11ac13f71492d75461bf3c1f12c195cbe42b046a859ec6a34848efc0462deda",
       "touching_txs": 59,
       "gas_of_touching_txs": 6907579,
@@ -117,6 +129,7 @@
     {
       "key": "0xb2cc224c1c9fee385f8ad6a55b4d94e92359dc59:0x0000000000000000000000000000000000000000000000000000000000000006",
       "address": "0xb2cc224c1c9fee385f8ad6a55b4d94e92359dc59",
+      "address_label": "unknown",
       "slot": "0x0000000000000000000000000000000000000000000000000000000000000006",
       "touching_txs": 47,
       "gas_of_touching_txs": 12020811,
@@ -125,6 +138,7 @@
     {
       "key": "0x827922686190790b37229fd06084350e74485b72:0x0000000000000000000000000000000000000000000000000000000000000002",
       "address": "0x827922686190790b37229fd06084350e74485b72",
+      "address_label": "unknown",
       "slot": "0x0000000000000000000000000000000000000000000000000000000000000002",
       "touching_txs": 33,
       "gas_of_touching_txs": 15433386,
@@ -133,6 +147,7 @@
     {
       "key": "0xd0b53d9277642d899df5c87a3966a349a798f224:0x0000000000000000000000000000000000000000000000000000000000000000",
       "address": "0xd0b53d9277642d899df5c87a3966a349a798f224",
+      "address_label": "unknown",
       "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "touching_txs": 60,
       "gas_of_touching_txs": 11618931,
@@ -141,6 +156,7 @@
     {
       "key": "0x4200000000000000000000000000000000000006:0x7fa89ed191104b59893c54aa61c35c4b88ae911f1ac7cab067c891ab0601acac",
       "address": "0x4200000000000000000000000000000000000006",
+      "address_label": "Base WETH",
       "slot": "0x7fa89ed191104b59893c54aa61c35c4b88ae911f1ac7cab067c891ab0601acac",
       "touching_txs": 27,
       "gas_of_touching_txs": 6928640,
@@ -149,6 +165,7 @@
     {
       "key": "0x72ab388e2e2f6facef59e3c3fa2c4e29011c2d38:0x0000000000000000000000000000000000000000000000000000000000000000",
       "address": "0x72ab388e2e2f6facef59e3c3fa2c4e29011c2d38",
+      "address_label": "unknown",
       "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "touching_txs": 49,
       "gas_of_touching_txs": 6310331,
@@ -157,6 +174,7 @@
     {
       "key": "0x72ab388e2e2f6facef59e3c3fa2c4e29011c2d38:0x0000000000000000000000000000000000000000000000000000000000000001",
       "address": "0x72ab388e2e2f6facef59e3c3fa2c4e29011c2d38",
+      "address_label": "unknown",
       "slot": "0x0000000000000000000000000000000000000000000000000000000000000001",
       "touching_txs": 49,
       "gas_of_touching_txs": 6310331,
@@ -165,6 +183,7 @@
     {
       "key": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913:0x6b44a3e0842ecc28ca534a294955223b94a5209f3671031126ec16ea6e217dab",
       "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+      "address_label": "Base USDC",
       "slot": "0x6b44a3e0842ecc28ca534a294955223b94a5209f3671031126ec16ea6e217dab",
       "touching_txs": 22,
       "gas_of_touching_txs": 6732792,
@@ -173,6 +192,7 @@
     {
       "key": "0x22aee3699b6a0fed71490c103bd4e5f3309891d5:0x0000000000000000000000000000000000000000000000000000000000000006",
       "address": "0x22aee3699b6a0fed71490c103bd4e5f3309891d5",
+      "address_label": "unknown",
       "slot": "0x0000000000000000000000000000000000000000000000000000000000000006",
       "touching_txs": 54,
       "gas_of_touching_txs": 8636780,
@@ -538,6 +558,7 @@
         {
           "key": "0x4200000000000000000000000000000000000006:0x0d52ad225b9f8da090dc37c741705dabc30f648dce00d7b0cab66994a1261ea6",
           "address": "0x4200000000000000000000000000000000000006",
+          "address_label": "Base WETH",
           "slot": "0x0d52ad225b9f8da090dc37c741705dabc30f648dce00d7b0cab66994a1261ea6",
           "touching_txs": 60,
           "gas_of_touching_txs": 7037020,
@@ -546,6 +567,7 @@
         {
           "key": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913:0xb11ac13f71492d75461bf3c1f12c195cbe42b046a859ec6a34848efc0462deda",
           "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+          "address_label": "Base USDC",
           "slot": "0xb11ac13f71492d75461bf3c1f12c195cbe42b046a859ec6a34848efc0462deda",
           "touching_txs": 59,
           "gas_of_touching_txs": 6907579,
@@ -554,6 +576,7 @@
         {
           "key": "0xb2cc224c1c9fee385f8ad6a55b4d94e92359dc59:0x0000000000000000000000000000000000000000000000000000000000000006",
           "address": "0xb2cc224c1c9fee385f8ad6a55b4d94e92359dc59",
+          "address_label": "unknown",
           "slot": "0x0000000000000000000000000000000000000000000000000000000000000006",
           "touching_txs": 47,
           "gas_of_touching_txs": 12020811,
@@ -562,6 +585,7 @@
         {
           "key": "0x827922686190790b37229fd06084350e74485b72:0x0000000000000000000000000000000000000000000000000000000000000002",
           "address": "0x827922686190790b37229fd06084350e74485b72",
+          "address_label": "unknown",
           "slot": "0x0000000000000000000000000000000000000000000000000000000000000002",
           "touching_txs": 33,
           "gas_of_touching_txs": 15433386,
@@ -570,6 +594,7 @@
         {
           "key": "0xd0b53d9277642d899df5c87a3966a349a798f224:0x0000000000000000000000000000000000000000000000000000000000000000",
           "address": "0xd0b53d9277642d899df5c87a3966a349a798f224",
+          "address_label": "unknown",
           "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
           "touching_txs": 60,
           "gas_of_touching_txs": 11618931,
@@ -579,6 +604,7 @@
       "top_hot_contracts": [
         {
           "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+          "label": "Base USDC",
           "touching_txs": 177,
           "unique_slots": 208,
           "gas_of_touching_txs": 34490590,
@@ -586,6 +612,7 @@
         },
         {
           "address": "0x4200000000000000000000000000000000000006",
+          "label": "Base WETH",
           "touching_txs": 153,
           "unique_slots": 117,
           "gas_of_touching_txs": 34105958,
@@ -593,6 +620,7 @@
         },
         {
           "address": "0xb2cc224c1c9fee385f8ad6a55b4d94e92359dc59",
+          "label": "unknown",
           "touching_txs": 47,
           "unique_slots": 54,
           "gas_of_touching_txs": 12020811,
@@ -600,6 +628,7 @@
         },
         {
           "address": "0x827922686190790b37229fd06084350e74485b72",
+          "label": "unknown",
           "touching_txs": 33,
           "unique_slots": 368,
           "gas_of_touching_txs": 15433386,
@@ -607,6 +636,7 @@
         },
         {
           "address": "0x72ab388e2e2f6facef59e3c3fa2c4e29011c2d38",
+          "label": "unknown",
           "touching_txs": 49,
           "unique_slots": 14,
           "gas_of_touching_txs": 6310331,
@@ -5090,51 +5120,27 @@
   ],
   "warning_summary": [
     {
-      "warning": "436 of 436 analyzed txs: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+      "warning": "436 of 436 analyzed txs: Provider support for debug_traceTransaction and JavaScript tracers varies",
       "count": 436
     },
     {
-      "warning": "436 of 436 analyzed txs: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+      "warning": "436 of 436 analyzed txs: read coverage is incomplete",
       "count": 436
     },
     {
-      "warning": "31 of 436 analyzed txs: debug tracer reported 1 fault(s)",
-      "count": 31
-    },
-    {
-      "warning": "25 of 436 analyzed txs: debug tracer reported 2 fault(s)",
-      "count": 25
-    },
-    {
-      "warning": "3 of 436 analyzed txs: debug tracer reported 3 fault(s)",
-      "count": 3
-    },
-    {
-      "warning": "4 of 436 analyzed txs: debug tracer reported 4 fault(s)",
-      "count": 4
-    },
-    {
-      "warning": "1 of 436 analyzed txs: debug tracer reported 5 fault(s)",
-      "count": 1
-    },
-    {
-      "warning": "1 of 436 analyzed txs: debug tracer reported 7 fault(s)",
-      "count": 1
-    },
-    {
-      "warning": "1 of 436 analyzed txs: debug tracer reported 8 fault(s)",
-      "count": 1
-    },
-    {
-      "warning": "436 of 436 analyzed txs: trace marks read information as incomplete",
+      "warning": "436 of 436 analyzed txs: tracer records SLOAD/SSTORE storage observations only",
       "count": 436
+    },
+    {
+      "warning": "66 of 436 analyzed txs: tracer reported faults",
+      "count": 66
     },
     {
       "warning": "Provider trace completeness varies; verify tracer support before making claims",
       "count": 1
     },
     {
-      "warning": "block 38014901: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical",
+      "warning": "gas-weighted scheduling is theoretical, not measured throughput",
       "count": 1
     }
   ],
@@ -6516,5 +6522,5 @@
     "block 38014901: tx_index 9: Provider support for debug_traceTransaction and JavaScript tracers varies.",
     "block 38014901: tx_index 9: trace marks read information as incomplete"
   ],
-  "deterministic_hash": "816c297eda5af62a"
+  "deterministic_hash": "4fa1d002b44086cc"
 }

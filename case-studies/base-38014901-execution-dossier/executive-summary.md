@@ -70,48 +70,45 @@ All strategies preserve observed dependencies; they only change deterministic re
 
 ## Hot Contracts
 
-| contract | txs | unique slots | gas covered | conflict contribution |
-| --- | ---: | ---: | ---: | ---: |
-| `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913` | 177 | 208 | 34490590 | 2543 |
-| `0x4200000000000000000000000000000000000006` | 153 | 117 | 34105958 | 2373 |
-| `0xb2cc224c1c9fee385f8ad6a55b4d94e92359dc59` | 47 | 54 | 12020811 | 1704 |
-| `0x827922686190790b37229fd06084350e74485b72` | 33 | 368 | 15433386 | 606 |
-| `0x72ab388e2e2f6facef59e3c3fa2c4e29011c2d38` | 49 | 14 | 6310331 | 481 |
-| `0x20cb8f872ae894f7c9e32e621c186e5afce82fd0` | 61 | 7 | 8149938 | 360 |
-| `0xd0b53d9277642d899df5c87a3966a349a798f224` | 60 | 6 | 11618931 | 354 |
-| `0x70acdf2ad0bf2402c957154f944c19ef4e1cbae1` | 37 | 34 | 6010520 | 319 |
-| `0x22aee3699b6a0fed71490c103bd4e5f3309891d5` | 54 | 52 | 8636780 | 245 |
-| `0x4e962bb3889bf030368f56810a9c96b83cb3e778` | 7 | 54 | 2788929 | 138 |
+Labels are convenience metadata for readability; they are not part of analysis correctness.
+
+| contract | label | txs | unique slots | gas covered | conflict contribution |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913` | Base USDC | 177 | 208 | 34490590 | 2543 |
+| `0x4200000000000000000000000000000000000006` | Base WETH | 153 | 117 | 34105958 | 2373 |
+| `0xb2cc224c1c9fee385f8ad6a55b4d94e92359dc59` | unknown | 47 | 54 | 12020811 | 1704 |
+| `0x827922686190790b37229fd06084350e74485b72` | unknown | 33 | 368 | 15433386 | 606 |
+| `0x72ab388e2e2f6facef59e3c3fa2c4e29011c2d38` | unknown | 49 | 14 | 6310331 | 481 |
+| `0x20cb8f872ae894f7c9e32e621c186e5afce82fd0` | unknown | 61 | 7 | 8149938 | 360 |
+| `0xd0b53d9277642d899df5c87a3966a349a798f224` | unknown | 60 | 6 | 11618931 | 354 |
+| `0x70acdf2ad0bf2402c957154f944c19ef4e1cbae1` | unknown | 37 | 34 | 6010520 | 319 |
+| `0x22aee3699b6a0fed71490c103bd4e5f3309891d5` | unknown | 54 | 52 | 8636780 | 245 |
+| `0x4e962bb3889bf030368f56810a9c96b83cb3e778` | unknown | 7 | 54 | 2788929 | 138 |
 
 ## Hot Storage Slots
 
-| slot | txs | gas covered | conflict contribution |
-| --- | ---: | ---: | ---: |
-| `0x4200000000000000000000000000000000000006:0x0d52ad225b9f8da090dc37c741705dabc30f648dce00d7b0cab66994a1261ea6` | 60 | 7037020 | 1704 |
-| `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913:0xb11ac13f71492d75461bf3c1f12c195cbe42b046a859ec6a34848efc0462deda` | 59 | 6907579 | 1645 |
-| `0xb2cc224c1c9fee385f8ad6a55b4d94e92359dc59:0x0000000000000000000000000000000000000000000000000000000000000006` | 47 | 12020811 | 675 |
-| `0x827922686190790b37229fd06084350e74485b72:0x0000000000000000000000000000000000000000000000000000000000000002` | 33 | 15433386 | 375 |
-| `0xd0b53d9277642d899df5c87a3966a349a798f224:0x0000000000000000000000000000000000000000000000000000000000000000` | 60 | 11618931 | 339 |
-| `0x4200000000000000000000000000000000000006:0x7fa89ed191104b59893c54aa61c35c4b88ae911f1ac7cab067c891ab0601acac` | 27 | 6928640 | 306 |
-| `0x72ab388e2e2f6facef59e3c3fa2c4e29011c2d38:0x0000000000000000000000000000000000000000000000000000000000000000` | 49 | 6310331 | 230 |
-| `0x72ab388e2e2f6facef59e3c3fa2c4e29011c2d38:0x0000000000000000000000000000000000000000000000000000000000000001` | 49 | 6310331 | 230 |
-| `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913:0x6b44a3e0842ecc28ca534a294955223b94a5209f3671031126ec16ea6e217dab` | 22 | 6732792 | 221 |
-| `0x22aee3699b6a0fed71490c103bd4e5f3309891d5:0x0000000000000000000000000000000000000000000000000000000000000006` | 54 | 8636780 | 206 |
+| slot | address label | txs | gas covered | conflict contribution |
+| --- | --- | ---: | ---: | ---: |
+| `0x4200000000000000000000000000000000000006:0x0d52ad225b9f8da090dc37c741705dabc30f648dce00d7b0cab66994a1261ea6` | Base WETH | 60 | 7037020 | 1704 |
+| `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913:0xb11ac13f71492d75461bf3c1f12c195cbe42b046a859ec6a34848efc0462deda` | Base USDC | 59 | 6907579 | 1645 |
+| `0xb2cc224c1c9fee385f8ad6a55b4d94e92359dc59:0x0000000000000000000000000000000000000000000000000000000000000006` | unknown | 47 | 12020811 | 675 |
+| `0x827922686190790b37229fd06084350e74485b72:0x0000000000000000000000000000000000000000000000000000000000000002` | unknown | 33 | 15433386 | 375 |
+| `0xd0b53d9277642d899df5c87a3966a349a798f224:0x0000000000000000000000000000000000000000000000000000000000000000` | unknown | 60 | 11618931 | 339 |
+| `0x4200000000000000000000000000000000000006:0x7fa89ed191104b59893c54aa61c35c4b88ae911f1ac7cab067c891ab0601acac` | Base WETH | 27 | 6928640 | 306 |
+| `0x72ab388e2e2f6facef59e3c3fa2c4e29011c2d38:0x0000000000000000000000000000000000000000000000000000000000000000` | unknown | 49 | 6310331 | 230 |
+| `0x72ab388e2e2f6facef59e3c3fa2c4e29011c2d38:0x0000000000000000000000000000000000000000000000000000000000000001` | unknown | 49 | 6310331 | 230 |
+| `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913:0x6b44a3e0842ecc28ca534a294955223b94a5209f3671031126ec16ea6e217dab` | Base USDC | 22 | 6732792 | 221 |
+| `0x22aee3699b6a0fed71490c103bd4e5f3309891d5:0x0000000000000000000000000000000000000000000000000000000000000006` | unknown | 54 | 8636780 | 206 |
 
 ## Warning Summary
 
-- 436 of 436 analyzed txs: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.
-- 436 of 436 analyzed txs: Provider support for debug_traceTransaction and JavaScript tracers varies.
-- 31 of 436 analyzed txs: debug tracer reported 1 fault(s)
-- 25 of 436 analyzed txs: debug tracer reported 2 fault(s)
-- 3 of 436 analyzed txs: debug tracer reported 3 fault(s)
-- 4 of 436 analyzed txs: debug tracer reported 4 fault(s)
-- 1 of 436 analyzed txs: debug tracer reported 5 fault(s)
-- 1 of 436 analyzed txs: debug tracer reported 7 fault(s)
-- 1 of 436 analyzed txs: debug tracer reported 8 fault(s)
-- 436 of 436 analyzed txs: trace marks read information as incomplete
+- Data covers full source transaction set: 436 of 436 transactions (100.000%).
+- 436 of 436 analyzed txs: Provider support for debug_traceTransaction and JavaScript tracers varies
+- 436 of 436 analyzed txs: read coverage is incomplete
+- 436 of 436 analyzed txs: tracer records SLOAD/SSTORE storage observations only
+- 66 of 436 analyzed txs: tracer reported faults
 - Provider trace completeness varies; verify tracer support before making claims
-- block 38014901: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical
+- gas-weighted scheduling is theoretical, not measured throughput
 
 Full per-transaction warnings are preserved in `dossier.json`.
 
@@ -121,4 +118,4 @@ This dossier shows deterministic access-contention structure, hot-state concentr
 
 ## What This Does Not Prove
 
-It is not production TPS, not Ggas/s, not full block replay, and not proof that observed access hints are complete Ethereum access lists.
+It is not production TPS, not Ggas/s, does not execute/replay full EVM state transitions, and is not proof that observed access hints are complete Ethereum access lists.
