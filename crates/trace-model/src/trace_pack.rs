@@ -206,6 +206,8 @@ pub struct TracePackBlock {
     pub block_hash: Option<String>,
     pub parent_hash: Option<String>,
     pub tx_count: usize,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_tx_count: Option<usize>,
     pub total_gas_used: Option<u64>,
     #[serde(default)]
     pub transactions: Vec<TracePackTx>,
@@ -245,6 +247,17 @@ impl TracePackBlock {
                     self.transactions.len()
                 ),
             });
+        }
+        if let Some(source_tx_count) = self.source_tx_count {
+            if source_tx_count < self.tx_count {
+                return Err(TracePackError::InvalidBlock {
+                    block_number: self.block_number,
+                    reason: format!(
+                        "source_tx_count {source_tx_count} is smaller than included tx_count {}",
+                        self.tx_count
+                    ),
+                });
+            }
         }
         let mut seen = BTreeSet::new();
         for tx in &self.transactions {
@@ -700,6 +713,16 @@ mod tests {
     }
 
     #[test]
+    fn source_tx_count_must_cover_included_txs() {
+        let mut pack = valid_pack();
+        pack.blocks[0].source_tx_count = Some(0);
+
+        let err = pack.validate().unwrap_err().to_string();
+        assert!(err.contains("source_tx_count 0"));
+        assert!(err.contains("included tx_count 1"));
+    }
+
+    #[test]
     fn parent_hash_must_match_previous_block_hash_when_present() {
         let mut pack = two_block_pack();
         pack.blocks[1].parent_hash = Some(format!("0x{:064x}", 99));
@@ -729,6 +752,7 @@ mod tests {
                 block_hash: Some(format!("0x{:064x}", 1)),
                 parent_hash: Some(format!("0x{:064x}", 0)),
                 tx_count: 1,
+                source_tx_count: None,
                 total_gas_used: Some(21_000),
                 transactions: vec![TracePackTx {
                     tx_index: TxIndex(0),

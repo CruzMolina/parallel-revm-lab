@@ -101,8 +101,8 @@ Commands run after the trace analyzer and revm smoke upgrade:
 - `cargo clippy --workspace --all-targets --all-features -- -D warnings`: passed.
 - `cargo test --workspace --all-features`: passed.
 - `cargo run -p parallel-revm-lab -- verify --workload mixed --txs 100 --conflicts 0.0,0.2,0.5,0.7,0.95 --threads 1,2,4 --seed-start 1 --seed-end 20`: passed, 300 workload/thread combinations.
-- `cargo run -p parallel-revm-lab -- analyze-fixture --fixture fixtures/base-mini-trace.json --out reports/base-mini-trace.parallelism.json --markdown reports/base-mini-trace.md --html reports/base-mini-trace.html --trace reports/base-mini-trace.schedule.trace.json`: passed, 12 txs, 7 conflicts, 3 waves, max width 7, hash `3df71a7c236db9d9`.
-- `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.251x and optimistic 2.310x vs sequential.
+- `cargo run -p parallel-revm-lab -- analyze-fixture --fixture fixtures/base-mini-trace.json --out reports/base-mini-trace.parallelism.json --markdown reports/base-mini-trace.md --html reports/base-mini-trace.html --trace reports/base-mini-trace.schedule.trace.json`: passed, 12 txs, 7 conflicts, 3 waves, max width 7, hash `551135a34ecf7b50`.
+- `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.190x and optimistic 2.300x vs sequential.
 - `cargo test -p parallel-revm-lab-revm-smoke --all-features`: passed, 3 tests.
 - `just --version`: passed with `just 1.51.0`.
 - `just validate`: passed.
@@ -122,7 +122,7 @@ Current fixture report:
 Current benchmark snapshots:
 
 - cheap mixed c50: access-list 0.011x and optimistic 0.806x vs sequential; scheduling overhead dominates access-list for this tiny synthetic batch.
-- heavier storage c0 with `vm_steps=50000`: access-list 3.251x and optimistic 2.310x vs sequential; parallelism wins under low contention.
+- heavier storage c0 with `vm_steps=50000`: access-list 3.190x and optimistic 2.300x vs sequential; parallelism wins under low contention.
 
 ## 2026-06-03 Final Credibility Pass Plan
 
@@ -156,12 +156,12 @@ Assumptions:
 - `cargo clippy --workspace --all-targets --all-features -- -D warnings`: passed.
 - `cargo test --workspace --all-features`: passed, 38 tests.
 - `cargo run -p parallel-revm-lab -- verify --workload mixed --txs 100 --conflicts 0.0,0.2,0.5,0.7,0.95 --threads 1,2,4 --seed-start 1 --seed-end 20`: passed, 300 workload/thread combinations.
-- `cargo run -p parallel-revm-lab -- analyze-fixture --fixture fixtures/base-mini-trace.json --out reports/base-mini-trace.parallelism.json --markdown reports/base-mini-trace.md --html reports/base-mini-trace.html --trace reports/base-mini-trace.schedule.trace.json`: passed, 12 txs, 7 conflicts, 3 waves, max width 7, hash `3df71a7c236db9d9`.
+- `cargo run -p parallel-revm-lab -- analyze-fixture --fixture fixtures/base-mini-trace.json --out reports/base-mini-trace.parallelism.json --markdown reports/base-mini-trace.md --html reports/base-mini-trace.html --trace reports/base-mini-trace.schedule.trace.json`: passed, 12 txs, 7 conflicts, 3 waves, max width 7, hash `551135a34ecf7b50`.
 - `cargo run -p parallel-revm-lab -- analyze-trace --format geth-struct-logs --fixture fixtures/geth-mini-struct-logs.json --out reports/geth-mini.parallelism.json --markdown reports/geth-mini.md --html reports/geth-mini.html --trace reports/geth-mini.schedule.trace.json`: passed, 3 txs, 1 conflict, 2 waves, max width 2, hash `1c9e9d1d244efdde`.
-- `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.251x and optimistic 2.310x vs sequential.
+- `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.190x and optimistic 2.300x vs sequential.
 - `cargo test -p parallel-revm-lab-revm-smoke --all-features`: passed, 3 tests.
 - `just validate`: passed.
-- `just analyze-fixture`: passed, hash `3df71a7c236db9d9`.
+- `just analyze-fixture`: passed, hash `551135a34ecf7b50`.
 - `just bench-smoke`: passed; mixed c50 access-list 0.011x and optimistic 0.806x vs sequential.
 
 ## 2026-06-03 Contention Dossier Pass Plan
@@ -185,7 +185,7 @@ Assumptions:
 ## 2026-06-03 Contention Dossier Pass Implementation
 
 - Added `trace-packs/<name>/manifest.json` plus per-block JSON schema with deterministic normalization, valid EVM hex checks, duplicate access deduplication, and gas-optional validation.
-- Added `trace-packs/demo-mini`, a tiny synthetic/demo trace pack over blocks `38014901` and `38014902`; it is explicitly not real Base data.
+- Added `trace-packs/demo-mini`, a tiny synthetic/demo trace pack over synthetic blocks `900000001` and `900000002`; it is explicitly not real Base data.
 - Added trace-pack dossier analysis with conflict graph, deterministic waves, gas-weighted conflict percentage, gas critical path, worker simulation, hot contracts, hot slots, contention concentration, and CSV sidecars.
 - Added `analyze-trace-pack` and `recommend-access-lists` CLI commands. Recommendations are labeled observed access hints, not complete production access lists.
 - Added `collect-block-range` with optional `debug_traceTransaction`/Geth JS tracer collection, `--dry-run`, `--resume`, `--max-transactions`, receipt gas/status capture, and RPC URL redaction.
@@ -212,7 +212,7 @@ Current demo dossier:
 - `cargo run -p parallel-revm-lab -- analyze-trace-pack --trace-dir trace-packs/demo-mini --workers 1,2,4,8 --out reports/demo-dossier.json --markdown reports/demo-dossier.md --html reports/demo-dossier.html --trace reports/demo-schedule.trace.json`: passed, 2 blocks, 7 txs, 2 conflicts, gas ceiling 1.593x.
 - `cargo run -p parallel-revm-lab -- recommend-access-lists --trace-dir trace-packs/demo-mini --out reports/access-list-recommendations.json`: passed, 7 observed access hints.
 - `cargo run -p parallel-revm-lab-revm-smoke --example emit_trace_pack`: passed; refreshed `trace-packs/revm-smoke-mini` and `reports/revm-smoke-dossier.*`.
-- `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.251x and optimistic 2.310x vs sequential.
+- `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.190x and optimistic 2.300x vs sequential.
 - `just validate-full`: passed; reran fmt, clippy, workspace tests, verifier sweep, fixture analysis, trace-pack dossier generation, revm smoke tests, revm trace-pack emission, and the release storage benchmark smoke.
 
 Note: one earlier focused multi-crate test attempt hit a transient Apple clang linker segmentation fault while linking `parallel-revm-lab-revm-smoke`; rerunning the revm smoke test and the full workspace test passed.
@@ -242,4 +242,47 @@ Milestones:
 - `cargo run -p parallel-revm-lab -- verify --workload mixed --txs 100 --conflicts 0.0,0.2,0.5,0.7,0.95 --threads 1,2,4 --seed-start 1 --seed-end 20`: passed, 300 workload/thread combinations.
 - `just validate-full`: passed; reran fmt, clippy, workspace tests, verifier sweep, fixture analysis, trace-pack dossier generation, revm smoke tests, revm trace-pack emission, and the release storage benchmark smoke.
 - Review-fix artifacts: demo dossier now reports 9 incomplete-trace warning signals; revm-smoke dossier now reports 7 incomplete-trace warning signals.
-- Release storage smoke: access-list 3.251x and optimistic 2.310x vs sequential, all modes state hash `1940c0cfba64e3cb`.
+- Release storage smoke: access-list 3.190x and optimistic 2.300x vs sequential, all modes state hash `1940c0cfba64e3cb`.
+
+## 2026-06-03 Final Base Dossier Pass Plan
+
+Milestones:
+
+1. Check real RPC capability first without printing secrets. If `BASE_RPC_URL` is missing or unsupported, document the exact blocker and keep the offline path perfect.
+2. Clean demo provenance so committed synthetic trace packs cannot be confused with real Base data: synthetic chain names and non-Base block numbers.
+3. Add missing report semantics needed for a real sample: tx coverage percentage, overlapping transaction percentage, range wave/max-width fields, and worst serializing transaction ranking.
+4. Add `rpc-capability-check` and optional Markdown rendering for observed access hints. Keep live RPC out of CI.
+5. If a debug-capable Base RPC endpoint is available, collect the smallest compact real sample first: Base block `38014901`, up to 25 transactions, custom Geth JS storage tracer, then generate dossier, access hints, provenance, and optimization memo.
+6. If the sample succeeds and output remains small, attempt the full `38014901-38014910` range. If it does not, keep the small sample as the real artifact.
+7. If real collection is blocked, update README and `case-studies/base-38014901-38014910/` with exact reproduction instructions and the observed local blocker, but do not create fake real-chain findings.
+8. Regenerate committed demo artifacts, run full validation, review for misleading claims and secrets, and commit.
+
+Current environment note:
+
+- `BASE_RPC_URL` was not set during the initial capability inspection, so this run cannot collect real Base data unless the environment changes before the collection milestone.
+
+## 2026-06-03 Final Base Dossier Pass Implementation Notes
+
+- Cleaned `trace-packs/demo-mini` provenance to `synthetic-base-shaped` and moved demo block numbers to `900000001-900000002`.
+- Cleaned the normalized `fixtures/base-mini-trace.json` fixture to `synthetic-base-shaped-fixture` block `900000000` and regenerated `reports/base-mini-trace.*`.
+- Added `source_tx_count` to trace-pack blocks so partial real samples can report transaction coverage honestly.
+- Added range-level `overlapping_tx_percentage`, wave/max-width totals, worst serializing transaction ranking, and Markdown rendering for observed access hints.
+- Added `rpc-capability-check` to verify block availability, receipts, debug tracing, custom JavaScript tracer support, and struct-log fallback support without printing RPC URLs.
+- Regenerated demo dossier and access-hint artifacts from the renamed synthetic trace pack.
+
+RPC capability result in this environment:
+
+- `cargo run -p parallel-revm-lab -- rpc-capability-check --chain base --block 38014901`: failed before network access because no `BASE_RPC_URL` or `ETH_RPC_URL` was set. No RPC URL was printed.
+
+## 2026-06-03 Final Base Dossier Pass Validation Results
+
+- `cargo fmt --all -- --check`: passed.
+- `cargo clippy --workspace --all-targets --all-features -- -D warnings`: passed.
+- `cargo test --workspace --all-features`: passed, 65 tests plus doctests.
+- `cargo run -p parallel-revm-lab -- analyze-trace-pack --trace-dir trace-packs/demo-mini --workers 1,2,4,8 --out reports/demo-dossier.json --markdown reports/demo-dossier.md --html reports/demo-dossier.html --trace reports/demo-schedule.trace.json`: passed, 2 synthetic blocks, 7 txs, 2 conflicts, 57.143% overlapping txs, gas ceiling 1.593x.
+- `cargo run -p parallel-revm-lab -- verify --workload mixed --txs 100 --conflicts 0.0,0.2,0.5,0.7,0.95 --threads 1,2,4 --seed-start 1 --seed-end 20`: passed, 300 workload/thread combinations.
+- `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.190x and optimistic 2.300x vs sequential, all modes state hash `1940c0cfba64e3cb`.
+- `cargo run -p parallel-revm-lab -- rpc-capability-check --chain base --block 38014901`: failed as expected in this environment because no `BASE_RPC_URL` or `ETH_RPC_URL` was set; no URL or token was printed.
+- `cargo run -p parallel-revm-lab-revm-smoke --example emit_trace_pack`: passed; refreshed `trace-packs/revm-smoke-mini` and `reports/revm-smoke-dossier.*`.
+
+Real collection status: blocked by missing `BASE_RPC_URL`; no real Base trace pack, dossier, access hints, or optimization memo were produced.

@@ -1,19 +1,25 @@
 {
   "report_version": "trace-pack-dossier-v1",
-  "chain": "base",
-  "provenance": "synthetic/demo fixture (not real Base data)",
+  "chain": "synthetic-base-shaped",
+  "provenance": "synthetic-base-shaped demo fixture (not real Base data)",
   "source": "committed-demo-trace-pack",
   "tracer_kind": "sanitized-geth-js-storage",
-  "start_block": 38014901,
-  "end_block": 38014902,
+  "start_block": 900000001,
+  "end_block": 900000002,
   "block_count": 2,
   "tx_count": 7,
+  "source_tx_count": null,
+  "tx_coverage_percentage": null,
   "total_gas_used": 645,
   "total_accesses": 7,
   "unique_contracts": 3,
   "unique_storage_slots": 4,
   "conflict_pair_count": 2,
   "conflict_percentage": 22.22222222222222,
+  "overlapping_tx_count": 4,
+  "overlapping_tx_percentage": 57.14285714285714,
+  "wave_count": 4,
+  "max_wave_width": 3,
   "gas_weighted_conflict_percentage": 24.695121951219512,
   "critical_path_length_by_tx": 4,
   "gas_weighted_critical_path": 405,
@@ -90,14 +96,14 @@
   },
   "worst_blocks_by_conflict_percentage": [
     {
-      "block_number": 38014902,
+      "block_number": 900000002,
       "tx_count": 3,
       "conflict_pair_count": 1,
       "conflict_percentage": 33.33333333333333,
       "gas_weighted_critical_path": 185
     },
     {
-      "block_number": 38014901,
+      "block_number": 900000001,
       "tx_count": 4,
       "conflict_pair_count": 1,
       "conflict_percentage": 16.666666666666664,
@@ -106,18 +112,52 @@
   ],
   "worst_blocks_by_gas_weighted_critical_path": [
     {
-      "block_number": 38014901,
+      "block_number": 900000001,
       "tx_count": 4,
       "conflict_pair_count": 1,
       "conflict_percentage": 16.666666666666664,
       "gas_weighted_critical_path": 220
     },
     {
-      "block_number": 38014902,
+      "block_number": 900000002,
       "tx_count": 3,
       "conflict_pair_count": 1,
       "conflict_percentage": 33.33333333333333,
       "gas_weighted_critical_path": 185
+    }
+  ],
+  "worst_serializing_txs": [
+    {
+      "block_number": 900000001,
+      "tx_index": 2,
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000102",
+      "wave": 1,
+      "conflict_degree": 1,
+      "duration_units": 120
+    },
+    {
+      "block_number": 900000001,
+      "tx_index": 0,
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000100",
+      "wave": 0,
+      "conflict_degree": 1,
+      "duration_units": 100
+    },
+    {
+      "block_number": 900000002,
+      "tx_index": 2,
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000202",
+      "wave": 1,
+      "conflict_degree": 1,
+      "duration_units": 95
+    },
+    {
+      "block_number": 900000002,
+      "tx_index": 0,
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000200",
+      "wave": 0,
+      "conflict_degree": 1,
+      "duration_units": 90
     }
   ],
   "worker_simulation": [
@@ -156,12 +196,16 @@
   ],
   "blocks": [
     {
-      "block_number": 38014901,
+      "block_number": 900000001,
       "tx_count": 4,
+      "source_tx_count": null,
+      "tx_coverage_percentage": null,
       "gas_used": 350,
       "total_accesses": 4,
       "conflict_pair_count": 1,
       "conflict_percentage": 16.666666666666664,
+      "overlapping_tx_count": 2,
+      "overlapping_tx_percentage": 50.0,
       "gas_weighted_conflict_percentage": 20.952380952380953,
       "wave_count": 2,
       "max_wave_width": 3,
@@ -276,7 +320,7 @@
         }
       ],
       "warnings": [
-        "Block is a compact synthetic demo, not a Base RPC capture.",
+        "Block uses a synthetic number and is not a Base RPC capture.",
         "trace pack access observations may be incomplete; gas-weighted scheduling is theoretical",
         "tx_index 0: trace marks read information as incomplete",
         "tx_index 1: trace marks read information as incomplete",
@@ -285,12 +329,16 @@
       ]
     },
     {
-      "block_number": 38014902,
+      "block_number": 900000002,
       "tx_count": 3,
+      "source_tx_count": null,
+      "tx_coverage_percentage": null,
       "gas_used": 295,
       "total_accesses": 3,
       "conflict_pair_count": 1,
       "conflict_percentage": 33.33333333333333,
+      "overlapping_tx_count": 2,
+      "overlapping_tx_percentage": 66.66666666666666,
       "gas_weighted_conflict_percentage": 31.35593220338983,
       "wave_count": 2,
       "max_wave_width": 2,
@@ -390,7 +438,7 @@
         }
       ],
       "warnings": [
-        "Block is a compact synthetic demo, not a Base RPC capture.",
+        "Block uses a synthetic number and is not a Base RPC capture.",
         "trace pack access observations may be incomplete; gas-weighted scheduling is theoretical",
         "tx_index 0: trace marks read information as incomplete",
         "tx_index 1: trace marks read information as incomplete",
@@ -400,17 +448,17 @@
   ],
   "warnings": [
     "Synthetic demo fixture; do not cite as real-chain evidence.",
-    "block 38014901: Block is a compact synthetic demo, not a Base RPC capture.",
-    "block 38014901: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical",
-    "block 38014901: tx_index 0: trace marks read information as incomplete",
-    "block 38014901: tx_index 1: trace marks read information as incomplete",
-    "block 38014901: tx_index 2: trace marks read information as incomplete",
-    "block 38014901: tx_index 3: trace marks read information as incomplete",
-    "block 38014902: Block is a compact synthetic demo, not a Base RPC capture.",
-    "block 38014902: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical",
-    "block 38014902: tx_index 0: trace marks read information as incomplete",
-    "block 38014902: tx_index 1: trace marks read information as incomplete",
-    "block 38014902: tx_index 2: trace marks read information as incomplete"
+    "block 900000001: Block uses a synthetic number and is not a Base RPC capture.",
+    "block 900000001: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical",
+    "block 900000001: tx_index 0: trace marks read information as incomplete",
+    "block 900000001: tx_index 1: trace marks read information as incomplete",
+    "block 900000001: tx_index 2: trace marks read information as incomplete",
+    "block 900000001: tx_index 3: trace marks read information as incomplete",
+    "block 900000002: Block uses a synthetic number and is not a Base RPC capture.",
+    "block 900000002: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical",
+    "block 900000002: tx_index 0: trace marks read information as incomplete",
+    "block 900000002: tx_index 1: trace marks read information as incomplete",
+    "block 900000002: tx_index 2: trace marks read information as incomplete"
   ],
-  "deterministic_hash": "4d65ec74b0069d29"
+  "deterministic_hash": "85e483ef1ebc42e0"
 }

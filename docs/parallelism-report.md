@@ -7,6 +7,7 @@ Parallelism reports describe access contention, not production throughput.
 - `tx_count`: number of transactions in the normalized trace.
 - `conflict_pair_count`: number of pairwise read/write or write/write conflicts.
 - `conflict_percentage`: percentage of all possible transaction pairs that conflict.
+- `overlapping_tx_percentage`: percentage of transactions that share at least one observed access key with another transaction.
 - `wave_count`: number of deterministic dependency waves.
 - `max_wave_width`: largest number of transactions in a single wave.
 - `critical_path_length`: longest dependency chain.
@@ -41,14 +42,18 @@ Open the Chrome trace JSON with `chrome://tracing` or compatible trace viewers.
 Trace-pack dossiers extend the single-block report with range-level fields:
 
 - `provenance`: whether data is a synthetic/demo fixture or user-collected RPC trace pack
-- `total_gas_used`: present only when gas is available for all included transactions and block totals reconcile with transaction gas
+- `source_tx_count` and `tx_coverage_percentage`: original transaction count and included coverage for partial samples
+- `total_gas_used`: gas covered by included transactions, present only when gas is available for all included transactions and included gas reconciles with transaction gas
 - `gas_weighted_conflict_percentage`: conflict percentage weighted by pair gas
 - `gas_weighted_critical_path`: longest dependency path by gas duration
-- `theoretical_parallelism_ceiling_by_gas`: `total_gas / gas_weighted_critical_path`
+- `theoretical_parallelism_ceiling_by_gas`: `total_gas_covered / gas_weighted_critical_path`
 - `worker_simulation`: deterministic list scheduling for requested worker counts
+- `worst_serializing_txs`: highest conflict-degree transactions, tie-broken by duration and canonical position
 - `top_hot_contracts` and `top_hot_storage_slots`: tx count, gas, unique slots, and conflict contribution
 - `contention_concentration`: percent of conflict contributions caused by top 1/5/10 keys
 
 Worker simulation reports a makespan in duration units, speedup versus one worker, idle percentage, and whether the schedule appears dependency-bound, worker-bound, or mixed. These are theoretical scheduling numbers, not measured execution throughput.
+
+`overlapping_tx_percentage` is useful for public contention framing, but only as a same-family metric. Do not compare it as equal to another benchmark unless the trace scope, included transaction set, and access completeness model are the same.
 
 CSV sidecars are emitted for hot contracts, hot slots, and worker simulation.

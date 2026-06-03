@@ -1,8 +1,8 @@
 {
-  "chain": "base",
-  "block_number": 38014901,
-  "block_hash": "0x00000000000000000000000000000000000000000000000000000000024413f5",
-  "parent_hash": "0x00000000000000000000000000000000000000000000000000000000024413f4",
+  "chain": "synthetic-base-shaped",
+  "block_number": 900000001,
+  "block_hash": "0x0000000000000000000000000000000000000000000000000000000035a4e901",
+  "parent_hash": "0x0000000000000000000000000000000000000000000000000000000035a4e900",
   "tx_count": 4,
   "total_gas_used": 350,
   "transactions": [
@@ -88,6 +88,6 @@
     }
   ],
   "warnings": [
-    "Block is a compact synthetic demo, not a Base RPC capture."
+    "Block uses a synthetic number and is not a Base RPC capture."
   ]
 }

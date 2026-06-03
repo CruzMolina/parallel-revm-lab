@@ -8,8 +8,12 @@
 
 - Blocks: 1
 - Transactions: 3
+- Source transactions covered: 3 of 3 (100.000%)
 - Accesses: 5
 - Conflict pairs: 1 (33.333%)
+- Overlapping transactions: 2 (66.667%)
+- Waves: 2
+- Max wave width: 2
 - Critical path by tx count: 2
 - Theoretical ceiling by tx: 1.500x
 - Gas-weighted metrics: unavailable because gas is missing
@@ -22,15 +26,22 @@
 | 2 | 2 | 1.500x | 25.00% | dependency-bound: makespan is at the critical-path lower bound |
 | 4 | 2 | 1.500x | 62.50% | dependency-bound: makespan is at the critical-path lower bound |
 
+## Worst Serializing Transactions
+
+| block | tx | wave | conflicts | duration | tx hash |
+| ---: | ---: | ---: | ---: | ---: | --- |
+| 0 | 0 | 0 | 1 | 1 | `0x0000000000000000000000000000000000000000000000000000000000000000` |
+| 0 | 2 | 1 | 1 | 1 | `0x0000000000000000000000000000000000000000000000000000000000000002` |
+
 ## Hot Contracts
 
-| contract | txs | unique slots | gas | conflict contribution |
+| contract | txs | unique slots | gas covered | conflict contribution |
 | --- | ---: | ---: | ---: | ---: |
 | `0x2222222222222222222222222222222222222222` | 3 | 2 | unavailable | 1 |
 
 ## Hot Storage Slots
 
-| slot | txs | gas | conflict contribution |
+| slot | txs | gas covered | conflict contribution |
 | --- | ---: | ---: | ---: |
 | `0x2222222222222222222222222222222222222222:0x0000000000000000000000000000000000000000000000000000000000000007` | 2 | unavailable | 1 |
 | `0x2222222222222222222222222222222222222222:0x0000000000000000000000000000000000000000000000000000000000000008` | 1 | unavailable | 0 |

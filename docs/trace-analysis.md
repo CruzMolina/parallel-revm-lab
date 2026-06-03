@@ -47,7 +47,7 @@ trace-packs/<name>/
     <block-number>.json
 ```
 
-The manifest records schema version, chain, source, provenance, start/end block, tool version, tracer kind, notes, and warnings. Each block file records block identity, optional gas totals, ordered transactions, optional receipt gas/status, and compact access observations.
+The manifest records schema version, chain, source, provenance, start/end block, tool version, tracer kind, notes, and warnings. Each block file records block identity, optional included-gas totals, ordered transactions, optional original transaction count, optional receipt gas/status, and compact access observations.
 
 Validated fields:
 
@@ -56,20 +56,23 @@ Validated fields:
 - tx hashes: `0x` plus 64 hex characters
 - block files must match the manifest chain/range
 - adjacent block hashes must chain through `parent_hash` when both hashes are present
-- complete block gas must equal the sum of transaction `gas_used` values
+- complete included gas must equal the sum of included transaction `gas_used` values
+- `source_tx_count`, when present, must be greater than or equal to the included transaction count
 - duplicate transactions and duplicate exact accesses are normalized deterministically
 
-Missing gas is allowed. Dossier reports then mark gas-weighted metrics unavailable and fall back to one duration unit per tx for worker simulation.
+Missing gas is allowed. Dossier reports then mark gas-weighted metrics unavailable and fall back to one duration unit per tx for worker simulation. For partial samples, gas-weighted fields describe gas covered by included transactions, not whole-block gas.
 
 ## Gas-Weighted Scheduling
 
-`analyze-trace-pack` computes tx-count metrics and gas-weighted metrics. Tx-count metrics include conflict pairs, deterministic waves, critical path length, and `tx_count / critical_path`. Gas-weighted metrics include weighted conflict percentage, gas critical path, and `total_gas / gas_critical_path` when every included tx has gas and the block total reconciles with transaction gas.
+`analyze-trace-pack` computes tx-count metrics and gas-weighted metrics. Tx-count metrics include conflict pairs, overlapping transaction percentage, deterministic waves, critical path length, and `tx_count / critical_path`. Gas-weighted metrics include weighted conflict percentage, gas critical path, and `total_gas_covered / gas_critical_path` when every included tx has gas and included gas reconciles with transaction gas.
+
+`overlapping_tx_percentage` is the percentage of included transactions that share at least one observed access key with another included transaction. It is in the same metric family as public high-contention framing, but it is not directly comparable unless the trace scope, access model, and completeness assumptions match.
 
 Worker simulation uses deterministic list scheduling over the dependency graph. It uses receipt `gas_used` as task duration when available, otherwise one unit per transaction. This is a theoretical model, not measured Ggas/s.
 
 ## Observed Access Hints
 
-`recommend-access-lists` emits observed contracts and storage keys per transaction plus the keys responsible for the most observed conflicts. The output is labeled as access hints, not complete Ethereum access lists. Dynamic accesses and incomplete traces can be missing.
+`recommend-access-lists` emits observed contracts and storage keys per transaction plus the keys responsible for the most observed conflicts. The output is labeled as access hints, not complete Ethereum access lists. Dynamic accesses and incomplete traces can be missing. Markdown output is available with `--markdown`.
 
 ## Conflict Assumptions
 
@@ -92,6 +95,17 @@ Different Ethereum providers expose different debug and trace APIs. Even when a 
 - `--rpc-url` takes precedence over `BASE_RPC_URL` and `ETH_RPC_URL`.
 - `collect-block-range --resume` resumes from validated per-block trace-pack files already written under `blocks/`.
 - Live RPC normalization should be implemented provider by provider with fixtures and tests.
+
+Check a provider before collecting:
+
+```sh
+cargo run -p parallel-revm-lab -- rpc-capability-check \
+  --chain base \
+  --block 38014901 \
+  --rpc-url "$BASE_RPC_URL"
+```
+
+The capability check verifies block availability, transaction presence, receipt access, `debug_traceTransaction`, custom JavaScript tracer support when possible, and struct-log fallback support. It does not print RPC URLs or bearer/API tokens.
 
 ## Why Fixture Mode Exists
 

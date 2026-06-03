@@ -1,7 +1,7 @@
 {
-  "chain": "base-fixture",
+  "chain": "synthetic-base-shaped-fixture",
   "block": {
-    "number": 38014901,
+    "number": 900000000,
     "hash": "0x9999999999999999999999999999999999999999999999999999999999999999"
   },
   "transactions": [

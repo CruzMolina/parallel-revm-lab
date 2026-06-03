@@ -1,6 +1,6 @@
-# Contention Dossier: base blocks 38014901-38014902
+# Contention Dossier: synthetic-base-shaped blocks 900000001-900000002
 
-**Provenance:** `synthetic/demo fixture (not real Base data)`
+**Provenance:** `synthetic-base-shaped demo fixture (not real Base data)`
 
 **Tracer:** `sanitized-geth-js-storage`
 
@@ -10,9 +10,12 @@
 - Transactions: 7
 - Accesses: 7
 - Conflict pairs: 2 (22.222%)
+- Overlapping transactions: 4 (57.143%)
+- Waves: 4
+- Max wave width: 3
 - Critical path by tx count: 4
 - Theoretical ceiling by tx: 1.750x
-- Total gas used: 645
+- Total gas covered: 645
 - Gas-weighted critical path: 405
 - Theoretical ceiling by gas: 1.593x
 
@@ -25,9 +28,18 @@
 | 4 | 405 | 1.593x | 60.19% | dependency-bound: makespan is at the critical-path lower bound |
 | 8 | 405 | 1.593x | 80.09% | dependency-bound: makespan is at the critical-path lower bound |
 
+## Worst Serializing Transactions
+
+| block | tx | wave | conflicts | duration | tx hash |
+| ---: | ---: | ---: | ---: | ---: | --- |
+| 900000001 | 2 | 1 | 1 | 120 | `0x0000000000000000000000000000000000000000000000000000000000000102` |
+| 900000001 | 0 | 0 | 1 | 100 | `0x0000000000000000000000000000000000000000000000000000000000000100` |
+| 900000002 | 2 | 1 | 1 | 95 | `0x0000000000000000000000000000000000000000000000000000000000000202` |
+| 900000002 | 0 | 0 | 1 | 90 | `0x0000000000000000000000000000000000000000000000000000000000000200` |
+
 ## Hot Contracts
 
-| contract | txs | unique slots | gas | conflict contribution |
+| contract | txs | unique slots | gas covered | conflict contribution |
 | --- | ---: | ---: | ---: | ---: |
 | `0x1111111111111111111111111111111111111111` | 4 | 2 | 410 | 1 |
 | `0x3333333333333333333333333333333333333333` | 2 | 1 | 185 | 1 |
@@ -35,7 +47,7 @@
 
 ## Hot Storage Slots
 
-| slot | txs | gas | conflict contribution |
+| slot | txs | gas covered | conflict contribution |
 | --- | ---: | ---: | ---: |
 | `0x1111111111111111111111111111111111111111:0x0000000000000000000000000000000000000000000000000000000000000000` | 3 | 330 | 1 |
 | `0x3333333333333333333333333333333333333333:0x0000000000000000000000000000000000000000000000000000000000000007` | 2 | 185 | 1 |
@@ -45,17 +57,17 @@
 ## Warnings
 
 - Synthetic demo fixture; do not cite as real-chain evidence.
-- block 38014901: Block is a compact synthetic demo, not a Base RPC capture.
-- block 38014901: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical
-- block 38014901: tx_index 0: trace marks read information as incomplete
-- block 38014901: tx_index 1: trace marks read information as incomplete
-- block 38014901: tx_index 2: trace marks read information as incomplete
-- block 38014901: tx_index 3: trace marks read information as incomplete
-- block 38014902: Block is a compact synthetic demo, not a Base RPC capture.
-- block 38014902: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical
-- block 38014902: tx_index 0: trace marks read information as incomplete
-- block 38014902: tx_index 1: trace marks read information as incomplete
-- block 38014902: tx_index 2: trace marks read information as incomplete
+- block 900000001: Block uses a synthetic number and is not a Base RPC capture.
+- block 900000001: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical
+- block 900000001: tx_index 0: trace marks read information as incomplete
+- block 900000001: tx_index 1: trace marks read information as incomplete
+- block 900000001: tx_index 2: trace marks read information as incomplete
+- block 900000001: tx_index 3: trace marks read information as incomplete
+- block 900000002: Block uses a synthetic number and is not a Base RPC capture.
+- block 900000002: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical
+- block 900000002: tx_index 0: trace marks read information as incomplete
+- block 900000002: tx_index 1: trace marks read information as incomplete
+- block 900000002: tx_index 2: trace marks read information as incomplete
 
 ## What This Proves
 

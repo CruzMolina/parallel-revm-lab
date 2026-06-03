@@ -56,7 +56,7 @@ No real Base report is committed for that range. The directory contains reproduc
 
 The committed proof path is:
 
-- `trace-packs/demo-mini/`: tiny synthetic/demo trace pack, not real Base data.
+- `trace-packs/demo-mini/`: tiny synthetic/demo trace pack using `synthetic-base-shaped` and synthetic block numbers, not real Base data.
 - `case-studies/demo-trace-pack/summary.md`: polished dossier summary.
 - `case-studies/demo-trace-pack/dossier.html`: static report.
 
@@ -64,18 +64,49 @@ Current demo dossier:
 
 | metric | value |
 | --- | ---: |
+| range | `synthetic-base-shaped` blocks `900000001-900000002` |
 | blocks | 2 |
 | transactions | 7 |
 | conflict pairs | 2 |
 | conflict percentage | 22.222% |
+| overlapping transactions | 57.143% |
+| waves | 4 |
+| max wave width | 3 |
 | critical path by tx | 4 |
-| gas-weighted critical path | 405 |
+| gas-weighted critical path | 405 gas covered |
 | theoretical ceiling by tx | 1.750x |
 | theoretical ceiling by gas | 1.593x |
 
 Worker simulation reaches the gas critical-path bound at 2 workers in the demo. More workers do not help because observed dependencies are already binding.
 
 ## Optional Real-Chain Collection
+
+First check provider capability without tracing the full range:
+
+```sh
+cargo run -p parallel-revm-lab -- rpc-capability-check \
+  --chain base \
+  --block 38014901 \
+  --rpc-url "$BASE_RPC_URL"
+```
+
+If this environment does not provide `BASE_RPC_URL`, the command fails before network access with a clear missing-URL message. If a provider lacks `debug_traceTransaction` or custom JavaScript tracer support, the command reports that capability gap without printing the RPC URL.
+
+Collect the smallest real sample first:
+
+```sh
+cargo run -p parallel-revm-lab -- collect-block-range \
+  --chain base \
+  --start-block 38014901 \
+  --end-block 38014901 \
+  --rpc-url "$BASE_RPC_URL" \
+  --tracer geth-js-storage \
+  --out trace-packs/base-38014901-real-sample \
+  --max-transactions 25 \
+  --resume
+```
+
+If that succeeds and the compact trace pack remains reviewable, expand to the public range:
 
 ```sh
 cargo run -p parallel-revm-lab -- collect-block-range \
@@ -102,6 +133,15 @@ cargo run -p parallel-revm-lab -- analyze-trace-pack \
   --trace case-studies/base-38014901-38014910/schedule.trace.json
 ```
 
+Observed access hints can be generated with:
+
+```sh
+cargo run -p parallel-revm-lab -- recommend-access-lists \
+  --trace-dir trace-packs/base-38014901-real-sample \
+  --out case-studies/base-38014901-real-sample/access-hints.json \
+  --markdown case-studies/base-38014901-real-sample/access-hints.md
+```
+
 ## What Is Real Vs Synthetic
 
 | Layer | Provenance | What it proves | What it does not prove |
@@ -116,8 +156,8 @@ cargo run -p parallel-revm-lab -- analyze-trace-pack \
 - Deterministic state, access-key, delta, and stable hash model.
 - Sequential baseline, access-list wave scheduler, and optimistic validation executor.
 - Compact trace-pack schema with provenance, block files, gas, and validated EVM hex fields.
-- Dossier analysis: conflict graph, waves, gas-weighted critical path, worker simulation, hot contracts, hot slots, concentration, and warnings.
-- Optional Geth JS storage tracer and `collect-block-range` command for user-collected RPC trace packs.
+- Dossier analysis: conflict graph, overlapping-transaction percentage, waves, gas-weighted critical path, worker simulation, hot contracts, hot slots, concentration, and warnings.
+- Optional Geth JS storage tracer, `rpc-capability-check`, and `collect-block-range` commands for user-collected RPC trace packs.
 - Observed access-hint recommendations that explicitly are not production-ready Ethereum access lists.
 - A `revm 40.0.3` smoke path that emits a trace pack from inspector-captured `SLOAD`/`SSTORE`.
 

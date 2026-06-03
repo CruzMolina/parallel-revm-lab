@@ -4,6 +4,7 @@
   "block_hash": null,
   "parent_hash": null,
   "tx_count": 3,
+  "source_tx_count": 3,
   "total_gas_used": null,
   "transactions": [
     {

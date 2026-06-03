@@ -25,6 +25,7 @@ fn help_smoke() {
     assert!(stdout.contains("analyze-trace"));
     assert!(stdout.contains("analyze-trace-pack"));
     assert!(stdout.contains("recommend-access-lists"));
+    assert!(stdout.contains("rpc-capability-check"));
     assert!(!stdout.contains("analyze-block"));
 }
 
@@ -225,11 +226,16 @@ fn analyze_trace_pack_smoke_writes_dossier() {
 
     let json = std::fs::read_to_string(report).unwrap();
     assert!(json.contains("\"report_version\": \"trace-pack-dossier-v1\""));
+    assert!(json.contains("\"chain\": \"synthetic-base-shaped\""));
+    assert!(json
+        .contains("\"provenance\": \"synthetic-base-shaped demo fixture (not real Base data)\""));
     assert!(json.contains("\"tx_count\": 7"));
     assert!(json.contains("\"conflict_pair_count\": 2"));
-    assert!(std::fs::read_to_string(markdown)
-        .unwrap()
-        .contains("Contention Dossier"));
+    assert!(!json.contains("38014901"));
+    let markdown = std::fs::read_to_string(markdown).unwrap();
+    assert!(markdown.contains("Contention Dossier"));
+    assert!(markdown.contains("synthetic-base-shaped demo fixture"));
+    assert!(!markdown.contains("38014901"));
     assert!(std::fs::read_to_string(html)
         .unwrap()
         .contains("Worker Simulation"));
@@ -245,6 +251,7 @@ fn analyze_trace_pack_smoke_writes_dossier() {
 fn recommend_access_lists_smoke_writes_observed_hints() {
     let dir = tempfile::tempdir().unwrap();
     let report = dir.path().join("recommendations.json");
+    let markdown = dir.path().join("recommendations.md");
     let trace_dir = workspace_root().join("trace-packs/demo-mini");
     let output = Command::new(bin())
         .args([
@@ -253,6 +260,8 @@ fn recommend_access_lists_smoke_writes_observed_hints() {
             trace_dir.to_str().unwrap(),
             "--out",
             report.to_str().unwrap(),
+            "--markdown",
+            markdown.to_str().unwrap(),
         ])
         .output()
         .unwrap();
@@ -266,6 +275,29 @@ fn recommend_access_lists_smoke_writes_observed_hints() {
     assert!(json.contains("\"report_version\": \"observed-access-hints-v1\""));
     assert!(json.contains("observed access hints only"));
     assert!(json.contains("not production-ready Ethereum access lists"));
+    let markdown = std::fs::read_to_string(markdown).unwrap();
+    assert!(markdown.contains("Observed Access Hints"));
+    assert!(markdown.contains("not complete production Ethereum access lists"));
+}
+
+#[test]
+fn rpc_capability_without_rpc_url_is_clear() {
+    let output = Command::new(bin())
+        .env_remove("BASE_RPC_URL")
+        .env_remove("ETH_RPC_URL")
+        .args([
+            "rpc-capability-check",
+            "--chain",
+            "base",
+            "--block",
+            "38014901",
+        ])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("missing RPC URL for rpc-capability-check"));
+    assert!(!stderr.contains("http"));
 }
 
 #[test]

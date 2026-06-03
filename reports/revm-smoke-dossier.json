@@ -8,12 +8,18 @@
   "end_block": 0,
   "block_count": 1,
   "tx_count": 3,
+  "source_tx_count": 3,
+  "tx_coverage_percentage": 100.0,
   "total_gas_used": null,
   "total_accesses": 5,
   "unique_contracts": 1,
   "unique_storage_slots": 2,
   "conflict_pair_count": 1,
   "conflict_percentage": 33.33333333333333,
+  "overlapping_tx_count": 2,
+  "overlapping_tx_percentage": 66.66666666666666,
+  "wave_count": 2,
+  "max_wave_width": 2,
   "gas_weighted_conflict_percentage": null,
   "critical_path_length_by_tx": 2,
   "gas_weighted_critical_path": null,
@@ -76,6 +82,24 @@
       "gas_weighted_critical_path": null
     }
   ],
+  "worst_serializing_txs": [
+    {
+      "block_number": 0,
+      "tx_index": 0,
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "wave": 0,
+      "conflict_degree": 1,
+      "duration_units": 1
+    },
+    {
+      "block_number": 0,
+      "tx_index": 2,
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000002",
+      "wave": 1,
+      "conflict_degree": 1,
+      "duration_units": 1
+    }
+  ],
   "worker_simulation": [
     {
       "workers": 1,
@@ -106,10 +130,14 @@
     {
       "block_number": 0,
       "tx_count": 3,
+      "source_tx_count": 3,
+      "tx_coverage_percentage": 100.0,
       "gas_used": null,
       "total_accesses": 5,
       "conflict_pair_count": 1,
       "conflict_percentage": 33.33333333333333,
+      "overlapping_tx_count": 2,
+      "overlapping_tx_percentage": 66.66666666666666,
       "gas_weighted_conflict_percentage": null,
       "wave_count": 2,
       "max_wave_width": 2,
@@ -217,5 +245,5 @@
     "block 0: tx_index 2: trace marks read information as incomplete",
     "one or more blocks/transactions are missing gas; gas-weighted range metrics are unavailable"
   ],
-  "deterministic_hash": "ef04570d979ec6f0"
+  "deterministic_hash": "8870f0fb8b9768c4"
 }

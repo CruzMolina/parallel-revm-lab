@@ -23,7 +23,10 @@ dossier-demo:
     cargo run -p parallel-revm-lab -- analyze-trace-pack --trace-dir trace-packs/demo-mini --workers 1,2,4,8 --out case-studies/demo-trace-pack/dossier.json --markdown case-studies/demo-trace-pack/summary.md --html case-studies/demo-trace-pack/dossier.html --trace case-studies/demo-trace-pack/schedule.trace.json
 
 recommend-access-lists:
-    cargo run -p parallel-revm-lab -- recommend-access-lists --trace-dir trace-packs/demo-mini --out reports/access-list-recommendations.json
+    cargo run -p parallel-revm-lab -- recommend-access-lists --trace-dir trace-packs/demo-mini --out reports/access-list-recommendations.json --markdown reports/access-list-recommendations.md
+
+rpc-capability-base:
+    cargo run -p parallel-revm-lab -- rpc-capability-check --chain base --block 38014901
 
 collect-base-dry-run:
     cargo run -p parallel-revm-lab -- collect-block-range --chain base --start-block 38014901 --end-block 38014910 --tracer geth-js-storage --out trace-packs/base-38014901-38014910 --dry-run

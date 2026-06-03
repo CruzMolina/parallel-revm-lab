@@ -92,6 +92,7 @@ fn trace_to_pack_block(trace: &BlockAccessTrace) -> TracePackBlock {
         block_hash: trace.block.hash.clone(),
         parent_hash: None,
         tx_count: trace.transactions.len(),
+        source_tx_count: Some(trace.transactions.len()),
         total_gas_used: None,
         transactions: trace.transactions.iter().map(trace_tx_to_pack_tx).collect(),
         warnings: trace

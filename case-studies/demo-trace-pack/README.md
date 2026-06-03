@@ -1,6 +1,7 @@
 # Demo Trace-Pack Dossier
 
 This case study is generated from `trace-packs/demo-mini`, a tiny synthetic/demo trace pack. It is not real Base data.
+The trace pack uses chain name `synthetic-base-shaped` and synthetic block numbers `900000001-900000002`.
 
 ## Reproduce
 
@@ -19,6 +20,9 @@ cargo run -p parallel-revm-lab -- analyze-trace-pack \
 - Blocks: 2
 - Transactions: 7
 - Conflict pairs: 2 (22.222%)
+- Overlapping transactions: 4 (57.143%)
+- Waves: 4
+- Max wave width: 3
 - Critical path by tx count: 4
 - Gas-weighted critical path: 405
 - Theoretical ceiling by tx: 1.750x

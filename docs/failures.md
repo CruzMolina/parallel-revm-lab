@@ -69,7 +69,7 @@ See `docs/engineering-log.md` for the current validation history and upgrade dec
 
 - Symptom: a public Base block range is useful as a target, but committing synthetic output under that path would look like real-chain evidence.
 - Root cause: collection depends on a user-supplied debug-capable RPC endpoint and provider support for JavaScript tracers.
-- Fix: committed only reproduction instructions under `case-studies/base-38014901-38014910/`; the committed dossier uses `trace-packs/demo-mini` and labels itself synthetic/demo.
+- Fix: committed only reproduction instructions under `case-studies/base-38014901-38014910/`; the committed dossier uses `trace-packs/demo-mini`, labels itself `synthetic-base-shaped`, and uses synthetic block numbers.
 - Tests added: CLI dossier smoke tests run on the committed demo trace pack without network access.
 
 ## Trace-Pack Gas Totals Could Skew Ceilings

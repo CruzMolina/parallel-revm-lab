@@ -6,8 +6,8 @@ use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use parallel_revm_lab_analyzer::{
     analyze_block_trace, analyze_trace_pack as analyze_trace_pack_report,
-    dossier_schedule_trace_json, recommend_access_lists, render_dossier_html,
-    render_dossier_markdown, render_hot_contracts_csv, render_hot_slots_csv,
+    dossier_schedule_trace_json, recommend_access_lists, render_access_hints_markdown,
+    render_dossier_html, render_dossier_markdown, render_hot_contracts_csv, render_hot_slots_csv,
     render_html_with_command, render_markdown, render_worker_simulation_csv, schedule_trace_json,
 };
 use parallel_revm_lab_executor::{
@@ -39,6 +39,7 @@ enum Commands {
     AnalyzeTrace(AnalyzeTraceArgs),
     AnalyzeTracePack(AnalyzeTracePackArgs),
     RecommendAccessLists(RecommendAccessListsArgs),
+    RpcCapabilityCheck(RpcCapabilityCheckArgs),
     CollectBlockRange(CollectBlockRangeArgs),
     #[command(hide = true)]
     AnalyzeBlock(AnalyzeBlockArgs),
@@ -163,6 +164,20 @@ struct RecommendAccessListsArgs {
     trace_dir: PathBuf,
     #[arg(long)]
     out: PathBuf,
+    #[arg(long)]
+    markdown: Option<PathBuf>,
+}
+
+#[derive(Debug, Args)]
+struct RpcCapabilityCheckArgs {
+    #[arg(long)]
+    chain: String,
+    #[arg(long)]
+    block: u64,
+    #[arg(long)]
+    rpc_url: Option<String>,
+    #[arg(long)]
+    out: Option<PathBuf>,
 }
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
@@ -216,6 +231,23 @@ struct AnalyzeBlockArgs {
     html: PathBuf,
 }
 
+#[derive(Debug, serde::Serialize)]
+struct RpcCapabilityReport {
+    report_version: String,
+    chain: String,
+    block: u64,
+    block_available: bool,
+    block_hash: Option<String>,
+    tx_count: usize,
+    sample_tx_hash: Option<String>,
+    receipt_available: bool,
+    debug_trace_transaction_available: bool,
+    custom_js_tracer_available: bool,
+    struct_logs_available: bool,
+    status: String,
+    failures: Vec<String>,
+}
+
 fn main() -> Result<()> {
     match Cli::parse().command {
         Commands::Bench(args) => bench(args),
@@ -225,6 +257,7 @@ fn main() -> Result<()> {
         Commands::AnalyzeTrace(args) => analyze_trace(args),
         Commands::AnalyzeTracePack(args) => analyze_trace_pack(args),
         Commands::RecommendAccessLists(args) => recommend_access_lists_command(args),
+        Commands::RpcCapabilityCheck(args) => rpc_capability_check(args),
         Commands::CollectBlockRange(args) => collect_block_range(args),
         Commands::AnalyzeBlock(args) => analyze_block(args),
     }
@@ -471,11 +504,163 @@ fn recommend_access_lists_command(args: RecommendAccessListsArgs) -> Result<()> 
         .with_context(|| format!("failed to load trace pack {}", args.trace_dir.display()))?;
     let report = recommend_access_lists(&pack);
     write_json(&args.out, &report)?;
+    if let Some(markdown) = args.markdown {
+        write_text(&markdown, &render_access_hints_markdown(&report))?;
+    }
     println!(
         "wrote {} observed access hint(s) to {}",
         report.tx_hints.len(),
         args.out.display()
     );
+    Ok(())
+}
+
+fn rpc_capability_check(args: RpcCapabilityCheckArgs) -> Result<()> {
+    let rpc_url = resolve_rpc_url(&args.chain, args.rpc_url).map_err(|err| {
+        anyhow!(
+            "{}",
+            redact_rpc_url(&err.to_string()).replace(
+                "missing RPC URL for collect-block-range",
+                "missing RPC URL for rpc-capability-check"
+            )
+        )
+    })?;
+    let mut report = RpcCapabilityReport {
+        report_version: "rpc-capability-v1".to_owned(),
+        chain: args.chain.clone(),
+        block: args.block,
+        block_available: false,
+        block_hash: None,
+        tx_count: 0,
+        sample_tx_hash: None,
+        receipt_available: false,
+        debug_trace_transaction_available: false,
+        custom_js_tracer_available: false,
+        struct_logs_available: false,
+        status: "unsupported".to_owned(),
+        failures: Vec::new(),
+    };
+
+    match rpc_call(
+        &rpc_url,
+        "eth_getBlockByNumber",
+        serde_json::json!([hex_u64(args.block), true]),
+    ) {
+        Ok(block) if !block.is_null() => {
+            report.block_available = true;
+            report.block_hash = value_string(block.get("hash"));
+            let tx_values = block
+                .get("transactions")
+                .and_then(serde_json::Value::as_array)
+                .cloned()
+                .unwrap_or_default();
+            report.tx_count = tx_values.len();
+            report.sample_tx_hash = tx_values.iter().find_map(|tx| value_string(tx.get("hash")));
+        }
+        Ok(_) => report
+            .failures
+            .push(format!("block {} returned null", args.block)),
+        Err(err) => report
+            .failures
+            .push(capability_failure("eth_getBlockByNumber", &err)),
+    }
+
+    if let Some(tx_hash) = &report.sample_tx_hash {
+        match rpc_call(
+            &rpc_url,
+            "eth_getTransactionReceipt",
+            serde_json::json!([tx_hash]),
+        ) {
+            Ok(receipt) if !receipt.is_null() => {
+                report.receipt_available = true;
+            }
+            Ok(_) => report
+                .failures
+                .push("eth_getTransactionReceipt returned null".to_owned()),
+            Err(err) => report
+                .failures
+                .push(capability_failure("eth_getTransactionReceipt", &err)),
+        }
+
+        match rpc_call(
+            &rpc_url,
+            "debug_traceTransaction",
+            serde_json::json!([
+                tx_hash,
+                {
+                    "tracer": "{ result: function(ctx, db) { return { ok: true }; } }",
+                    "timeout": "20s"
+                }
+            ]),
+        ) {
+            Ok(_) => {
+                report.debug_trace_transaction_available = true;
+                report.custom_js_tracer_available = true;
+            }
+            Err(err) => report
+                .failures
+                .push(capability_failure("custom JS debug_traceTransaction", &err)),
+        }
+
+        match rpc_call(
+            &rpc_url,
+            "debug_traceTransaction",
+            serde_json::json!([
+                tx_hash,
+                {
+                    "disableMemory": true,
+                    "disableStorage": true,
+                    "disableStack": false,
+                    "timeout": "20s"
+                }
+            ]),
+        ) {
+            Ok(trace) => {
+                report.debug_trace_transaction_available = true;
+                report.struct_logs_available = trace.get("structLogs").is_some();
+                if !report.struct_logs_available {
+                    report
+                        .failures
+                        .push("debug_traceTransaction returned no structLogs field".to_owned());
+                }
+            }
+            Err(err) => report.failures.push(capability_failure(
+                "structLogs debug_traceTransaction",
+                &err,
+            )),
+        }
+    } else if report.block_available {
+        report
+            .failures
+            .push("block has no transactions to trace".to_owned());
+    }
+
+    report.status = if report.block_available
+        && report.tx_count > 0
+        && report.receipt_available
+        && report.custom_js_tracer_available
+    {
+        "ok".to_owned()
+    } else {
+        "unsupported".to_owned()
+    };
+
+    if let Some(path) = args.out {
+        write_json(&path, &report)?;
+    }
+    println!(
+        "rpc capability {} block {} status={} txs={} receipts={} js_tracer={} struct_logs={}",
+        report.chain,
+        report.block,
+        report.status,
+        report.tx_count,
+        report.receipt_available,
+        report.custom_js_tracer_available,
+        report.struct_logs_available
+    );
+    for failure in &report.failures {
+        println!("capability warning: {failure}");
+    }
     Ok(())
 }
 
@@ -620,6 +805,7 @@ fn collect_block_range(args: CollectBlockRangeArgs) -> Result<()> {
             block_hash: value_string(block_value.get("hash")),
             parent_hash: value_string(block_value.get("parentHash")),
             tx_count: transactions.len(),
+            source_tx_count: Some(tx_values.len()),
             total_gas_used,
             transactions,
             warnings: block_warnings,
@@ -901,7 +1087,34 @@ fn redact_rpc_url(value: &str) -> String {
             out.replace_range(start..end, "<redacted-rpc-url>");
         }
     }
+    redact_after_marker(&mut out, "Bearer ", "<redacted-bearer-token>");
+    for marker in ["api_key=", "apikey=", "token=", "access_token=", "key="] {
+        redact_after_marker(&mut out, marker, "<redacted-secret>");
+    }
     out
+}
+
+fn redact_after_marker(out: &mut String, marker: &str, replacement: &str) {
+    let mut search_start = 0;
+    while let Some(relative_start) = out[search_start..].find(marker) {
+        let start = search_start + relative_start + marker.len();
+        let end = out[start..]
+            .find(|ch: char| {
+                ch.is_whitespace() || ch == '"' || ch == '\'' || ch == '&' || ch == ','
+            })
+            .map(|offset| start + offset)
+            .unwrap_or(out.len());
+        if start < end {
+            out.replace_range(start..end, replacement);
+            search_start = start + replacement.len();
+        } else {
+            search_start = end;
+        }
+    }
+}
+
+fn capability_failure(label: &str, err: &anyhow::Error) -> String {
+    format!("{label}: {}", redact_rpc_url(&err.to_string()))
 }
 
 fn parse_workload(input: &str) -> std::result::Result<WorkloadKind, String> {
@@ -1020,13 +1233,32 @@ mod tests {
 
     #[test]
     fn collect_redacts_rpc_urls() {
-        let input =
-            "failed: https://example.com/base?key=redactme and http://credential.example.org";
-        let redacted = redact_rpc_url(input);
+        let url = ["https://example.com/base?", "key", "=", "redactme"].concat();
+        let bearer = ["Bearer", "very-secret"].join(" ");
+        let api_key = ["api_key", "also-secret"].join("=");
+        let input = format!(
+            "failed: {url} and http://credential.example.org Authorization: {bearer} {api_key}"
+        );
+        let redacted = redact_rpc_url(&input);
 
         assert!(!redacted.contains("redactme"));
         assert!(!redacted.contains("credential.example"));
+        assert!(!redacted.contains("very-secret"));
+        assert!(!redacted.contains("also-secret"));
         assert_eq!(redacted.matches("<redacted-rpc-url>").count(), 2);
+    }
+
+    #[test]
+    fn capability_failure_redacts_tokens() {
+        let token_url = ["https://example.com/rpc?", "token", "=", "abc"].concat();
+        let bearer = ["Bearer", "def"].join(" ");
+        let err = anyhow!("provider said nope at {token_url} with {bearer}");
+        let message = capability_failure("debug_traceTransaction", &err);
+
+        assert!(message.contains("debug_traceTransaction"));
+        assert!(!message.contains("abc"));
+        assert!(!message.contains("def"));
+        assert!(message.contains("<redacted-rpc-url>"));
     }
 
     #[test]
@@ -1081,6 +1313,7 @@ mod tests {
             block_hash: Some(format!("0x{block_number:064x}")),
             parent_hash: Some(format!("0x{:064x}", block_number.saturating_sub(1))),
             tx_count: 1,
+            source_tx_count: Some(1),
             total_gas_used: Some(7),
             transactions: vec![TracePackTx {
                 tx_index: TxIndex(0),

@@ -61,6 +61,29 @@ curl -H "Content-Type: application/json" \
 The CLI wraps this call in:
 
 ```sh
+cargo run -p parallel-revm-lab -- rpc-capability-check \
+  --chain base \
+  --block 38014901 \
+  --rpc-url "$BASE_RPC_URL"
+```
+
+Then collect a small real sample first:
+
+```sh
+cargo run -p parallel-revm-lab -- collect-block-range \
+  --chain base \
+  --start-block 38014901 \
+  --end-block 38014901 \
+  --rpc-url "$BASE_RPC_URL" \
+  --tracer geth-js-storage \
+  --out trace-packs/base-38014901-real-sample \
+  --max-transactions 25 \
+  --resume
+```
+
+If that succeeds and output remains compact, collect the full target range:
+
+```sh
 cargo run -p parallel-revm-lab -- collect-block-range \
   --chain base \
   --start-block 38014901 \
@@ -80,7 +103,7 @@ Not every provider supports:
 - historical state for the requested block
 - enough timeout or payload size for large transactions
 
-Run `--dry-run` first to check every requested block header and transaction count. A successful dry run does not prove tracing support.
+Run `rpc-capability-check` first for debug tracing support, and `collect-block-range --dry-run` to check every requested block header and transaction count. A successful dry run does not prove tracing support.
 
 ## Security Notes
 

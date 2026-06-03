@@ -21,12 +21,18 @@ pub struct TracePackDossier {
     pub end_block: u64,
     pub block_count: usize,
     pub tx_count: usize,
+    pub source_tx_count: Option<usize>,
+    pub tx_coverage_percentage: Option<f64>,
     pub total_gas_used: Option<u64>,
     pub total_accesses: usize,
     pub unique_contracts: usize,
     pub unique_storage_slots: usize,
     pub conflict_pair_count: u64,
     pub conflict_percentage: f64,
+    pub overlapping_tx_count: usize,
+    pub overlapping_tx_percentage: f64,
+    pub wave_count: usize,
+    pub max_wave_width: usize,
     pub gas_weighted_conflict_percentage: Option<f64>,
     pub critical_path_length_by_tx: usize,
     pub gas_weighted_critical_path: Option<u64>,
@@ -38,6 +44,7 @@ pub struct TracePackDossier {
     pub parallelism_loss_decomposition: ParallelismLossDecomposition,
     pub worst_blocks_by_conflict_percentage: Vec<WorstBlockSummary>,
     pub worst_blocks_by_gas_weighted_critical_path: Vec<WorstBlockSummary>,
+    pub worst_serializing_txs: Vec<SerializingTxSummary>,
     pub worker_simulation: Vec<WorkerSimulation>,
     pub blocks: Vec<BlockDossier>,
     pub warnings: Vec<String>,
@@ -92,10 +99,14 @@ pub struct WorstBlockSummary {
 pub struct BlockDossier {
     pub block_number: u64,
     pub tx_count: usize,
+    pub source_tx_count: Option<usize>,
+    pub tx_coverage_percentage: Option<f64>,
     pub gas_used: Option<u64>,
     pub total_accesses: usize,
     pub conflict_pair_count: u64,
     pub conflict_percentage: f64,
+    pub overlapping_tx_count: usize,
+    pub overlapping_tx_percentage: f64,
     pub gas_weighted_conflict_percentage: Option<f64>,
     pub wave_count: usize,
     pub max_wave_width: usize,
@@ -112,6 +123,16 @@ pub struct BlockDossier {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct DossierTxSummary {
+    pub tx_index: u64,
+    pub tx_hash: String,
+    pub wave: usize,
+    pub conflict_degree: u64,
+    pub duration_units: u64,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct SerializingTxSummary {
+    pub block_number: u64,
     pub tx_index: u64,
     pub tx_hash: String,
     pub wave: usize,
@@ -194,6 +215,11 @@ pub fn analyze_trace_pack(pack: &TracePack, workers: &[usize]) -> TracePackDossi
     let mut total_conflicts = 0_u64;
     let mut total_pairs = 0_u64;
     let mut total_tx = 0_usize;
+    let mut source_tx_total = 0_usize;
+    let mut source_tx_present = false;
+    let mut overlapping_tx_total = 0_usize;
+    let mut wave_count = 0_usize;
+    let mut max_wave_width = 0_usize;
     let mut total_accesses = 0_usize;
     let mut total_gas = 0_u64;
     let mut gas_all = true;
@@ -208,6 +234,13 @@ pub fn analyze_trace_pack(pack: &TracePack, workers: &[usize]) -> TracePackDossi
         total_conflicts += block_dossier.conflict_pair_count;
         total_pairs += pair_count(block_dossier.tx_count);
         total_tx += block_dossier.tx_count;
+        source_tx_total += block_dossier
+            .source_tx_count
+            .unwrap_or(block_dossier.tx_count);
+        source_tx_present |= block_dossier.source_tx_count.is_some();
+        overlapping_tx_total += block_dossier.overlapping_tx_count;
+        wave_count += block_dossier.wave_count;
+        max_wave_width = max_wave_width.max(block_dossier.max_wave_width);
         total_accesses += block_dossier.total_accesses;
         critical_path_by_tx += block_dossier.critical_path_length;
         if let Some(gas_used) = block.total_gas_used {
@@ -263,6 +296,10 @@ pub fn analyze_trace_pack(pack: &TracePack, workers: &[usize]) -> TracePackDossi
         .max_by_key(|simulation| simulation.workers)
         .map(|simulation| simulation.idle_percentage);
     let conflict_percentage = percentage(total_conflicts, total_pairs);
+    let tx_coverage_percentage =
+        source_tx_present.then(|| percentage(total_tx as u64, source_tx_total as u64));
+    let overlapping_tx_percentage = percentage(overlapping_tx_total as u64, total_tx as u64);
+    let worst_serializing_txs = worst_serializing_txs(&blocks, 10);
     let mut dossier = TracePackDossier {
         report_version: "trace-pack-dossier-v1".to_owned(),
         chain: normalized.manifest.chain.to_string(),
@@ -273,12 +310,18 @@ pub fn analyze_trace_pack(pack: &TracePack, workers: &[usize]) -> TracePackDossi
         end_block: normalized.manifest.end_block,
         block_count: normalized.blocks.len(),
         tx_count: total_tx,
+        source_tx_count: source_tx_present.then_some(source_tx_total),
+        tx_coverage_percentage,
         total_gas_used: gas_all.then_some(total_gas),
         total_accesses,
         unique_contracts: hot.contract_txs.len(),
         unique_storage_slots: hot.slot_txs.len(),
         conflict_pair_count: total_conflicts,
         conflict_percentage,
+        overlapping_tx_count: overlapping_tx_total,
+        overlapping_tx_percentage,
+        wave_count,
+        max_wave_width,
         gas_weighted_conflict_percentage: if gas_all {
             weighted_percentage(weighted_conflict_num, weighted_conflict_den)
         } else {
@@ -316,6 +359,7 @@ pub fn analyze_trace_pack(pack: &TracePack, workers: &[usize]) -> TracePackDossi
         },
         worst_blocks_by_conflict_percentage: worst_by_conflict(&blocks, 5),
         worst_blocks_by_gas_weighted_critical_path: worst_by_gas_path(&blocks, 5),
+        worst_serializing_txs,
         worker_simulation,
         blocks,
         warnings,
@@ -338,11 +382,25 @@ pub fn render_dossier_markdown(dossier: &TracePackDossier) -> String {
     out.push_str("## Summary\n\n");
     out.push_str(&format!("- Blocks: {}\n", dossier.block_count));
     out.push_str(&format!("- Transactions: {}\n", dossier.tx_count));
+    if let (Some(source_tx_count), Some(coverage)) =
+        (dossier.source_tx_count, dossier.tx_coverage_percentage)
+    {
+        out.push_str(&format!(
+            "- Source transactions covered: {} of {} ({:.3}%)\n",
+            dossier.tx_count, source_tx_count, coverage
+        ));
+    }
     out.push_str(&format!("- Accesses: {}\n", dossier.total_accesses));
     out.push_str(&format!(
         "- Conflict pairs: {} ({:.3}%)\n",
         dossier.conflict_pair_count, dossier.conflict_percentage
     ));
+    out.push_str(&format!(
+        "- Overlapping transactions: {} ({:.3}%)\n",
+        dossier.overlapping_tx_count, dossier.overlapping_tx_percentage
+    ));
+    out.push_str(&format!("- Waves: {}\n", dossier.wave_count));
+    out.push_str(&format!("- Max wave width: {}\n", dossier.max_wave_width));
     out.push_str(&format!(
         "- Critical path by tx count: {}\n",
         dossier.critical_path_length_by_tx
@@ -356,7 +414,7 @@ pub fn render_dossier_markdown(dossier: &TracePackDossier) -> String {
         dossier.gas_weighted_critical_path,
         dossier.theoretical_parallelism_ceiling_by_gas,
     ) {
-        out.push_str(&format!("- Total gas used: {gas}\n"));
+        out.push_str(&format!("- Total gas covered: {gas}\n"));
         out.push_str(&format!("- Gas-weighted critical path: {path}\n"));
         out.push_str(&format!("- Theoretical ceiling by gas: {ceiling:.3}x\n"));
     } else {
@@ -373,7 +431,21 @@ pub fn render_dossier_markdown(dossier: &TracePackDossier) -> String {
             simulation.interpretation
         ));
     }
-    out.push_str("\n## Hot Contracts\n\n| contract | txs | unique slots | gas | conflict contribution |\n| --- | ---: | ---: | ---: | ---: |\n");
+    if !dossier.worst_serializing_txs.is_empty() {
+        out.push_str("\n## Worst Serializing Transactions\n\n| block | tx | wave | conflicts | duration | tx hash |\n| ---: | ---: | ---: | ---: | ---: | --- |\n");
+        for tx in &dossier.worst_serializing_txs {
+            out.push_str(&format!(
+                "| {} | {} | {} | {} | {} | `{}` |\n",
+                tx.block_number,
+                tx.tx_index,
+                tx.wave,
+                tx.conflict_degree,
+                tx.duration_units,
+                tx.tx_hash
+            ));
+        }
+    }
+    out.push_str("\n## Hot Contracts\n\n| contract | txs | unique slots | gas covered | conflict contribution |\n| --- | ---: | ---: | ---: | ---: |\n");
     for item in &dossier.top_hot_contracts {
         out.push_str(&format!(
             "| `{}` | {} | {} | {} | {} |\n",
@@ -384,7 +456,7 @@ pub fn render_dossier_markdown(dossier: &TracePackDossier) -> String {
             item.conflict_contribution
         ));
     }
-    out.push_str("\n## Hot Storage Slots\n\n| slot | txs | gas | conflict contribution |\n| --- | ---: | ---: | ---: |\n");
+    out.push_str("\n## Hot Storage Slots\n\n| slot | txs | gas covered | conflict contribution |\n| --- | ---: | ---: | ---: |\n");
     for item in &dossier.top_hot_storage_slots {
         out.push_str(&format!(
             "| `{}` | {} | {} | {} |\n",
@@ -455,21 +527,46 @@ pub fn render_dossier_html(dossier: &TracePackDossier, command: &str) -> String 
         .map(|warning| format!("<li>{}</li>", escape_html(warning)))
         .collect::<Vec<_>>()
         .join("");
+    let serializing_rows = dossier
+        .worst_serializing_txs
+        .iter()
+        .map(|tx| {
+            format!(
+                "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td><code>{}</code></td></tr>",
+                tx.block_number,
+                tx.tx_index,
+                tx.wave,
+                tx.conflict_degree,
+                tx.duration_units,
+                escape_html(&tx.tx_hash)
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("");
     format!(
-        "<!doctype html><html><head><meta charset=\"utf-8\"><title>Contention Dossier</title><style>body{{font-family:system-ui,sans-serif;margin:32px;line-height:1.45;max-width:1180px}}.badge{{display:inline-block;border:1px solid #999;padding:3px 8px;border-radius:4px}}.cards{{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:18px 0}}.card{{border:1px solid #ddd;padding:12px;border-radius:6px}}table{{border-collapse:collapse;width:100%;margin:12px 0 24px}}td,th{{border:1px solid #ddd;padding:6px;text-align:left;vertical-align:top}}code{{font-size:12px}}</style></head><body><h1>Contention Dossier</h1><p><span class=\"badge\">{}</span></p><p>{} blocks {}-{}</p><div class=\"cards\"><div class=\"card\"><b>txs</b><br>{}</div><div class=\"card\"><b>conflicts</b><br>{} ({:.3}%)</div><div class=\"card\"><b>tx ceiling</b><br>{:.3}x</div><div class=\"card\"><b>gas ceiling</b><br>{}</div></div><h2>Worker Simulation</h2><table><tr><th>workers</th><th>makespan</th><th>speedup</th><th>idle</th><th>interpretation</th></tr>{}</table><h2>Hot Contracts</h2><table><tr><th>contract</th><th>txs</th><th>unique slots</th><th>gas</th><th>conflicts</th></tr>{}</table><h2>Hot Storage Slots</h2><table><tr><th>slot</th><th>txs</th><th>gas</th><th>conflicts</th></tr>{}</table><h2>Warnings</h2><ul>{}</ul><h2>Commands</h2><pre>{}</pre><h2>What This Does Not Prove</h2><p>This is a theoretical scheduling and contention model over observed trace-pack accesses. It is not production TPS, not Ggas/s, not full block replay, and not a complete Ethereum access-list generator.</p></body></html>",
+        "<!doctype html><html><head><meta charset=\"utf-8\"><title>Contention Dossier</title><style>body{{font-family:system-ui,sans-serif;margin:32px;line-height:1.45;max-width:1180px}}.badge{{display:inline-block;border:1px solid #999;padding:3px 8px;border-radius:4px}}.cards{{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:18px 0}}.card{{border:1px solid #ddd;padding:12px;border-radius:6px}}table{{border-collapse:collapse;width:100%;margin:12px 0 24px}}td,th{{border:1px solid #ddd;padding:6px;text-align:left;vertical-align:top}}code{{font-size:12px}}</style></head><body><h1>Contention Dossier</h1><p><span class=\"badge\">{}</span></p><p>{} blocks {}-{}</p><div class=\"cards\"><div class=\"card\"><b>txs</b><br>{}</div><div class=\"card\"><b>coverage</b><br>{}</div><div class=\"card\"><b>conflicts</b><br>{} ({:.3}%)</div><div class=\"card\"><b>overlap</b><br>{} ({:.3}%)</div><div class=\"card\"><b>waves</b><br>{} / max width {}</div><div class=\"card\"><b>tx ceiling</b><br>{:.3}x</div><div class=\"card\"><b>gas ceiling</b><br>{}</div></div><h2>Worker Simulation</h2><table><tr><th>workers</th><th>makespan</th><th>speedup</th><th>idle</th><th>interpretation</th></tr>{}</table><h2>Worst Serializing Transactions</h2><table><tr><th>block</th><th>tx</th><th>wave</th><th>conflicts</th><th>duration</th><th>tx hash</th></tr>{}</table><h2>Hot Contracts</h2><table><tr><th>contract</th><th>txs</th><th>unique slots</th><th>gas covered</th><th>conflicts</th></tr>{}</table><h2>Hot Storage Slots</h2><table><tr><th>slot</th><th>txs</th><th>gas covered</th><th>conflicts</th></tr>{}</table><h2>Warnings</h2><ul>{}</ul><h2>Commands</h2><pre>{}</pre><h2>What This Does Not Prove</h2><p>This is a theoretical scheduling and contention model over observed trace-pack accesses. It is not production TPS, not Ggas/s, not full block replay, and not a complete Ethereum access-list generator.</p></body></html>",
         escape_html(&dossier.provenance),
         escape_html(&dossier.chain),
         dossier.start_block,
         dossier.end_block,
         dossier.tx_count,
+        dossier
+            .tx_coverage_percentage
+            .map(|value| format!("{value:.3}%"))
+            .unwrap_or_else(|| "n/a".to_owned()),
         dossier.conflict_pair_count,
         dossier.conflict_percentage,
+        dossier.overlapping_tx_count,
+        dossier.overlapping_tx_percentage,
+        dossier.wave_count,
+        dossier.max_wave_width,
         dossier.theoretical_parallelism_ceiling_by_tx,
         dossier
             .theoretical_parallelism_ceiling_by_gas
             .map(|value| format!("{value:.3}x"))
             .unwrap_or_else(|| "unavailable".to_owned()),
         worker_rows,
+        serializing_rows,
         contract_rows,
         slot_rows,
         warnings,
@@ -627,6 +724,45 @@ pub fn recommend_access_lists(pack: &TracePack) -> AccessListRecommendationRepor
     report
 }
 
+pub fn render_access_hints_markdown(report: &AccessListRecommendationReport) -> String {
+    let mut out = String::new();
+    out.push_str(&format!("# Observed Access Hints: {}\n\n", report.chain));
+    out.push_str(&format!("**Provenance:** `{}`\n\n", report.provenance));
+    out.push_str("These are observed access hints, not complete production Ethereum access lists. Dynamic access and incomplete trace caveats apply.\n\n");
+    out.push_str("## Candidate Conflict Keys\n\n| key | conflict contribution |\n| --- | ---: |\n");
+    for key in &report.top_conflict_keys {
+        out.push_str(&format!(
+            "| `{}` | {} |\n",
+            key.key, key.conflict_contribution
+        ));
+    }
+    out.push_str("\n## Scheduling-Helpful Transactions\n\n| block | tx | conflicts | tx hash |\n| ---: | ---: | ---: | --- |\n");
+    for tx in report.scheduling_helpful_txs.iter().take(25) {
+        out.push_str(&format!(
+            "| {} | {} | {} | `{}` |\n",
+            tx.block_number, tx.tx_index, tx.conflict_degree, tx.tx_hash
+        ));
+    }
+    out.push_str("\n## Per-Transaction Observations\n\n| block | tx | contracts | storage keys | warning |\n| ---: | ---: | ---: | ---: | --- |\n");
+    for tx in &report.tx_hints {
+        out.push_str(&format!(
+            "| {} | {} | {} | {} | {} |\n",
+            tx.block_number,
+            tx.tx_index,
+            tx.observed_contracts.len(),
+            tx.observed_storage_keys.len(),
+            tx.warning
+        ));
+    }
+    if !report.warnings.is_empty() {
+        out.push_str("\n## Warnings\n\n");
+        for warning in &report.warnings {
+            out.push_str(&format!("- {warning}\n"));
+        }
+    }
+    out
+}
+
 fn analyze_trace_pack_block(
     block: &TracePackBlock,
     workers: &[usize],
@@ -664,13 +800,23 @@ fn analyze_trace_pack_block(
     hot.observe_block(block, &conflicts);
     let block_hot = HotAccumulator::from_block(block, &conflicts);
     let pair_count = pair_count(block.transactions.len());
+    let overlapping_tx_count = overlapping_tx_count(&trace);
     BlockDossier {
         block_number: block.block_number,
         tx_count: block.transactions.len(),
+        source_tx_count: block.source_tx_count,
+        tx_coverage_percentage: block
+            .source_tx_count
+            .map(|source| percentage(block.transactions.len() as u64, source as u64)),
         gas_used: gas_complete.then_some(block.total_gas_used.unwrap_or(0)),
         total_accesses: block.transactions.iter().map(|tx| tx.accesses.len()).sum(),
         conflict_pair_count: conflicts.len() as u64,
         conflict_percentage: percentage(conflicts.len() as u64, pair_count),
+        overlapping_tx_count,
+        overlapping_tx_percentage: percentage(
+            overlapping_tx_count as u64,
+            block.transactions.len() as u64,
+        ),
         gas_weighted_conflict_percentage: block_weighted_conflict_parts(block)
             .and_then(|(num, den)| weighted_percentage(num, den)),
         wave_count: waves.len(),
@@ -715,6 +861,63 @@ fn trace_warning_message(warning: &TraceParseWarning) -> String {
         Some(tx_index) => format!("tx_index {}: {}", tx_index.0, warning.message),
         None => warning.message.clone(),
     }
+}
+
+fn overlapping_tx_count(trace: &BlockAccessTrace) -> usize {
+    let keys_by_tx = trace
+        .transactions
+        .iter()
+        .map(|tx| {
+            let set = tx.access_set();
+            let keys = set
+                .reads
+                .union(&set.writes)
+                .cloned()
+                .collect::<BTreeSet<_>>();
+            (tx.tx_index, keys)
+        })
+        .collect::<Vec<_>>();
+    let mut overlapping = BTreeSet::new();
+    for left in 0..keys_by_tx.len() {
+        for right in (left + 1)..keys_by_tx.len() {
+            if keys_by_tx[left]
+                .1
+                .iter()
+                .any(|key| keys_by_tx[right].1.contains(key))
+            {
+                overlapping.insert(keys_by_tx[left].0);
+                overlapping.insert(keys_by_tx[right].0);
+            }
+        }
+    }
+    overlapping.len()
+}
+
+fn worst_serializing_txs(blocks: &[BlockDossier], limit: usize) -> Vec<SerializingTxSummary> {
+    let mut out = blocks
+        .iter()
+        .flat_map(|block| {
+            block.tx_summaries.iter().map(|tx| SerializingTxSummary {
+                block_number: block.block_number,
+                tx_index: tx.tx_index,
+                tx_hash: tx.tx_hash.clone(),
+                wave: tx.wave,
+                conflict_degree: tx.conflict_degree,
+                duration_units: tx.duration_units,
+            })
+        })
+        .filter(|tx| tx.conflict_degree > 0)
+        .collect::<Vec<_>>();
+    out.sort_by(|left, right| {
+        right
+            .conflict_degree
+            .cmp(&left.conflict_degree)
+            .then_with(|| right.duration_units.cmp(&left.duration_units))
+            .then_with(|| left.block_number.cmp(&right.block_number))
+            .then_with(|| left.tx_index.cmp(&right.tx_index))
+    });
+    out.truncate(limit);
+    out
 }
 
 fn duration_map(block: &TracePackBlock, gas_complete: bool) -> BTreeMap<TxIndex, u64> {
@@ -1205,6 +1408,7 @@ mod tests {
         assert_eq!(dossier.conflict_pair_count, 3);
         assert_eq!(dossier.critical_path_length_by_tx, 3);
         assert_eq!(dossier.gas_weighted_critical_path, Some(160));
+        assert!((dossier.gas_weighted_conflict_percentage.unwrap() - 59.259).abs() < 0.01);
     }
 
     #[test]
@@ -1228,6 +1432,19 @@ mod tests {
     }
 
     #[test]
+    fn worker_simulation_invariants_hold() {
+        let pack = demo_pack();
+        let dossier = analyze_trace_pack(&pack, &[1, 2, 4, 8]);
+        let mut previous = u64::MAX;
+        for simulation in &dossier.worker_simulation {
+            assert!(simulation.makespan <= previous);
+            assert!(simulation.critical_path_bound <= simulation.makespan);
+            previous = simulation.makespan;
+        }
+        assert_eq!(dossier.worker_simulation[0].makespan, 180);
+    }
+
+    #[test]
     fn gas_missing_falls_back_to_unit_duration() {
         let mut pack = demo_pack();
         pack.blocks[0].total_gas_used = None;
@@ -1248,6 +1465,39 @@ mod tests {
 
         assert_eq!(dossier.top_hot_storage_slots[0].touching_txs, 3);
         assert_eq!(dossier.top_hot_storage_slots[0].conflict_contribution, 3);
+        assert_eq!(
+            dossier.contention_concentration.top_1_conflict_percent,
+            100.0
+        );
+    }
+
+    #[test]
+    fn overlap_coverage_and_worst_txs_are_reported() {
+        let mut pack = demo_pack();
+        pack.blocks[0].source_tx_count = Some(8);
+
+        let dossier = analyze_trace_pack(&pack, &[1, 2]);
+
+        assert_eq!(dossier.source_tx_count, Some(8));
+        assert_eq!(dossier.tx_coverage_percentage, Some(50.0));
+        assert_eq!(dossier.overlapping_tx_count, 3);
+        assert_eq!(dossier.overlapping_tx_percentage, 75.0);
+        assert_eq!(dossier.wave_count, 3);
+        assert_eq!(dossier.max_wave_width, 2);
+        assert_eq!(dossier.worst_serializing_txs[0].tx_index, 2);
+        assert_eq!(dossier.worst_serializing_txs[0].duration_units, 60);
+    }
+
+    #[test]
+    fn access_hints_are_deterministic_and_render_markdown() {
+        let pack = demo_pack();
+        let left = recommend_access_lists(&pack);
+        let right = recommend_access_lists(&pack);
+
+        assert_eq!(left.deterministic_hash, right.deterministic_hash);
+        let markdown = render_access_hints_markdown(&left);
+        assert!(markdown.contains("Observed Access Hints"));
+        assert!(markdown.contains("not complete production Ethereum access lists"));
     }
 
     #[test]
@@ -1298,6 +1548,7 @@ mod tests {
                 block_hash: Some(format!("0x{:064x}", 1)),
                 parent_hash: Some(format!("0x{:064x}", 0)),
                 tx_count: 4,
+                source_tx_count: Some(4),
                 total_gas_used: Some(180),
                 transactions: vec![
                     tx(0, 50, &contract, Some(&slot)),
