@@ -48,31 +48,38 @@ cargo run --release -p parallel-revm-lab -- bench \
 
 Real Base trace-backed case study available:
 
-- `case-studies/base-38014901-real-sample/executive-summary.md`
-- `case-studies/base-38014901-real-sample/dossier.html`
-- `trace-packs/base-38014901-real-sample/`
+- `case-studies/base-38014901-execution-dossier/executive-summary.md`
+- `case-studies/base-38014901-execution-dossier/dossier.html`
+- `case-studies/base-38014901-execution-dossier/optimization-memo.md`
+- `trace-packs/base-38014901-full/`
 
-This is a 25-transaction real sample from Base block `38014901`, not a full-block analysis.
+This is a full-block real trace-backed analysis of Base block `38014901`.
 
 Headline findings:
 
 | metric | value |
 | --- | ---: |
 | block | `38014901` |
-| txs covered | 25 of 436 (5.734%) |
-| gas covered | 3,584,277 |
-| conflict pairs | 1 (0.333%) |
-| gas-weighted conflict percentage | 0.564% |
-| overlapping transactions | 22 (88.000%) |
-| waves | 2 |
-| max wave width | 24 |
-| gas-weighted critical path | 563,160 |
-| theoretical ceiling by gas | 6.365x |
-| 16-worker simulated speedup | 6.168x |
-| top hot contract | `0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789` |
-| top conflict slot | `0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789:0x...0002` |
+| txs covered | 436 of 436 (100.000%) |
+| gas covered | 71,655,982 |
+| observed accesses | 27,034 |
+| unique contracts | 386 |
+| unique storage slots | 4,321 |
+| conflict pairs | 5,052 (5.327%) |
+| gas-weighted conflict percentage | 7.172% |
+| overlapping transactions | 403 (92.431%) |
+| waves | 60 |
+| max wave width | 106 |
+| gas-weighted critical path | 16,951,990 |
+| theoretical ceiling by gas | 4.227x |
+| canonical 16-worker simulated speedup | 4.227x |
+| critical-path scheduler speedup at 4 workers | 4.000x |
+| top hot contract | `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913` |
+| top conflict slot | `0x4200000000000000000000000000000000000006:0x0d52ad225b9f8da090dc37c741705dabc30f648dce00d7b0cab66994a1261ea6` |
 
-The sample has high observed key overlap but only one write-related conflict pair under this repository's access model. Caveat: the tracer records storage opcodes only, and the sample covers 5.734% of the block's transactions.
+The block has high observed key overlap but substantially less write-dependent serialization: 92.431% of transactions shared at least one observed key, while pairwise conflicts were 5.327%. Scheduler ablation shows critical-path ready-queue priority improving the canonical schedule by 7.460% at 4 workers and reaching the gas critical-path bound at 8 and 16 workers.
+
+Caveat: the tracer records observed storage accesses, not complete EVM access lists, and the schedule is theoretical. The trace-derived benchmark is synthetic execution over observed topology, not full block replay.
 
 The larger public target range remains:
 
@@ -122,7 +129,7 @@ cargo run -p parallel-revm-lab -- rpc-capability-check \
 
 If the environment does not provide `BASE_RPC_URL`, the command fails before network access with a clear missing-URL message. If a provider lacks `debug_traceTransaction` or custom JavaScript tracer support, the command reports that capability gap without printing the RPC URL.
 
-Collect the smallest real sample first:
+Collect the full block used by the committed case study:
 
 ```sh
 cargo run -p parallel-revm-lab -- collect-block-range \
@@ -131,12 +138,11 @@ cargo run -p parallel-revm-lab -- collect-block-range \
   --end-block 38014901 \
   --rpc-url "$BASE_RPC_URL" \
   --tracer geth-js-storage \
-  --out trace-packs/base-38014901-real-sample \
-  --max-transactions 25 \
+  --out trace-packs/base-38014901-full \
   --resume
 ```
 
-If that succeeds and the compact trace pack remains reviewable, expand to the public range:
+If that succeeds and the compact trace pack remains reviewable, optionally expand to the public range:
 
 ```sh
 cargo run -p parallel-revm-lab -- collect-block-range \
@@ -155,21 +161,32 @@ Then analyze the collected trace pack:
 
 ```sh
 cargo run -p parallel-revm-lab -- analyze-trace-pack \
-  --trace-dir trace-packs/base-38014901-38014910 \
+  --trace-dir trace-packs/base-38014901-full \
   --workers 1,2,4,8,16 \
-  --out case-studies/base-38014901-38014910/dossier.json \
-  --markdown case-studies/base-38014901-38014910/summary.md \
-  --html case-studies/base-38014901-38014910/dossier.html \
-  --trace case-studies/base-38014901-38014910/schedule.trace.json
+  --out case-studies/base-38014901-execution-dossier/dossier.json \
+  --markdown case-studies/base-38014901-execution-dossier/executive-summary.md \
+  --html case-studies/base-38014901-execution-dossier/dossier.html \
+  --trace case-studies/base-38014901-execution-dossier/schedule.trace.json
 ```
 
 Observed access hints can be generated with:
 
 ```sh
 cargo run -p parallel-revm-lab -- recommend-access-lists \
-  --trace-dir trace-packs/base-38014901-real-sample \
-  --out case-studies/base-38014901-real-sample/access-hints.json \
-  --markdown case-studies/base-38014901-real-sample/access-hints.md
+  --trace-dir trace-packs/base-38014901-full \
+  --out case-studies/base-38014901-execution-dossier/access-hints.json \
+  --markdown case-studies/base-38014901-execution-dossier/access-hints.md
+```
+
+Run the trace-derived synthetic benchmark:
+
+```sh
+cargo run --release -p parallel-revm-lab -- bench-trace-pack \
+  --trace-dir trace-packs/base-38014901-full \
+  --mode all \
+  --threads 1,2,4,8,16 \
+  --vm-steps-per-gas 1 \
+  --out case-studies/base-38014901-execution-dossier/trace-derived-benchmark.json
 ```
 
 ## What Is Real Vs Synthetic
@@ -179,7 +196,7 @@ cargo run -p parallel-revm-lab -- recommend-access-lists \
 | synthetic scheduler | generated workload | sequential equivalence of implemented schedulers | EVM semantics |
 | demo trace pack | synthetic/demo fixture | dossier schema, gas-weighted scheduling, hot-state analysis | Base mainnet behavior |
 | Geth tracer | optional RPC collection tool | compact storage observation path where providers support JS tracers | provider-wide trace compatibility |
-| real Base sample | user-collected RPC trace pack | real observed storage contention for 25 txs from Base block 38014901 | full-block or full-range representativeness |
+| real Base block | user-collected RPC trace pack | real observed storage contention for Base block 38014901 | full-range representativeness or production throughput |
 | revm smoke | real `revm` bytecode | inspector storage observations can feed trace packs and dossiers | full block replay |
 
 ## What It Demonstrates
@@ -226,15 +243,16 @@ just validate
 - `crates/cli`: `parallel-revm-lab` command-line interface.
 - `tracers/geth-storage-access-tracer.js`: compact Geth JS storage tracer.
 - `trace-packs/demo-mini`: committed synthetic demo trace pack.
-- `case-studies/base-38014901-real-sample`: committed real Base sample dossier.
+- `trace-packs/base-38014901-full`: committed compact real Base block trace pack.
+- `case-studies/base-38014901-execution-dossier`: committed full-block real Base dossier.
 - `case-studies/demo-trace-pack`: committed offline demo dossier.
 - `case-studies/base-38014901-38014910`: full-range reproduction notes.
 
 ## What To Review In 90 Seconds
 
-1. `case-studies/base-38014901-real-sample/executive-summary.md`
-2. `case-studies/base-38014901-real-sample/optimization-memo.md`
-3. `case-studies/base-38014901-real-sample/dossier.html`
+1. `case-studies/base-38014901-execution-dossier/executive-summary.md`
+2. `case-studies/base-38014901-execution-dossier/optimization-memo.md`
+3. `case-studies/base-38014901-execution-dossier/dossier.html`
 4. `case-studies/demo-trace-pack/summary.md`
 5. `crates/trace-model/src/trace_pack.rs`
 6. `crates/analyzer/src/dossier.rs`

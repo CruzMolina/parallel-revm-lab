@@ -46,7 +46,9 @@ pub struct TracePackDossier {
     pub worst_blocks_by_gas_weighted_critical_path: Vec<WorstBlockSummary>,
     pub worst_serializing_txs: Vec<SerializingTxSummary>,
     pub worker_simulation: Vec<WorkerSimulation>,
+    pub scheduler_ablation: Vec<SchedulerAblation>,
     pub blocks: Vec<BlockDossier>,
+    pub warning_summary: Vec<WarningSummary>,
     pub warnings: Vec<String>,
     pub deterministic_hash: String,
 }
@@ -151,6 +153,26 @@ pub struct WorkerSimulation {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SchedulerAblation {
+    pub strategy: String,
+    pub workers: usize,
+    pub makespan: u64,
+    pub speedup_vs_canonical_one_worker: f64,
+    pub idle_percentage: f64,
+    pub ready_queue_wait_units: u64,
+    pub critical_path_bound: u64,
+    pub improvement_vs_canonical_percent: f64,
+    pub preserves_dependencies: bool,
+    pub interpretation: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct WarningSummary {
+    pub warning: String,
+    pub count: usize,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AccessListRecommendationReport {
     pub report_version: String,
     pub chain: String,
@@ -190,6 +212,15 @@ pub struct SchedulingTxHint {
 struct ScheduleStats {
     makespan: u64,
     idle_percentage: f64,
+    ready_queue_wait_units: u64,
+    preserves_dependencies: bool,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+enum SchedulerStrategy {
+    Canonical,
+    GasLpt,
+    CriticalPath,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -300,6 +331,7 @@ pub fn analyze_trace_pack(pack: &TracePack, workers: &[usize]) -> TracePackDossi
         source_tx_present.then(|| percentage(total_tx as u64, source_tx_total as u64));
     let overlapping_tx_percentage = percentage(overlapping_tx_total as u64, total_tx as u64);
     let worst_serializing_txs = worst_serializing_txs(&blocks, 10);
+    let scheduler_ablation = range_scheduler_ablation(&normalized.blocks, &workers);
     let mut dossier = TracePackDossier {
         report_version: "trace-pack-dossier-v1".to_owned(),
         chain: normalized.manifest.chain.to_string(),
@@ -361,7 +393,9 @@ pub fn analyze_trace_pack(pack: &TracePack, workers: &[usize]) -> TracePackDossi
         worst_blocks_by_gas_weighted_critical_path: worst_by_gas_path(&blocks, 5),
         worst_serializing_txs,
         worker_simulation,
+        scheduler_ablation,
         blocks,
+        warning_summary: warning_summary(&warnings, total_tx),
         warnings,
         deterministic_hash: String::new(),
     };
@@ -399,6 +433,7 @@ pub fn render_dossier_markdown(dossier: &TracePackDossier) -> String {
         "- Overlapping transactions: {} ({:.3}%)\n",
         dossier.overlapping_tx_count, dossier.overlapping_tx_percentage
     ));
+    out.push_str("- Overlap is broader than serialization: read-compatible overlap can be high even when write-dependent conflict pairs and waves stay low.\n");
     out.push_str(&format!("- Waves: {}\n", dossier.wave_count));
     out.push_str(&format!("- Max wave width: {}\n", dossier.max_wave_width));
     out.push_str(&format!(
@@ -430,6 +465,25 @@ pub fn render_dossier_markdown(dossier: &TracePackDossier) -> String {
             simulation.idle_percentage,
             simulation.interpretation
         ));
+    }
+    if !dossier.scheduler_ablation.is_empty() {
+        out.push_str("\n## Scheduler Ablation\n\n");
+        out.push_str("All strategies preserve observed dependencies; they only change deterministic ready-queue priority.\n\n");
+        out.push_str("| strategy | workers | makespan | speedup vs canonical 1-worker | idle | ready wait | critical-path bound | improvement vs canonical | deps preserved |\n| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n");
+        for item in &dossier.scheduler_ablation {
+            out.push_str(&format!(
+                "| `{}` | {} | {} | {:.3}x | {:.2}% | {} | {} | {:.2}% | {} |\n",
+                item.strategy,
+                item.workers,
+                item.makespan,
+                item.speedup_vs_canonical_one_worker,
+                item.idle_percentage,
+                item.ready_queue_wait_units,
+                item.critical_path_bound,
+                item.improvement_vs_canonical_percent,
+                item.preserves_dependencies
+            ));
+        }
     }
     if !dossier.worst_serializing_txs.is_empty() {
         out.push_str("\n## Worst Serializing Transactions\n\n| block | tx | wave | conflicts | duration | tx hash |\n| ---: | ---: | ---: | ---: | ---: | --- |\n");
@@ -466,11 +520,12 @@ pub fn render_dossier_markdown(dossier: &TracePackDossier) -> String {
             item.conflict_contribution
         ));
     }
-    if !dossier.warnings.is_empty() {
-        out.push_str("\n## Warnings\n\n");
-        for warning in &dossier.warnings {
-            out.push_str(&format!("- {warning}\n"));
+    if !dossier.warning_summary.is_empty() {
+        out.push_str("\n## Warning Summary\n\n");
+        for warning in &dossier.warning_summary {
+            out.push_str(&format!("- {}\n", warning.warning));
         }
+        out.push_str("\nFull per-transaction warnings are preserved in `dossier.json`.\n");
     }
     out.push_str("\n## What This Proves\n\nThis dossier shows deterministic access-contention structure, hot-state concentration, gas-weighted theoretical scheduling bounds where gas is available, and worker-count sensitivity for the supplied trace pack.\n\n## What This Does Not Prove\n\nIt is not production TPS, not Ggas/s, not full block replay, and not proof that observed access hints are complete Ethereum access lists.\n");
     out
@@ -522,9 +577,28 @@ pub fn render_dossier_html(dossier: &TracePackDossier, command: &str) -> String 
         .collect::<Vec<_>>()
         .join("");
     let warnings = dossier
-        .warnings
+        .warning_summary
         .iter()
-        .map(|warning| format!("<li>{}</li>", escape_html(warning)))
+        .map(|warning| format!("<li>{}</li>", escape_html(&warning.warning)))
+        .collect::<Vec<_>>()
+        .join("");
+    let scheduler_rows = dossier
+        .scheduler_ablation
+        .iter()
+        .map(|item| {
+            format!(
+                "<tr><td><code>{}</code></td><td>{}</td><td>{}</td><td>{:.3}x</td><td>{:.2}%</td><td>{}</td><td>{}</td><td>{:.2}%</td><td>{}</td></tr>",
+                escape_html(&item.strategy),
+                item.workers,
+                item.makespan,
+                item.speedup_vs_canonical_one_worker,
+                item.idle_percentage,
+                item.ready_queue_wait_units,
+                item.critical_path_bound,
+                item.improvement_vs_canonical_percent,
+                item.preserves_dependencies
+            )
+        })
         .collect::<Vec<_>>()
         .join("");
     let serializing_rows = dossier
@@ -544,7 +618,7 @@ pub fn render_dossier_html(dossier: &TracePackDossier, command: &str) -> String 
         .collect::<Vec<_>>()
         .join("");
     format!(
-        "<!doctype html><html><head><meta charset=\"utf-8\"><title>Contention Dossier</title><style>body{{font-family:system-ui,sans-serif;margin:32px;line-height:1.45;max-width:1180px}}.badge{{display:inline-block;border:1px solid #999;padding:3px 8px;border-radius:4px}}.cards{{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:18px 0}}.card{{border:1px solid #ddd;padding:12px;border-radius:6px}}table{{border-collapse:collapse;width:100%;margin:12px 0 24px}}td,th{{border:1px solid #ddd;padding:6px;text-align:left;vertical-align:top}}code{{font-size:12px}}</style></head><body><h1>Contention Dossier</h1><p><span class=\"badge\">{}</span></p><p>{} blocks {}-{}</p><div class=\"cards\"><div class=\"card\"><b>txs</b><br>{}</div><div class=\"card\"><b>coverage</b><br>{}</div><div class=\"card\"><b>conflicts</b><br>{} ({:.3}%)</div><div class=\"card\"><b>overlap</b><br>{} ({:.3}%)</div><div class=\"card\"><b>waves</b><br>{} / max width {}</div><div class=\"card\"><b>tx ceiling</b><br>{:.3}x</div><div class=\"card\"><b>gas ceiling</b><br>{}</div></div><h2>Worker Simulation</h2><table><tr><th>workers</th><th>makespan</th><th>speedup</th><th>idle</th><th>interpretation</th></tr>{}</table><h2>Worst Serializing Transactions</h2><table><tr><th>block</th><th>tx</th><th>wave</th><th>conflicts</th><th>duration</th><th>tx hash</th></tr>{}</table><h2>Hot Contracts</h2><table><tr><th>contract</th><th>txs</th><th>unique slots</th><th>gas covered</th><th>conflicts</th></tr>{}</table><h2>Hot Storage Slots</h2><table><tr><th>slot</th><th>txs</th><th>gas covered</th><th>conflicts</th></tr>{}</table><h2>Warnings</h2><ul>{}</ul><h2>Commands</h2><pre>{}</pre><h2>What This Does Not Prove</h2><p>This is a theoretical scheduling and contention model over observed trace-pack accesses. It is not production TPS, not Ggas/s, not full block replay, and not a complete Ethereum access-list generator.</p></body></html>",
+        "<!doctype html><html><head><meta charset=\"utf-8\"><title>Contention Dossier</title><style>body{{font-family:system-ui,sans-serif;margin:32px;line-height:1.45;max-width:1180px}}.badge{{display:inline-block;border:1px solid #999;padding:3px 8px;border-radius:4px}}.cards{{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:18px 0}}.card{{border:1px solid #ddd;padding:12px;border-radius:6px}}table{{border-collapse:collapse;width:100%;margin:12px 0 24px}}td,th{{border:1px solid #ddd;padding:6px;text-align:left;vertical-align:top}}code{{font-size:12px}}</style></head><body><h1>Contention Dossier</h1><p><span class=\"badge\">{}</span></p><p>{} blocks {}-{}</p><div class=\"cards\"><div class=\"card\"><b>txs</b><br>{}</div><div class=\"card\"><b>coverage</b><br>{}</div><div class=\"card\"><b>conflicts</b><br>{} ({:.3}%)</div><div class=\"card\"><b>overlap</b><br>{} ({:.3}%)</div><div class=\"card\"><b>waves</b><br>{} / max width {}</div><div class=\"card\"><b>tx ceiling</b><br>{:.3}x</div><div class=\"card\"><b>gas ceiling</b><br>{}</div></div><p>Overlap is broader than serialization: read-compatible overlap can be high even when write-dependent conflict pairs and waves stay low.</p><h2>Worker Simulation</h2><table><tr><th>workers</th><th>makespan</th><th>speedup</th><th>idle</th><th>interpretation</th></tr>{}</table><h2>Scheduler Ablation</h2><p>Strategies preserve observed dependencies and only change deterministic ready-queue priority.</p><table><tr><th>strategy</th><th>workers</th><th>makespan</th><th>speedup vs canonical 1-worker</th><th>idle</th><th>ready wait</th><th>critical path</th><th>improvement</th><th>deps</th></tr>{}</table><h2>Worst Serializing Transactions</h2><table><tr><th>block</th><th>tx</th><th>wave</th><th>conflicts</th><th>duration</th><th>tx hash</th></tr>{}</table><h2>Hot Contracts</h2><table><tr><th>contract</th><th>txs</th><th>unique slots</th><th>gas covered</th><th>conflicts</th></tr>{}</table><h2>Hot Storage Slots</h2><table><tr><th>slot</th><th>txs</th><th>gas covered</th><th>conflicts</th></tr>{}</table><h2>Warning Summary</h2><ul>{}</ul><p>Full per-transaction warnings are preserved in <code>dossier.json</code>.</p><h2>Commands</h2><pre>{}</pre><h2>What This Does Not Prove</h2><p>This is a theoretical scheduling and contention model over observed trace-pack accesses. It is not production TPS, not Ggas/s, not full block replay, and not a complete Ethereum access-list generator.</p></body></html>",
         escape_html(&dossier.provenance),
         escape_html(&dossier.chain),
         dossier.start_block,
@@ -566,6 +640,7 @@ pub fn render_dossier_html(dossier: &TracePackDossier, command: &str) -> String 
             .map(|value| format!("{value:.3}x"))
             .unwrap_or_else(|| "unavailable".to_owned()),
         worker_rows,
+        scheduler_rows,
         serializing_rows,
         contract_rows,
         slot_rows,
@@ -640,6 +715,26 @@ pub fn render_worker_simulation_csv(dossier: &TracePackDossier) -> String {
             item.idle_percentage,
             item.critical_path_bound,
             item.interpretation
+        ));
+    }
+    out
+}
+
+pub fn render_scheduler_ablation_csv(dossier: &TracePackDossier) -> String {
+    let mut out = "strategy,workers,makespan,speedup_vs_canonical_one_worker,idle_percentage,ready_queue_wait_units,critical_path_bound,improvement_vs_canonical_percent,preserves_dependencies,interpretation\n".to_owned();
+    for item in &dossier.scheduler_ablation {
+        out.push_str(&format!(
+            "{},{},{},{:.6},{:.6},{},{},{:.6},{},{}\n",
+            item.strategy,
+            item.workers,
+            item.makespan,
+            item.speedup_vs_canonical_one_worker,
+            item.idle_percentage,
+            item.ready_queue_wait_units,
+            item.critical_path_bound,
+            item.improvement_vs_canonical_percent,
+            item.preserves_dependencies,
+            csv_cell(&item.interpretation)
         ));
     }
     out
@@ -863,6 +958,42 @@ fn trace_warning_message(warning: &TraceParseWarning) -> String {
     }
 }
 
+fn warning_summary(warnings: &[String], tx_count: usize) -> Vec<WarningSummary> {
+    let mut tx_messages = BTreeMap::<String, usize>::new();
+    let mut range_warnings = Vec::new();
+    for warning in warnings {
+        if let Some(message) = tx_specific_warning_message(warning) {
+            *tx_messages.entry(message.to_owned()).or_insert(0) += 1;
+        } else {
+            range_warnings.push(warning.clone());
+        }
+    }
+
+    let mut summary = Vec::new();
+    for (message, count) in tx_messages {
+        let warning = if tx_count == 0 {
+            format!("{count} tx warning(s): {message}")
+        } else {
+            format!("{count} of {tx_count} analyzed txs: {message}")
+        };
+        summary.push(WarningSummary { warning, count });
+    }
+    range_warnings.sort();
+    range_warnings.dedup();
+    summary.extend(
+        range_warnings
+            .into_iter()
+            .map(|warning| WarningSummary { warning, count: 1 }),
+    );
+    summary
+}
+
+fn tx_specific_warning_message(warning: &str) -> Option<&str> {
+    let (_, rest) = warning.split_once(": tx_index ")?;
+    let (_, message) = rest.split_once(": ")?;
+    Some(message)
+}
+
 fn overlapping_tx_count(trace: &BlockAccessTrace) -> usize {
     let keys_by_tx = trace
         .transactions
@@ -1051,11 +1182,149 @@ fn weighted_critical_path_for_indices(
     depth.values().copied().max().unwrap_or(0)
 }
 
+fn range_scheduler_ablation(
+    blocks: &[TracePackBlock],
+    workers: &[usize],
+) -> Vec<SchedulerAblation> {
+    #[derive(Clone, Default)]
+    struct Acc {
+        makespan: u64,
+        total_duration: u64,
+        ready_queue_wait_units: u64,
+        critical_path_bound: u64,
+        preserves_dependencies: bool,
+    }
+
+    let mut acc = BTreeMap::<(SchedulerStrategy, usize), Acc>::new();
+    for block in blocks {
+        let trace = block.to_block_trace();
+        let conflicts = conflict_pairs(&trace);
+        let dependencies = dependency_graph(&conflicts);
+        let gas_complete = block.has_complete_gas();
+        let durations = duration_map(block, gas_complete);
+        let tx_indices = trace
+            .transactions
+            .iter()
+            .map(|tx| tx.tx_index)
+            .collect::<Vec<_>>();
+        let total_duration = tx_indices
+            .iter()
+            .map(|tx| durations.get(tx).copied().unwrap_or(1))
+            .sum::<u64>();
+        let critical_path =
+            weighted_critical_path_for_indices(&tx_indices, &dependencies, &durations);
+        for strategy in scheduler_strategies() {
+            for worker_count in workers {
+                let stats = simulate_strategy(
+                    &tx_indices,
+                    &dependencies,
+                    &durations,
+                    *worker_count,
+                    strategy,
+                );
+                let entry = acc.entry((strategy, *worker_count)).or_insert_with(|| Acc {
+                    preserves_dependencies: true,
+                    ..Acc::default()
+                });
+                entry.makespan += stats.makespan;
+                entry.total_duration += total_duration;
+                entry.ready_queue_wait_units += stats.ready_queue_wait_units;
+                entry.critical_path_bound += critical_path;
+                entry.preserves_dependencies &= stats.preserves_dependencies;
+            }
+        }
+    }
+
+    let canonical_one = acc
+        .get(&(SchedulerStrategy::Canonical, 1))
+        .map(|entry| entry.makespan)
+        .unwrap_or(0);
+    let mut rows = Vec::new();
+    for strategy in scheduler_strategies() {
+        for worker_count in workers {
+            let entry = acc
+                .get(&(strategy, *worker_count))
+                .cloned()
+                .unwrap_or_default();
+            let canonical_same_workers = acc
+                .get(&(SchedulerStrategy::Canonical, *worker_count))
+                .map(|entry| entry.makespan)
+                .unwrap_or(0);
+            rows.push(SchedulerAblation {
+                strategy: strategy.label().to_owned(),
+                workers: *worker_count,
+                makespan: entry.makespan,
+                speedup_vs_canonical_one_worker: if entry.makespan == 0 {
+                    0.0
+                } else {
+                    canonical_one as f64 / entry.makespan as f64
+                },
+                idle_percentage: idle_percentage(
+                    entry.total_duration,
+                    entry.makespan,
+                    *worker_count,
+                ),
+                ready_queue_wait_units: entry.ready_queue_wait_units,
+                critical_path_bound: entry.critical_path_bound,
+                improvement_vs_canonical_percent: if canonical_same_workers == 0 {
+                    0.0
+                } else {
+                    ((canonical_same_workers as f64 - entry.makespan as f64)
+                        / canonical_same_workers as f64)
+                        * 100.0
+                },
+                preserves_dependencies: entry.preserves_dependencies,
+                interpretation: scheduler_interpretation(
+                    strategy,
+                    entry.makespan,
+                    canonical_same_workers,
+                    entry.critical_path_bound,
+                ),
+            });
+        }
+    }
+    rows
+}
+
+fn scheduler_strategies() -> [SchedulerStrategy; 3] {
+    [
+        SchedulerStrategy::Canonical,
+        SchedulerStrategy::GasLpt,
+        SchedulerStrategy::CriticalPath,
+    ]
+}
+
+impl SchedulerStrategy {
+    fn label(self) -> &'static str {
+        match self {
+            SchedulerStrategy::Canonical => "canonical",
+            SchedulerStrategy::GasLpt => "gas_lpt",
+            SchedulerStrategy::CriticalPath => "critical_path",
+        }
+    }
+}
+
 fn simulate_stats(
     tx_indices: &[TxIndex],
     dependencies: &BTreeMap<TxIndex, BTreeSet<TxIndex>>,
     durations: &BTreeMap<TxIndex, u64>,
     workers: usize,
+) -> ScheduleStats {
+    simulate_strategy(
+        tx_indices,
+        dependencies,
+        durations,
+        workers,
+        SchedulerStrategy::Canonical,
+    )
+}
+
+fn simulate_strategy(
+    tx_indices: &[TxIndex],
+    dependencies: &BTreeMap<TxIndex, BTreeSet<TxIndex>>,
+    durations: &BTreeMap<TxIndex, u64>,
+    workers: usize,
+    strategy: SchedulerStrategy,
 ) -> ScheduleStats {
     let workers = workers.max(1);
     let total_duration = tx_indices
@@ -1065,19 +1334,30 @@ fn simulate_stats(
     let mut unscheduled = tx_indices.iter().copied().collect::<BTreeSet<_>>();
     let mut completed = BTreeSet::new();
     let mut running = BTreeMap::<TxIndex, u64>::new();
+    let mut starts = BTreeMap::<TxIndex, u64>::new();
+    let mut finishes = BTreeMap::<TxIndex, u64>::new();
+    let mut first_ready_at = BTreeMap::<TxIndex, u64>::new();
+    let priority = critical_path_priorities(tx_indices, dependencies, durations);
+    let mut ready_queue_wait_units = 0_u64;
     let mut now = 0_u64;
 
     while !unscheduled.is_empty() || !running.is_empty() {
-        let ready = unscheduled
+        let mut ready = unscheduled
             .iter()
             .copied()
             .filter(|tx| deps_done(*tx, dependencies, &completed))
             .collect::<Vec<_>>();
+        sort_ready(&mut ready, strategy, durations, &priority);
+        for tx in &ready {
+            first_ready_at.entry(*tx).or_insert(now);
+        }
         for tx in ready {
             if running.len() >= workers {
                 break;
             }
             unscheduled.remove(&tx);
+            starts.insert(tx, now);
+            ready_queue_wait_units += now.saturating_sub(*first_ready_at.get(&tx).unwrap_or(&now));
             running.insert(tx, now + durations.get(&tx).copied().unwrap_or(1));
         }
         if running.is_empty() {
@@ -1090,7 +1370,9 @@ fn simulate_stats(
             .filter_map(|(tx, finish)| (*finish == now).then_some(*tx))
             .collect::<Vec<_>>();
         for tx in finished {
-            running.remove(&tx);
+            if let Some(finish) = running.remove(&tx) {
+                finishes.insert(tx, finish);
+            }
             completed.insert(tx);
         }
     }
@@ -1098,7 +1380,100 @@ fn simulate_stats(
     ScheduleStats {
         makespan: now,
         idle_percentage: idle_percentage(total_duration, now, workers),
+        ready_queue_wait_units,
+        preserves_dependencies: schedule_preserves_dependencies(
+            tx_indices,
+            dependencies,
+            &starts,
+            &finishes,
+        ),
     }
+}
+
+fn sort_ready(
+    ready: &mut [TxIndex],
+    strategy: SchedulerStrategy,
+    durations: &BTreeMap<TxIndex, u64>,
+    critical_path_priority: &BTreeMap<TxIndex, u64>,
+) {
+    ready.sort_by(|left, right| match strategy {
+        SchedulerStrategy::Canonical => left.cmp(right),
+        SchedulerStrategy::GasLpt => durations
+            .get(right)
+            .copied()
+            .unwrap_or(1)
+            .cmp(&durations.get(left).copied().unwrap_or(1))
+            .then_with(|| left.cmp(right)),
+        SchedulerStrategy::CriticalPath => critical_path_priority
+            .get(right)
+            .copied()
+            .unwrap_or(1)
+            .cmp(&critical_path_priority.get(left).copied().unwrap_or(1))
+            .then_with(|| {
+                durations
+                    .get(right)
+                    .copied()
+                    .unwrap_or(1)
+                    .cmp(&durations.get(left).copied().unwrap_or(1))
+            })
+            .then_with(|| left.cmp(right)),
+    });
+}
+
+fn critical_path_priorities(
+    tx_indices: &[TxIndex],
+    dependencies: &BTreeMap<TxIndex, BTreeSet<TxIndex>>,
+    durations: &BTreeMap<TxIndex, u64>,
+) -> BTreeMap<TxIndex, u64> {
+    let mut successors = BTreeMap::<TxIndex, BTreeSet<TxIndex>>::new();
+    for tx in tx_indices {
+        successors.entry(*tx).or_default();
+    }
+    for (tx, deps) in dependencies {
+        for dep in deps {
+            successors.entry(*dep).or_default().insert(*tx);
+        }
+    }
+    let mut priority = BTreeMap::<TxIndex, u64>::new();
+    for tx in tx_indices.iter().rev() {
+        let suffix = successors
+            .get(tx)
+            .map(|children| {
+                children
+                    .iter()
+                    .filter_map(|child| priority.get(child).copied())
+                    .max()
+                    .unwrap_or(0)
+            })
+            .unwrap_or(0);
+        priority.insert(*tx, durations.get(tx).copied().unwrap_or(1) + suffix);
+    }
+    priority
+}
+
+fn schedule_preserves_dependencies(
+    tx_indices: &[TxIndex],
+    dependencies: &BTreeMap<TxIndex, BTreeSet<TxIndex>>,
+    starts: &BTreeMap<TxIndex, u64>,
+    finishes: &BTreeMap<TxIndex, u64>,
+) -> bool {
+    if starts.len() != tx_indices.len() || finishes.len() != tx_indices.len() {
+        return false;
+    }
+    for tx in tx_indices {
+        let Some(start) = starts.get(tx) else {
+            return false;
+        };
+        if let Some(deps) = dependencies.get(tx) {
+            for dep in deps {
+                match finishes.get(dep) {
+                    Some(finish) if finish <= start => {}
+                    _ => return false,
+                }
+            }
+        }
+    }
+    true
 }
 
 fn deps_done(
@@ -1128,6 +1503,32 @@ fn schedule_interpretation(makespan: u64, critical_path: u64, idle: f64) -> Stri
         "worker-bound: workers stay mostly occupied under observed dependencies".to_owned()
     } else {
         "mixed dependency/worker-bound: dependencies and idle capacity both matter".to_owned()
+    }
+}
+
+fn scheduler_interpretation(
+    strategy: SchedulerStrategy,
+    makespan: u64,
+    canonical_makespan: u64,
+    critical_path: u64,
+) -> String {
+    if makespan == critical_path {
+        return "at critical-path lower bound under observed dependencies".to_owned();
+    }
+    if strategy == SchedulerStrategy::Canonical {
+        return "baseline canonical tx-order ready queue".to_owned();
+    }
+    if canonical_makespan > 0 && makespan < canonical_makespan {
+        format!(
+            "{} improves the observed schedule by {:.2}% vs canonical at the same worker count",
+            strategy.label(),
+            ((canonical_makespan as f64 - makespan as f64) / canonical_makespan as f64) * 100.0
+        )
+    } else {
+        format!(
+            "{} does not improve canonical order for this observed dependency graph",
+            strategy.label()
+        )
     }
 }
 
@@ -1376,6 +1777,14 @@ fn option_u64(value: Option<u64>) -> String {
         .unwrap_or_else(|| "unavailable".to_owned())
 }
 
+fn csv_cell(value: &str) -> String {
+    if value.contains([',', '"', '\n']) {
+        format!("\"{}\"", value.replace('"', "\"\""))
+    } else {
+        value.to_owned()
+    }
+}
+
 fn dossier_hash(dossier: &TracePackDossier) -> String {
     let mut clone = dossier.clone();
     clone.deterministic_hash.clear();
@@ -1442,6 +1851,51 @@ mod tests {
             previous = simulation.makespan;
         }
         assert_eq!(dossier.worker_simulation[0].makespan, 180);
+    }
+
+    #[test]
+    fn scheduler_ablation_invariants_hold() {
+        let dossier = analyze_trace_pack(&scheduler_pack(), &[1, 2, 4, 8, 16]);
+        for strategy in ["canonical", "gas_lpt", "critical_path"] {
+            let rows = dossier
+                .scheduler_ablation
+                .iter()
+                .filter(|row| row.strategy == strategy)
+                .collect::<Vec<_>>();
+            assert_eq!(rows.len(), 5);
+            assert_eq!(rows[0].makespan, 4001);
+            let mut previous = u64::MAX;
+            for row in rows {
+                assert!(row.makespan <= previous);
+                assert!(row.critical_path_bound <= row.makespan);
+                assert!(row.preserves_dependencies);
+                previous = row.makespan;
+            }
+        }
+    }
+
+    #[test]
+    fn critical_path_scheduler_can_reduce_ready_queue_delay() {
+        let dossier = analyze_trace_pack(&scheduler_pack(), &[2]);
+        let canonical = dossier
+            .scheduler_ablation
+            .iter()
+            .find(|row| row.strategy == "canonical" && row.workers == 2)
+            .unwrap();
+        let critical = dossier
+            .scheduler_ablation
+            .iter()
+            .find(|row| row.strategy == "critical_path" && row.workers == 2)
+            .unwrap();
+
+        assert_eq!(canonical.makespan, 3001);
+        assert_eq!(critical.makespan, 2001);
+        assert!(critical.improvement_vs_canonical_percent > 30.0);
+        assert!(critical.ready_queue_wait_units <= canonical.ready_queue_wait_units);
+
+        let markdown = render_dossier_markdown(&dossier);
+        assert!(markdown.contains("Scheduler Ablation"));
+        assert!(markdown.contains("critical_path"));
     }
 
     #[test]
@@ -1524,6 +1978,32 @@ mod tests {
                 .unknown_incomplete_trace_warning_count
                 > 0
         );
+        assert!(dossier.warning_summary.iter().any(|warning| warning
+            .warning
+            .contains("1 of 4 analyzed txs: provider returned truncated trace")));
+    }
+
+    #[test]
+    fn markdown_groups_repeated_tx_warnings() {
+        let mut pack = demo_pack();
+        for tx in &mut pack.blocks[0].transactions {
+            tx.warnings
+                .push("trace marks read information as incomplete".to_owned());
+        }
+
+        let dossier = analyze_trace_pack(&pack, &[1]);
+        let markdown = render_dossier_markdown(&dossier);
+
+        assert!(dossier.warnings.iter().any(|warning| {
+            warning.contains("block 1: tx_index 0: trace marks read information as incomplete")
+        }));
+        assert!(
+            markdown.contains("4 of 4 analyzed txs: trace marks read information as incomplete")
+        );
+        assert!(
+            !markdown.contains("block 1: tx_index 0: trace marks read information as incomplete")
+        );
+        assert!(markdown.contains("Full per-transaction warnings are preserved"));
     }
 
     fn demo_pack() -> TracePack {
@@ -1555,6 +2035,42 @@ mod tests {
                     tx(1, 20, &contract, None),
                     tx(2, 60, &contract, Some(&slot)),
                     tx(3, 50, &contract, Some(&slot)),
+                ],
+                warnings: Vec::new(),
+            }],
+        }
+    }
+
+    fn scheduler_pack() -> TracePack {
+        let contract = Address::canonical("0x1111111111111111111111111111111111111111");
+        let hot_slot = StorageKey::canonical(format!("0x{:064x}", 1));
+        TracePack {
+            manifest: TracePackManifest {
+                schema_version: TRACE_PACK_SCHEMA_VERSION.to_owned(),
+                chain: ChainKind::new("base"),
+                source: "unit-test".to_owned(),
+                provenance: "synthetic scheduler fixture".to_owned(),
+                start_block: 1,
+                end_block: 1,
+                created_by_tool_version: "test".to_owned(),
+                tracer_kind: "unit-test".to_owned(),
+                notes: Vec::new(),
+                warnings: Vec::new(),
+            },
+            blocks: vec![TracePackBlock {
+                chain: ChainKind::new("base"),
+                block_number: 1,
+                block_hash: Some(format!("0x{:064x}", 1)),
+                parent_hash: Some(format!("0x{:064x}", 0)),
+                tx_count: 5,
+                source_tx_count: Some(5),
+                total_gas_used: Some(4001),
+                transactions: vec![
+                    tx(0, 1000, &contract, None),
+                    tx(1, 1000, &contract, None),
+                    tx(2, 1, &contract, Some(&hot_slot)),
+                    tx(3, 1000, &contract, Some(&hot_slot)),
+                    tx(4, 1000, &contract, Some(&hot_slot)),
                 ],
                 warnings: Vec::new(),
             }],

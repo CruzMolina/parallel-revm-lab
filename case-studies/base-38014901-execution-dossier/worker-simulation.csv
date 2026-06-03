@@ -1,0 +1,6 @@
+workers,makespan,speedup_vs_one_worker,idle_percentage,critical_path_bound,interpretation
+1,71655982,1.000000,0.000000,16951990,worker-bound: workers stay mostly occupied under observed dependencies
+2,36389121,1.969159,1.542027,16951990,worker-bound: workers stay mostly occupied under observed dependencies
+4,19359165,3.701398,7.465040,16951990,mixed dependency/worker-bound: dependencies and idle capacity both matter
+8,17381589,4.122522,48.468476,16951990,mixed dependency/worker-bound: dependencies and idle capacity both matter
+16,16953037,4.226734,73.582911,16951990,mixed dependency/worker-bound: dependencies and idle capacity both matter

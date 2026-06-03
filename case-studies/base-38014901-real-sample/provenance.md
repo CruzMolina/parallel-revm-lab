@@ -1,5 +1,7 @@
 # Provenance
 
+This partial sample is retained as a compact reproduction artifact. The headline full-block analysis is `case-studies/base-38014901-execution-dossier/`.
+
 - Chain: Base mainnet.
 - Block: `38014901`.
 - Block hash: `0x6a2428ff484a816874438551d68a9e036b6a5108b8dceab9fb10575534082881`.

@@ -48,6 +48,7 @@ Trace-pack dossiers extend the single-block report with range-level fields:
 - `gas_weighted_critical_path`: longest dependency path by gas duration
 - `theoretical_parallelism_ceiling_by_gas`: `total_gas_covered / gas_weighted_critical_path`
 - `worker_simulation`: deterministic list scheduling for requested worker counts
+- `scheduler_ablation`: deterministic ready-queue policy comparison for canonical, gas-LPT, and critical-path priority
 - `worst_serializing_txs`: highest conflict-degree transactions, tie-broken by duration and canonical position
 - `top_hot_contracts` and `top_hot_storage_slots`: tx count, gas, unique slots, and conflict contribution
 - `contention_concentration`: percent of conflict contributions caused by top 1/5/10 keys
@@ -56,18 +57,20 @@ Worker simulation reports a makespan in duration units, speedup versus one worke
 
 `overlapping_tx_percentage` is useful for public contention framing, but only as a same-family metric. Do not compare it as equal to another benchmark unless the trace scope, included transaction set, and access completeness model are the same.
 
-## Current Real Sample
+## Current Real Base Block
 
-`case-studies/base-38014901-real-sample/` is a user-collected Base sample from block `38014901`.
+`case-studies/base-38014901-execution-dossier/` is a user-collected full-block Base dossier for block `38014901`.
 
-- Coverage: 25 of 436 transactions, 5.734%.
-- Conflict pairs: 1, 0.333%.
-- Overlapping transactions: 22 of 25, 88.000%.
-- Gas-weighted conflict percentage: 0.564%.
-- Waves: 2, max width 24.
-- Gas-weighted critical path: 563,160.
-- Theoretical gas ceiling: 6.365x.
+- Coverage: 436 of 436 transactions, 100.000%.
+- Conflict pairs: 5,052, 5.327%.
+- Overlapping transactions: 403 of 436, 92.431%.
+- Gas-weighted conflict percentage: 7.172%.
+- Waves: 60, max width 106.
+- Gas-weighted critical path: 16,951,990.
+- Theoretical gas ceiling: 4.227x.
+- Canonical 16-worker simulated speedup: 4.227x.
+- Critical-path scheduler speedup at 4 workers: 4.000x, a 7.460% improvement over canonical at the same worker count.
 
-This is a real trace-backed storage-access sample, but it is partial and uses storage opcode observations only. It is the same metric family as public contention framing, not a full-block comparable measurement.
+This is a real trace-backed storage-access analysis for one full Base block. It is the same metric family as public contention framing, but it should not be compared as equal to another benchmark unless the trace scope and access-completeness model match.
 
-CSV sidecars are emitted for hot contracts, hot slots, and worker simulation.
+CSV sidecars are emitted for hot contracts, hot slots, worker simulation, and scheduler ablation.

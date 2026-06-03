@@ -70,9 +70,15 @@ Missing gas is allowed. Dossier reports then mark gas-weighted metrics unavailab
 
 Worker simulation uses deterministic list scheduling over the dependency graph. It uses receipt `gas_used` as task duration when available, otherwise one unit per transaction. This is a theoretical model, not measured Ggas/s.
 
+`analyze-trace-pack` also emits `scheduler-ablation.csv` beside the main dossier outputs. The ablation compares canonical ready-queue order, gas longest-processing-time priority, and critical-path priority while preserving the same observed dependencies. It is a scheduler-policy experiment, not a different execution engine.
+
 ## Observed Access Hints
 
 `recommend-access-lists` emits observed contracts and storage keys per transaction plus the keys responsible for the most observed conflicts. The output is labeled as access hints, not complete Ethereum access lists. Dynamic accesses and incomplete traces can be missing. Markdown output is available with `--markdown`.
+
+## Trace-Derived Synthetic Benchmark
+
+`bench-trace-pack` maps observed trace-pack access keys into the repository's deterministic toy transaction model and runs the existing sequential/access-list/optimistic harness. This preserves observed declared read/write topology for scheduler experiments, but it is not EVM replay and does not prove production TPS or Ggas/s.
 
 ## Conflict Assumptions
 
@@ -111,8 +117,8 @@ The capability check verifies block availability, transaction presence, receipt 
 
 Fixture mode gives reviewers deterministic artifacts with no secrets, no provider dependency, and no fabricated live-chain claim. The committed normalized fixture is synthetic and Base-shaped; the committed Geth fixture is sanitized and intentionally tiny.
 
-## Current Real Sample
+## Current Real Base Block
 
-The committed real sample is `trace-packs/base-38014901-real-sample`, collected from Base block `38014901` with the compact Geth JavaScript storage tracer. It includes the first 25 transactions from a 436-transaction block and records `source_tx_count` so dossier coverage is explicit.
+The committed real block trace pack is `trace-packs/base-38014901-full`, collected from Base block `38014901` with the compact Geth JavaScript storage tracer. It includes 436 of 436 transactions and records `source_tx_count` so dossier coverage is explicit.
 
-The corresponding case study is `case-studies/base-38014901-real-sample/`. It should be cited as a partial storage-access contention sample, not a full block or full range analysis.
+The corresponding case study is `case-studies/base-38014901-execution-dossier/`. It should be cited as a one-block storage-access contention analysis, not a full-range or production-throughput measurement.

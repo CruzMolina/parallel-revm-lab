@@ -1,0 +1,16 @@
+strategy,workers,makespan,speedup_vs_canonical_one_worker,idle_percentage,ready_queue_wait_units,critical_path_bound,improvement_vs_canonical_percent,preserves_dependencies,interpretation
+canonical,1,71655982,1.000000,0.000000,4022895361,16951990,0.000000,true,baseline canonical tx-order ready queue
+canonical,2,36389121,1.969159,1.542027,1946047757,16951990,0.000000,true,baseline canonical tx-order ready queue
+canonical,4,19359165,3.701398,7.465040,542752310,16951990,0.000000,true,baseline canonical tx-order ready queue
+canonical,8,17381589,4.122522,48.468476,188262374,16951990,0.000000,true,baseline canonical tx-order ready queue
+canonical,16,16953037,4.226734,73.582911,61373991,16951990,0.000000,true,baseline canonical tx-order ready queue
+gas_lpt,1,71655982,1.000000,0.000000,3066311505,16951990,0.000000,true,gas_lpt does not improve canonical order for this observed dependency graph
+gas_lpt,2,36994895,1.936915,3.154230,1380746646,16951990,-1.664712,true,gas_lpt does not improve canonical order for this observed dependency graph
+gas_lpt,4,22694599,3.157402,21.064939,512902291,16951990,-17.229225,true,gas_lpt does not improve canonical order for this observed dependency graph
+gas_lpt,8,18718873,3.828007,52.149909,209800774,16951990,-7.693681,true,gas_lpt does not improve canonical order for this observed dependency graph
+gas_lpt,16,17564316,4.079634,74.502287,81554763,16951990,-3.605720,true,gas_lpt does not improve canonical order for this observed dependency graph
+critical_path,1,71655982,1.000000,0.000000,7619968599,16951990,0.000000,true,critical_path does not improve canonical order for this observed dependency graph
+critical_path,2,35829941,1.999891,0.005442,3792087940,16951990,1.536668,true,critical_path improves the observed schedule by 1.54% vs canonical at the same worker count
+critical_path,4,17914903,3.999797,0.005066,1520695740,16951990,7.460353,true,critical_path improves the observed schedule by 7.46% vs canonical at the same worker count
+critical_path,8,16951990,4.226995,47.162559,295153026,16951990,2.471575,true,at critical-path lower bound under observed dependencies
+critical_path,16,16951990,4.226995,73.581279,100727251,16951990,0.006176,true,at critical-path lower bound under observed dependencies

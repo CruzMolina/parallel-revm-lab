@@ -67,7 +67,7 @@ cargo run -p parallel-revm-lab -- rpc-capability-check \
   --rpc-url "$BASE_RPC_URL"
 ```
 
-Then collect a small real sample first:
+Then collect the committed full-block case-study trace:
 
 ```sh
 cargo run -p parallel-revm-lab -- collect-block-range \
@@ -76,12 +76,11 @@ cargo run -p parallel-revm-lab -- collect-block-range \
   --end-block 38014901 \
   --rpc-url "$BASE_RPC_URL" \
   --tracer geth-js-storage \
-  --out trace-packs/base-38014901-real-sample \
-  --max-transactions 25 \
+  --out trace-packs/base-38014901-full \
   --resume
 ```
 
-If that succeeds and output remains compact, collect the full target range:
+If that succeeds and output remains compact, optionally collect the full target range:
 
 ```sh
 cargo run -p parallel-revm-lab -- collect-block-range \

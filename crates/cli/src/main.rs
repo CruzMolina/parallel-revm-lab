@@ -8,16 +8,21 @@ use parallel_revm_lab_analyzer::{
     analyze_block_trace, analyze_trace_pack as analyze_trace_pack_report,
     dossier_schedule_trace_json, recommend_access_lists, render_access_hints_markdown,
     render_dossier_html, render_dossier_markdown, render_hot_contracts_csv, render_hot_slots_csv,
-    render_html_with_command, render_markdown, render_worker_simulation_csv, schedule_trace_json,
+    render_html_with_command, render_markdown, render_scheduler_ablation_csv,
+    render_worker_simulation_csv, schedule_trace_json,
 };
 use parallel_revm_lab_executor::{
-    benchmark_report, run_access_list, run_optimistic, run_sequential, trace_json, ExecutionMode,
+    benchmark_report, run_access_list, run_optimistic, run_sequential, trace_json, BenchmarkReport,
+    ExecutionMode,
 };
+use parallel_revm_lab_model::{AccessKey, AccountId, ContractId, SlotId, State, Tx, TxKind};
 use parallel_revm_lab_trace_model::{
-    Address, BlockAccessTrace, ChainKind, TracePack, TracePackAccess, TracePackBlock,
-    TracePackManifest, TracePackTx, TxHash, TxIndex, TRACE_PACK_SCHEMA_VERSION,
+    Address, BlockAccessTrace, ChainKind, TracePack, TracePackAccess, TracePackAccessKind,
+    TracePackBlock, TracePackManifest, TracePackTx, TxHash, TxIndex, TRACE_PACK_SCHEMA_VERSION,
 };
-use parallel_revm_lab_workload::{generate_workload, WorkloadConfig, WorkloadKind};
+use parallel_revm_lab_workload::{
+    count_conflict_pairs, generate_workload, Workload, WorkloadConfig, WorkloadKind,
+};
 
 #[derive(Debug, Parser)]
 #[command(
@@ -33,6 +38,7 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Commands {
     Bench(BenchArgs),
+    BenchTracePack(BenchTracePackArgs),
     Verify(VerifyArgs),
     Inspect(InspectArgs),
     AnalyzeFixture(AnalyzeFixtureArgs),
@@ -65,6 +71,20 @@ struct BenchArgs {
     out: PathBuf,
     #[arg(long)]
     trace: Option<PathBuf>,
+}
+
+#[derive(Debug, Args)]
+struct BenchTracePackArgs {
+    #[arg(long)]
+    trace_dir: PathBuf,
+    #[arg(long, value_parser = parse_mode, default_value = "all")]
+    mode: ExecutionMode,
+    #[arg(long, default_value = "1,2,4,8,16")]
+    threads: String,
+    #[arg(long, default_value_t = 0)]
+    vm_steps_per_gas: u64,
+    #[arg(long)]
+    out: PathBuf,
 }
 
 #[derive(Debug, Args)]
@@ -248,9 +268,28 @@ struct RpcCapabilityReport {
     failures: Vec<String>,
 }
 
+#[derive(Debug, serde::Serialize)]
+struct TracePackBenchmarkReport {
+    report_version: String,
+    trace_dir: String,
+    chain: String,
+    start_block: u64,
+    end_block: u64,
+    tx_count: usize,
+    source_tx_count: Option<usize>,
+    tx_coverage_percentage: Option<f64>,
+    observed_conflict: f64,
+    conflict_pairs: u64,
+    vm_steps_per_gas: u64,
+    access_topology: String,
+    caveats: Vec<String>,
+    runs: Vec<BenchmarkReport>,
+}
+
 fn main() -> Result<()> {
     match Cli::parse().command {
         Commands::Bench(args) => bench(args),
+        Commands::BenchTracePack(args) => bench_trace_pack(args),
         Commands::Verify(args) => verify(args),
         Commands::Inspect(args) => inspect(args),
         Commands::AnalyzeFixture(args) => analyze_fixture(args),
@@ -300,6 +339,67 @@ fn bench(args: BenchArgs) -> Result<()> {
                 .unwrap_or_else(|| "baseline".to_owned())
         );
     }
+    Ok(())
+}
+
+fn bench_trace_pack(args: BenchTracePackArgs) -> Result<()> {
+    let pack = TracePack::load_dir(&args.trace_dir)
+        .with_context(|| format!("failed to load trace pack {}", args.trace_dir.display()))?;
+    let workers = parse_thread_list(&args.threads)?;
+    let workload = trace_pack_to_workload(&pack, args.vm_steps_per_gas);
+    let mut runs = Vec::new();
+    for threads in workers {
+        let report = benchmark_report(
+            &workload,
+            args.mode,
+            threads,
+            rust_version().filter(|version| !version.is_empty()),
+        )?;
+        if report.modes.iter().any(|mode| !mode.deterministic_passed) {
+            bail!(
+                "trace-derived benchmark produced a state mismatch at {} thread(s); report was not written",
+                threads
+            );
+        }
+        runs.push(report);
+    }
+
+    let source_tx_count = trace_pack_source_tx_count(&pack);
+    let tx_count = workload.txs.len();
+    let report = TracePackBenchmarkReport {
+        report_version: "trace-derived-benchmark-v1".to_owned(),
+        trace_dir: args.trace_dir.display().to_string(),
+        chain: pack.manifest.chain.to_string(),
+        start_block: pack.manifest.start_block,
+        end_block: pack.manifest.end_block,
+        tx_count,
+        source_tx_count,
+        tx_coverage_percentage: source_tx_count
+            .map(|source| percentage(tx_count as u64, source as u64)),
+        observed_conflict: workload.observed_conflict,
+        conflict_pairs: workload.conflict_pairs,
+        vm_steps_per_gas: args.vm_steps_per_gas,
+        access_topology: "observed trace-pack access keys mapped to deterministic synthetic model keys".to_owned(),
+        caveats: vec![
+            "synthetic execution benchmark; not EVM replay and not production TPS/Ggas/s".to_owned(),
+            "access-list scheduling uses observed trace-pack read/write sets; toy transactions do not reproduce contract semantics".to_owned(),
+            "optimistic mode validation is over the toy execution outcome, not full trace-derived EVM read validation".to_owned(),
+        ],
+        runs,
+    };
+    write_json(&args.out, &report)?;
+    println!(
+        "wrote trace-derived benchmark for {} txs from {} to {}",
+        report.tx_count,
+        args.trace_dir.display(),
+        args.out.display()
+    );
+    println!(
+        "conflicts={} observed_conflict={:.6} runs={}",
+        report.conflict_pairs,
+        report.observed_conflict,
+        report.runs.len()
+    );
     Ok(())
 }
 
@@ -477,6 +577,10 @@ fn analyze_trace_pack(args: AnalyzeTracePackArgs) -> Result<()> {
         write_text(
             &parent.join("worker-simulation.csv"),
             &render_worker_simulation_csv(&dossier),
+        )?;
+        write_text(
+            &parent.join("scheduler-ablation.csv"),
+            &render_scheduler_ablation_csv(&dossier),
         )?;
     }
     println!(
@@ -940,6 +1044,158 @@ fn analyze_trace_pack_command(args: &AnalyzeTracePackArgs) -> String {
     command
 }
 
+fn trace_pack_to_workload(pack: &TracePack, vm_steps_per_gas: u64) -> Workload {
+    let mut contracts = std::collections::BTreeSet::<String>::new();
+    let mut slots = std::collections::BTreeSet::<(String, String)>::new();
+    let mut accounts = std::collections::BTreeSet::<String>::new();
+    for block in &pack.blocks {
+        for tx in &block.transactions {
+            for access in &tx.accesses {
+                let address = access.address.to_string();
+                if let Some(slot) = &access.slot {
+                    contracts.insert(address.clone());
+                    slots.insert((address, slot.to_string()));
+                } else {
+                    accounts.insert(address);
+                }
+            }
+        }
+    }
+
+    let contract_ids = contracts
+        .into_iter()
+        .enumerate()
+        .map(|(index, address)| (address, ContractId(index as u64)))
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let account_ids = accounts
+        .into_iter()
+        .enumerate()
+        .map(|(index, address)| (address, AccountId(index as u64)))
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let mut next_slot_by_contract = std::collections::BTreeMap::<String, u64>::new();
+    let mut slot_ids = std::collections::BTreeMap::<(String, String), SlotId>::new();
+    for (address, slot) in slots {
+        let next = next_slot_by_contract.entry(address.clone()).or_insert(0);
+        slot_ids.insert((address, slot), SlotId(*next));
+        *next += 1;
+    }
+
+    let mut txs = Vec::new();
+    for block in &pack.blocks {
+        for tx in &block.transactions {
+            let mut declared_reads = std::collections::BTreeSet::new();
+            let mut declared_writes = std::collections::BTreeSet::new();
+            for access in &tx.accesses {
+                let key =
+                    trace_pack_access_to_model_key(access, &contract_ids, &slot_ids, &account_ids);
+                match access.kind {
+                    TracePackAccessKind::Read | TracePackAccessKind::Call => {
+                        declared_reads.insert(key);
+                    }
+                    TracePackAccessKind::Write
+                    | TracePackAccessKind::Create
+                    | TracePackAccessKind::Selfdestruct => {
+                        declared_writes.insert(key);
+                    }
+                    TracePackAccessKind::ReadWrite | TracePackAccessKind::AccountTouch => {
+                        declared_reads.insert(key.clone());
+                        declared_writes.insert(key);
+                    }
+                }
+            }
+            txs.push(Tx {
+                id: tx.tx_index.0,
+                kind: TxKind::Noop,
+                vm_steps: tx
+                    .gas_used
+                    .unwrap_or(1)
+                    .max(1)
+                    .saturating_mul(vm_steps_per_gas),
+                declared_reads,
+                declared_writes,
+            });
+        }
+    }
+
+    let conflict_pairs = count_conflict_pairs(&txs);
+    let possible_pairs = pair_count(txs.len());
+    let observed_conflict = if possible_pairs == 0 {
+        0.0
+    } else {
+        conflict_pairs as f64 / possible_pairs as f64
+    };
+    let config = WorkloadConfig {
+        kind: WorkloadKind::Mixed,
+        tx_count: txs.len(),
+        requested_conflict: observed_conflict,
+        vm_steps: vm_steps_per_gas,
+        accounts: account_ids.len().max(2) as u64,
+        contracts: contract_ids.len().max(1) as u64,
+        hot_slots: slot_ids.len().max(1) as u64,
+        seed: 0,
+    };
+    Workload {
+        config,
+        initial_state: State::new(),
+        txs,
+        conflict_pairs,
+        observed_conflict,
+    }
+}
+
+fn trace_pack_access_to_model_key(
+    access: &TracePackAccess,
+    contract_ids: &std::collections::BTreeMap<String, ContractId>,
+    slot_ids: &std::collections::BTreeMap<(String, String), SlotId>,
+    account_ids: &std::collections::BTreeMap<String, AccountId>,
+) -> AccessKey {
+    let address = access.address.to_string();
+    if let Some(slot) = &access.slot {
+        let contract = *contract_ids
+            .get(&address)
+            .expect("contract ids are precomputed from all storage accesses");
+        let slot = *slot_ids
+            .get(&(address, slot.to_string()))
+            .expect("slot ids are precomputed from all storage accesses");
+        AccessKey::storage(contract, slot)
+    } else {
+        let account = *account_ids
+            .get(&address)
+            .expect("account ids are precomputed from all non-storage accesses");
+        AccessKey::account_balance(account)
+    }
+}
+
+fn trace_pack_source_tx_count(pack: &TracePack) -> Option<usize> {
+    let mut total = 0_usize;
+    let mut present = false;
+    for block in &pack.blocks {
+        if let Some(source) = block.source_tx_count {
+            total += source;
+            present = true;
+        } else {
+            total += block.transactions.len();
+        }
+    }
+    present.then_some(total)
+}
+
+fn percentage(numerator: u64, denominator: u64) -> f64 {
+    if denominator == 0 {
+        0.0
+    } else {
+        (numerator as f64 / denominator as f64) * 100.0
+    }
+}
+
+fn pair_count(len: usize) -> u64 {
+    if len < 2 {
+        0
+    } else {
+        (len as u64 * (len as u64 - 1)) / 2
+    }
+}
+
 fn analyze_block(args: AnalyzeBlockArgs) -> Result<()> {
     let env_key = match args.chain.as_str() {
         "base" => "BASE_RPC_URL",
@@ -1229,6 +1485,8 @@ fn format_accesses(
 
 #[cfg(test)]
 mod tests {
+    use parallel_revm_lab_trace_model::StorageKey;
+
     use super::*;
 
     #[test]
@@ -1306,6 +1564,20 @@ mod tests {
         assert!(err.contains("expected 42"));
     }
 
+    #[test]
+    fn trace_pack_benchmark_workload_preserves_declared_conflicts() {
+        let pack = test_trace_pack_for_benchmark();
+        let left = trace_pack_to_workload(&pack, 0);
+        let right = trace_pack_to_workload(&pack, 0);
+
+        assert_eq!(left.txs, right.txs);
+        assert_eq!(left.conflict_pairs, 1);
+        assert_eq!(left.observed_conflict, 1.0);
+        assert_eq!(left.txs[0].declared_reads.len(), 1);
+        assert_eq!(left.txs[0].declared_writes.len(), 1);
+        assert_eq!(trace_pack_source_tx_count(&pack), Some(2));
+    }
+
     fn test_trace_pack_block(block_number: u64) -> TracePackBlock {
         TracePackBlock {
             chain: ChainKind::new("base"),
@@ -1330,6 +1602,72 @@ mod tests {
                 warnings: Vec::new(),
             }],
             warnings: Vec::new(),
+        }
+    }
+
+    fn test_trace_pack_for_benchmark() -> TracePack {
+        let address = Address::canonical("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+        let slot = StorageKey::canonical(format!("0x{:064x}", 7));
+        let mut block = test_trace_pack_block(50);
+        block.tx_count = 2;
+        block.source_tx_count = Some(2);
+        block.total_gas_used = Some(14);
+        block.transactions = vec![
+            TracePackTx {
+                tx_index: TxIndex(0),
+                tx_hash: TxHash(format!("0x{:064x}", 50)),
+                from: Some(Address::canonical(
+                    "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                )),
+                to: Some(address.clone()),
+                gas_used: Some(7),
+                status: Some("0x1".to_owned()),
+                accesses: vec![TracePackAccess {
+                    address: address.clone(),
+                    slot: Some(slot.clone()),
+                    kind: TracePackAccessKind::ReadWrite,
+                    op: Some("SSTORE".to_owned()),
+                    pc: Some(0),
+                    depth: Some(1),
+                    gas_remaining: Some(100),
+                }],
+                warnings: Vec::new(),
+            },
+            TracePackTx {
+                tx_index: TxIndex(1),
+                tx_hash: TxHash(format!("0x{:064x}", 51)),
+                from: Some(Address::canonical(
+                    "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab",
+                )),
+                to: Some(address.clone()),
+                gas_used: Some(7),
+                status: Some("0x1".to_owned()),
+                accesses: vec![TracePackAccess {
+                    address,
+                    slot: Some(slot),
+                    kind: TracePackAccessKind::Read,
+                    op: Some("SLOAD".to_owned()),
+                    pc: Some(0),
+                    depth: Some(1),
+                    gas_remaining: Some(100),
+                }],
+                warnings: Vec::new(),
+            },
+        ];
+        TracePack {
+            manifest: TracePackManifest {
+                schema_version: TRACE_PACK_SCHEMA_VERSION.to_owned(),
+                chain: ChainKind::new("synthetic-base-shaped"),
+                source: "unit-test".to_owned(),
+                provenance: "synthetic trace-pack benchmark fixture".to_owned(),
+                start_block: 50,
+                end_block: 50,
+                created_by_tool_version: "test".to_owned(),
+                tracer_kind: "unit-test".to_owned(),
+                notes: Vec::new(),
+                warnings: Vec::new(),
+            },
+            blocks: vec![block],
         }
     }
 }

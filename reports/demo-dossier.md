@@ -11,6 +11,7 @@
 - Accesses: 7
 - Conflict pairs: 2 (22.222%)
 - Overlapping transactions: 4 (57.143%)
+- Overlap is broader than serialization: read-compatible overlap can be high even when write-dependent conflict pairs and waves stay low.
 - Waves: 4
 - Max wave width: 3
 - Critical path by tx count: 4
@@ -27,6 +28,25 @@
 | 2 | 405 | 1.593x | 20.37% | dependency-bound: makespan is at the critical-path lower bound |
 | 4 | 405 | 1.593x | 60.19% | dependency-bound: makespan is at the critical-path lower bound |
 | 8 | 405 | 1.593x | 80.09% | dependency-bound: makespan is at the critical-path lower bound |
+
+## Scheduler Ablation
+
+All strategies preserve observed dependencies; they only change deterministic ready-queue priority.
+
+| strategy | workers | makespan | speedup vs canonical 1-worker | idle | ready wait | critical-path bound | improvement vs canonical | deps preserved |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `canonical` | 1 | 645 | 1.000x | 0.00% | 620 | 405 | 0.00% | true |
+| `canonical` | 2 | 405 | 1.593x | 20.37% | 50 | 405 | 0.00% | true |
+| `canonical` | 4 | 405 | 1.593x | 60.19% | 0 | 405 | 0.00% | true |
+| `canonical` | 8 | 405 | 1.593x | 80.09% | 0 | 405 | 0.00% | true |
+| `gas_lpt` | 1 | 645 | 1.000x | 0.00% | 630 | 405 | 0.00% | true |
+| `gas_lpt` | 2 | 405 | 1.593x | 20.37% | 80 | 405 | 0.00% | true |
+| `gas_lpt` | 4 | 405 | 1.593x | 60.19% | 0 | 405 | 0.00% | true |
+| `gas_lpt` | 8 | 405 | 1.593x | 80.09% | 0 | 405 | 0.00% | true |
+| `critical_path` | 1 | 645 | 1.000x | 0.00% | 720 | 405 | 0.00% | true |
+| `critical_path` | 2 | 405 | 1.593x | 20.37% | 80 | 405 | 0.00% | true |
+| `critical_path` | 4 | 405 | 1.593x | 60.19% | 0 | 405 | 0.00% | true |
+| `critical_path` | 8 | 405 | 1.593x | 80.09% | 0 | 405 | 0.00% | true |
 
 ## Worst Serializing Transactions
 
@@ -54,20 +74,16 @@
 | `0x1111111111111111111111111111111111111111:0x0000000000000000000000000000000000000000000000000000000000000002` | 1 | 80 | 0 |
 | `0x2222222222222222222222222222222222222222:0x0000000000000000000000000000000000000000000000000000000000000001` | 1 | 50 | 0 |
 
-## Warnings
+## Warning Summary
 
+- 7 of 7 analyzed txs: trace marks read information as incomplete
 - Synthetic demo fixture; do not cite as real-chain evidence.
 - block 900000001: Block uses a synthetic number and is not a Base RPC capture.
 - block 900000001: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical
-- block 900000001: tx_index 0: trace marks read information as incomplete
-- block 900000001: tx_index 1: trace marks read information as incomplete
-- block 900000001: tx_index 2: trace marks read information as incomplete
-- block 900000001: tx_index 3: trace marks read information as incomplete
 - block 900000002: Block uses a synthetic number and is not a Base RPC capture.
 - block 900000002: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical
-- block 900000002: tx_index 0: trace marks read information as incomplete
-- block 900000002: tx_index 1: trace marks read information as incomplete
-- block 900000002: tx_index 2: trace marks read information as incomplete
+
+Full per-transaction warnings are preserved in `dossier.json`.
 
 ## What This Proves
 

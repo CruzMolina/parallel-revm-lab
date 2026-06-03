@@ -1,0 +1,13 @@
+strategy,workers,makespan,speedup_vs_canonical_one_worker,idle_percentage,ready_queue_wait_units,critical_path_bound,improvement_vs_canonical_percent,preserves_dependencies,interpretation
+canonical,1,645,1.000000,0.000000,620,405,0.000000,true,baseline canonical tx-order ready queue
+canonical,2,405,1.592593,20.370370,50,405,0.000000,true,at critical-path lower bound under observed dependencies
+canonical,4,405,1.592593,60.185185,0,405,0.000000,true,at critical-path lower bound under observed dependencies
+canonical,8,405,1.592593,80.092593,0,405,0.000000,true,at critical-path lower bound under observed dependencies
+gas_lpt,1,645,1.000000,0.000000,630,405,0.000000,true,gas_lpt does not improve canonical order for this observed dependency graph
+gas_lpt,2,405,1.592593,20.370370,80,405,0.000000,true,at critical-path lower bound under observed dependencies
+gas_lpt,4,405,1.592593,60.185185,0,405,0.000000,true,at critical-path lower bound under observed dependencies
+gas_lpt,8,405,1.592593,80.092593,0,405,0.000000,true,at critical-path lower bound under observed dependencies
+critical_path,1,645,1.000000,0.000000,720,405,0.000000,true,critical_path does not improve canonical order for this observed dependency graph
+critical_path,2,405,1.592593,20.370370,80,405,0.000000,true,at critical-path lower bound under observed dependencies
+critical_path,4,405,1.592593,60.185185,0,405,0.000000,true,at critical-path lower bound under observed dependencies
+critical_path,8,405,1.592593,80.092593,0,405,0.000000,true,at critical-path lower bound under observed dependencies

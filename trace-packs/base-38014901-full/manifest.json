@@ -1,0 +1,16 @@
+{
+  "schema_version": "trace-pack-v1",
+  "chain": "base",
+  "source": "rpc-debug_traceTransaction",
+  "provenance": "user-collected RPC trace pack",
+  "start_block": 38014901,
+  "end_block": 38014901,
+  "created_by_tool_version": "0.1.0",
+  "tracer_kind": "geth-js-storage",
+  "notes": [
+    "Collected with parallel-revm-lab collect-block-range over base blocks 38014901-38014901"
+  ],
+  "warnings": [
+    "Provider trace completeness varies; verify tracer support before making claims"
+  ]
+}

@@ -194,6 +194,152 @@
       "interpretation": "dependency-bound: makespan is at the critical-path lower bound"
     }
   ],
+  "scheduler_ablation": [
+    {
+      "strategy": "canonical",
+      "workers": 1,
+      "makespan": 645,
+      "speedup_vs_canonical_one_worker": 1.0,
+      "idle_percentage": 0.0,
+      "ready_queue_wait_units": 620,
+      "critical_path_bound": 405,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "baseline canonical tx-order ready queue"
+    },
+    {
+      "strategy": "canonical",
+      "workers": 2,
+      "makespan": 405,
+      "speedup_vs_canonical_one_worker": 1.5925925925925926,
+      "idle_percentage": 20.37037037037037,
+      "ready_queue_wait_units": 50,
+      "critical_path_bound": 405,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "at critical-path lower bound under observed dependencies"
+    },
+    {
+      "strategy": "canonical",
+      "workers": 4,
+      "makespan": 405,
+      "speedup_vs_canonical_one_worker": 1.5925925925925926,
+      "idle_percentage": 60.18518518518518,
+      "ready_queue_wait_units": 0,
+      "critical_path_bound": 405,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "at critical-path lower bound under observed dependencies"
+    },
+    {
+      "strategy": "canonical",
+      "workers": 8,
+      "makespan": 405,
+      "speedup_vs_canonical_one_worker": 1.5925925925925926,
+      "idle_percentage": 80.0925925925926,
+      "ready_queue_wait_units": 0,
+      "critical_path_bound": 405,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "at critical-path lower bound under observed dependencies"
+    },
+    {
+      "strategy": "gas_lpt",
+      "workers": 1,
+      "makespan": 645,
+      "speedup_vs_canonical_one_worker": 1.0,
+      "idle_percentage": 0.0,
+      "ready_queue_wait_units": 630,
+      "critical_path_bound": 405,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "gas_lpt does not improve canonical order for this observed dependency graph"
+    },
+    {
+      "strategy": "gas_lpt",
+      "workers": 2,
+      "makespan": 405,
+      "speedup_vs_canonical_one_worker": 1.5925925925925926,
+      "idle_percentage": 20.37037037037037,
+      "ready_queue_wait_units": 80,
+      "critical_path_bound": 405,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "at critical-path lower bound under observed dependencies"
+    },
+    {
+      "strategy": "gas_lpt",
+      "workers": 4,
+      "makespan": 405,
+      "speedup_vs_canonical_one_worker": 1.5925925925925926,
+      "idle_percentage": 60.18518518518518,
+      "ready_queue_wait_units": 0,
+      "critical_path_bound": 405,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "at critical-path lower bound under observed dependencies"
+    },
+    {
+      "strategy": "gas_lpt",
+      "workers": 8,
+      "makespan": 405,
+      "speedup_vs_canonical_one_worker": 1.5925925925925926,
+      "idle_percentage": 80.0925925925926,
+      "ready_queue_wait_units": 0,
+      "critical_path_bound": 405,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "at critical-path lower bound under observed dependencies"
+    },
+    {
+      "strategy": "critical_path",
+      "workers": 1,
+      "makespan": 645,
+      "speedup_vs_canonical_one_worker": 1.0,
+      "idle_percentage": 0.0,
+      "ready_queue_wait_units": 720,
+      "critical_path_bound": 405,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "critical_path does not improve canonical order for this observed dependency graph"
+    },
+    {
+      "strategy": "critical_path",
+      "workers": 2,
+      "makespan": 405,
+      "speedup_vs_canonical_one_worker": 1.5925925925925926,
+      "idle_percentage": 20.37037037037037,
+      "ready_queue_wait_units": 80,
+      "critical_path_bound": 405,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "at critical-path lower bound under observed dependencies"
+    },
+    {
+      "strategy": "critical_path",
+      "workers": 4,
+      "makespan": 405,
+      "speedup_vs_canonical_one_worker": 1.5925925925925926,
+      "idle_percentage": 60.18518518518518,
+      "ready_queue_wait_units": 0,
+      "critical_path_bound": 405,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "at critical-path lower bound under observed dependencies"
+    },
+    {
+      "strategy": "critical_path",
+      "workers": 8,
+      "makespan": 405,
+      "speedup_vs_canonical_one_worker": 1.5925925925925926,
+      "idle_percentage": 80.0925925925926,
+      "ready_queue_wait_units": 0,
+      "critical_path_bound": 405,
+      "improvement_vs_canonical_percent": 0.0,
+      "preserves_dependencies": true,
+      "interpretation": "at critical-path lower bound under observed dependencies"
+    }
+  ],
   "blocks": [
     {
       "block_number": 900000001,
@@ -446,6 +592,32 @@
       ]
     }
   ],
+  "warning_summary": [
+    {
+      "warning": "7 of 7 analyzed txs: trace marks read information as incomplete",
+      "count": 7
+    },
+    {
+      "warning": "Synthetic demo fixture; do not cite as real-chain evidence.",
+      "count": 1
+    },
+    {
+      "warning": "block 900000001: Block uses a synthetic number and is not a Base RPC capture.",
+      "count": 1
+    },
+    {
+      "warning": "block 900000001: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical",
+      "count": 1
+    },
+    {
+      "warning": "block 900000002: Block uses a synthetic number and is not a Base RPC capture.",
+      "count": 1
+    },
+    {
+      "warning": "block 900000002: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical",
+      "count": 1
+    }
+  ],
   "warnings": [
     "Synthetic demo fixture; do not cite as real-chain evidence.",
     "block 900000001: Block uses a synthetic number and is not a Base RPC capture.",
@@ -460,5 +632,5 @@
     "block 900000002: tx_index 1: trace marks read information as incomplete",
     "block 900000002: tx_index 2: trace marks read information as incomplete"
   ],
-  "deterministic_hash": "85e483ef1ebc42e0"
+  "deterministic_hash": "e784cf1c8b0e7291"
 }

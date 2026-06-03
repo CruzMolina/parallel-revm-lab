@@ -1,5 +1,7 @@
 # Base 38014901 Real Sample
 
+This partial sample is retained as a small reproduction artifact. The headline full-block analysis is now `case-studies/base-38014901-execution-dossier/`.
+
 This case study is a real, user-collected Base trace-backed sample from block `38014901`.
 
 It is not a full-block replay, not a production execution-client benchmark, and not a TPS or Ggas/s claim. It covers the first 25 transactions from a 436-transaction block using compact `SLOAD`/`SSTORE` observations from `debug_traceTransaction` with the repository's Geth JavaScript storage tracer.

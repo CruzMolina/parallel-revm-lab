@@ -340,3 +340,63 @@ Real sample headline:
 - `cargo run -p parallel-revm-lab -- recommend-access-lists --trace-dir trace-packs/base-38014901-real-sample --out case-studies/base-38014901-real-sample/access-hints.json --markdown case-studies/base-38014901-real-sample/access-hints.md`: passed, 25 observed access hints.
 - `cargo run -p parallel-revm-lab -- verify --workload mixed --txs 100 --conflicts 0.0,0.2,0.5,0.7,0.95 --threads 1,2,4 --seed-start 1 --seed-end 20`: passed, 300 workload/thread combinations.
 - `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.309x and optimistic 2.344x vs sequential, all modes state hash `1940c0cfba64e3cb`.
+
+## 2026-06-03 Final A+ Pass Plan
+
+- First polish the existing real-sample dossier: aggregate repetitive trace warnings in Markdown/HTML, preserve full warning detail in JSON, and make the overlap-vs-serialization distinction explicit.
+- Add a deterministic scheduler ablation over the observed dependency DAG: canonical order, gas longest-processing-time, and critical-path priority for 1/2/4/8/16 workers, with CSV/JSON/Markdown/HTML output and invariant tests.
+- Attempt a larger Base block `38014901` collection through `BASE_RPC_URL`; if full-block tracing is too slow or too large, keep the existing compact real sample and document the precise blocker without claiming full-block results.
+- If feasible, add a trace-derived synthetic benchmark command that reuses observed access topology without pretending to replay EVM execution.
+- Regenerate the best available case-study artifacts, update README and public docs only with measured data, run full validation, scan for secrets, and commit the final scoped changes.
+
+## 2026-06-03 Final A+ Pass Results
+
+Implementation:
+
+- Added `warning_summary` to trace-pack dossiers so Markdown/HTML aggregate repetitive per-transaction tracer warnings while JSON preserves the full raw warning list.
+- Added an explicit overlap-vs-serialization note to generated Markdown/HTML dossiers.
+- Added deterministic scheduler ablation rows for `canonical`, `gas_lpt`, and `critical_path` ready-queue policies, plus `scheduler-ablation.csv`.
+- Added `bench-trace-pack`, a trace-derived synthetic benchmark command that maps observed access topology into the deterministic toy execution model without claiming EVM replay.
+- Collected the full Base block `38014901` trace pack with the supplied debug-capable Base RPC endpoint through `BASE_RPC_URL`; no RPC URL was written to repository files.
+- Generated the lead case study under `case-studies/base-38014901-execution-dossier/`.
+
+Full-block collection and generation:
+
+- `cargo run -p parallel-revm-lab -- rpc-capability-check --chain base --block 38014901 --out /tmp/base-rpc-capability-a-plus.json`: passed; block available, 436 txs, receipts available, custom JS tracer available, struct-log fallback available.
+- `cargo run -p parallel-revm-lab -- collect-block-range --chain base --start-block 38014901 --end-block 38014901 --tracer geth-js-storage --out trace-packs/base-38014901-full --resume`: passed; collected 436 transactions for Base block `38014901`.
+- `cargo run -p parallel-revm-lab -- analyze-trace-pack --trace-dir trace-packs/base-38014901-full --workers 1,2,4,8,16 --out case-studies/base-38014901-execution-dossier/dossier.json --markdown case-studies/base-38014901-execution-dossier/executive-summary.md --html case-studies/base-38014901-execution-dossier/dossier.html --trace case-studies/base-38014901-execution-dossier/schedule.trace.json`: passed; 436 txs, 5,052 conflict pairs, 5.327%, gas ceiling 4.227x.
+- `cargo run -p parallel-revm-lab -- recommend-access-lists --trace-dir trace-packs/base-38014901-full --out case-studies/base-38014901-execution-dossier/access-hints.json --markdown case-studies/base-38014901-execution-dossier/access-hints.md`: passed; 436 observed access hints.
+- `cargo run --release -p parallel-revm-lab -- bench-trace-pack --trace-dir trace-packs/base-38014901-full --mode all --threads 1,2,4,8,16 --vm-steps-per-gas 1 --out case-studies/base-38014901-execution-dossier/trace-derived-benchmark.json`: passed; synthetic topology benchmark, 5,052 declared conflict pairs, all modes deterministic.
+
+Full-block headline:
+
+- Coverage: 436 of 436 txs, 100.000%.
+- Gas covered: 71,655,982.
+- Accesses: 27,034.
+- Unique contracts: 386.
+- Unique storage slots: 4,321.
+- Conflict pairs: 5,052, 5.327%.
+- Gas-weighted conflict percentage: 7.172%.
+- Overlapping transactions: 403 of 436, 92.431%.
+- Waves: 60; max wave width: 106.
+- Gas-weighted critical path: 16,951,990.
+- Theoretical gas ceiling: 4.227x.
+- Canonical 16-worker simulated speedup: 4.227x.
+- Critical-path scheduler at 4 workers: 4.000x speedup, 7.460% better than canonical at the same worker count.
+- Top hot contract: `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913`.
+- Top hot slot: `0x4200000000000000000000000000000000000006:0x0d52ad225b9f8da090dc37c741705dabc30f648dce00d7b0cab66994a1261ea6`.
+
+Validation:
+
+- `cargo fmt --all -- --check`: passed.
+- `cargo clippy --workspace --all-targets --all-features -- -D warnings`: initially failed on a `manual_pattern_char_comparison` warning in the CSV helper; fixed and reran successfully.
+- `cargo test --workspace --all-features`: passed, 69 tests plus doctests.
+- `cargo run -p parallel-revm-lab -- analyze-trace-pack --trace-dir trace-packs/demo-mini --workers 1,2,4,8 --out reports/demo-dossier.json --markdown reports/demo-dossier.md --html reports/demo-dossier.html --trace reports/demo-schedule.trace.json`: passed, demo path still works.
+- `cargo run -p parallel-revm-lab -- verify --workload mixed --txs 100 --conflicts 0.0,0.2,0.5,0.7,0.95 --threads 1,2,4 --seed-start 1 --seed-end 20`: passed, 300 workload/thread combinations.
+- `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.446x and optimistic 1.532x vs sequential, all modes state hash `1940c0cfba64e3cb`.
+
+Public-data notes:
+
+- The full block trace pack is compact normalized output, about 9.1 MB total, not a raw opcode trace dump.
+- The ten-block range remains reproduction notes only; a dry run previously found 3,676 transactions across `38014901-38014910`.
+- The trace-derived benchmark is labeled synthetic and should not be cited as production throughput.

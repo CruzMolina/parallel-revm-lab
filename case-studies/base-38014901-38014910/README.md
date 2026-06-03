@@ -7,7 +7,7 @@ The target public range is:
 - start block: `38014901`
 - end block: `38014910`
 
-To collect real data, provide a Base RPC endpoint that supports `debug_traceTransaction` with custom Geth JavaScript tracers. A real 25-transaction sample from block `38014901` is committed under `case-studies/base-38014901-real-sample/`.
+To collect real data, provide a Base RPC endpoint that supports `debug_traceTransaction` with custom Geth JavaScript tracers. A full-block trace-backed analysis of block `38014901` is committed under `case-studies/base-38014901-execution-dossier/`.
 
 ## Capability Check
 
@@ -28,7 +28,7 @@ The command checks block availability, transaction presence, receipt access, `de
 
 ## Collect
 
-Collect a small sample first:
+Collect the committed full-block case-study trace first:
 
 ```sh
 cargo run -p parallel-revm-lab -- collect-block-range \
@@ -37,12 +37,11 @@ cargo run -p parallel-revm-lab -- collect-block-range \
   --end-block 38014901 \
   --rpc-url "$BASE_RPC_URL" \
   --tracer geth-js-storage \
-  --out trace-packs/base-38014901-real-sample \
-  --max-transactions 25 \
+  --out trace-packs/base-38014901-full \
   --resume
 ```
 
-If the sample succeeds and remains compact, collect the full range:
+If the one-block trace succeeds and remains compact, collect the full range:
 
 ```sh
 cargo run -p parallel-revm-lab -- collect-block-range \
@@ -70,16 +69,16 @@ cargo run -p parallel-revm-lab -- collect-block-range \
 
 ## Analyze
 
-Sample analysis:
+One-block case-study analysis:
 
 ```sh
 cargo run -p parallel-revm-lab -- analyze-trace-pack \
-  --trace-dir trace-packs/base-38014901-real-sample \
+  --trace-dir trace-packs/base-38014901-full \
   --workers 1,2,4,8,16 \
-  --out case-studies/base-38014901-real-sample/dossier.json \
-  --markdown case-studies/base-38014901-real-sample/executive-summary.md \
-  --html case-studies/base-38014901-real-sample/dossier.html \
-  --trace case-studies/base-38014901-real-sample/schedule.trace.json
+  --out case-studies/base-38014901-execution-dossier/dossier.json \
+  --markdown case-studies/base-38014901-execution-dossier/executive-summary.md \
+  --html case-studies/base-38014901-execution-dossier/dossier.html \
+  --trace case-studies/base-38014901-execution-dossier/schedule.trace.json
 ```
 
 Full-range analysis:
@@ -98,14 +97,14 @@ Observed access hints:
 
 ```sh
 cargo run -p parallel-revm-lab -- recommend-access-lists \
-  --trace-dir trace-packs/base-38014901-real-sample \
-  --out case-studies/base-38014901-real-sample/access-hints.json \
-  --markdown case-studies/base-38014901-real-sample/access-hints.md
+  --trace-dir trace-packs/base-38014901-full \
+  --out case-studies/base-38014901-execution-dossier/access-hints.json \
+  --markdown case-studies/base-38014901-execution-dossier/access-hints.md
 ```
 
 ## Provenance Rules
 
-- A report generated from `trace-packs/base-38014901-real-sample` or `trace-packs/base-38014901-38014910` should be labeled `user-collected RPC trace pack`.
+- A report generated from `trace-packs/base-38014901-full` or `trace-packs/base-38014901-38014910` should be labeled `user-collected RPC trace pack`.
 - A partial sample must report included transaction coverage from `source_tx_count`.
 - Do not commit raw provider dumps or huge opcode traces.
 - Do not commit RPC URLs, API keys, or environment files.
@@ -113,6 +112,6 @@ cargo run -p parallel-revm-lab -- recommend-access-lists \
 
 ## Current Status
 
-Real Base sample collection succeeded for the first 25 transactions of block `38014901`; see `case-studies/base-38014901-real-sample/`.
+Real Base full-block collection succeeded for block `38014901`; see `case-studies/base-38014901-execution-dossier/`.
 
-Full-range tracing was not attempted in this pass. A dry run found 3,676 transactions across blocks `38014901-38014910`, so tracing the entire range would require thousands of debug trace calls and likely produce much larger artifacts.
+Full-range tracing is not committed in this directory. A dry run found 3,676 transactions across blocks `38014901-38014910`, so tracing the entire range would require thousands of debug trace calls and likely produce much larger artifacts.
