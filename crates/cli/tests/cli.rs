@@ -323,6 +323,39 @@ fn analyze_block_without_rpc_url_is_clear() {
         .unwrap();
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("missing RPC URL for analyze-block"));
+    assert!(stderr.contains("analyze-block is a hidden experimental command"));
+    assert!(stderr.contains("Prefer collect-block-range plus analyze-trace-pack"));
     assert!(!stderr.contains("http"));
+}
+
+#[test]
+fn hidden_analyze_block_with_rpc_is_experimental_and_redacted() {
+    let dir = tempfile::tempdir().unwrap();
+    let output = Command::new(bin())
+        .env_remove("BASE_RPC_URL")
+        .env_remove("ETH_RPC_URL")
+        .args([
+            "analyze-block",
+            "--chain",
+            "base",
+            "--block",
+            "38014901",
+            "--rpc-url",
+            "https://token@example.invalid",
+            "--out",
+            dir.path().join("out.json").to_str().unwrap(),
+            "--markdown",
+            dir.path().join("out.md").to_str().unwrap(),
+            "--html",
+            dir.path().join("out.html").to_str().unwrap(),
+        ])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("analyze-block is a hidden experimental command"));
+    assert!(stderr.contains("live RPC trace normalization is not implemented yet"));
+    assert!(stderr.contains("Prefer collect-block-range plus analyze-trace-pack"));
+    assert!(!stderr.contains("token"));
+    assert!(!stderr.contains("https://"));
 }

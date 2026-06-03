@@ -1210,13 +1210,13 @@ fn analyze_block(args: AnalyzeBlockArgs) -> Result<()> {
 
     if rpc_url.is_none() {
         bail!(
-            "missing RPC URL for analyze-block: pass --rpc-url or set {} / ETH_RPC_URL",
+            "analyze-block is a hidden experimental command; missing RPC URL: pass --rpc-url or set {} / ETH_RPC_URL. Prefer collect-block-range plus analyze-trace-pack for public workflows.",
             env_key
         );
     }
 
     bail!(
-        "live RPC trace normalization is not implemented yet for chain={} block={}; use analyze-fixture with a normalized fixture. RPC URLs are intentionally not printed.",
+        "analyze-block is a hidden experimental command; live RPC trace normalization is not implemented yet for chain={} block={}. Prefer collect-block-range plus analyze-trace-pack, or analyze-fixture with a normalized fixture. RPC URLs are intentionally not printed.",
         args.chain,
         args.block
     )

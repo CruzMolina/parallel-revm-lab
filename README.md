@@ -37,7 +37,7 @@ Headline findings:
 | canonical 16-worker simulated speedup | 4.227x |
 | critical-path scheduler speedup at 4 workers | 4.000x |
 | top hot contract | Base USDC, `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913` |
-| top conflict slot | Base WETH address, `0x4200000000000000000000000000000000000006:0x0d52ad225b9f8da090dc37c741705dabc30f648dce00d7b0cab66994a1261ea6` |
+| top conflict slot | Base WETH slot, `0x4200000000000000000000000000000000000006:0x0d52ad225b9f8da090dc37c741705dabc30f648dce00d7b0cab66994a1261ea6` |
 
 High observed overlap did not directly translate into serialization: this repo separates shared-key overlap, write-related dependency edges, gas-weighted critical path, and worker scheduling effects.
 
