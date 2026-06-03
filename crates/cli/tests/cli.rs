@@ -4,6 +4,14 @@ fn bin() -> &'static str {
     env!("CARGO_BIN_EXE_parallel-revm-lab")
 }
 
+fn workspace_root() -> std::path::PathBuf {
+    std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .ancestors()
+        .nth(2)
+        .expect("cli crate is under crates/cli")
+        .to_path_buf()
+}
+
 #[test]
 fn help_smoke() {
     let output = Command::new(bin()).arg("--help").output().unwrap();
@@ -84,4 +92,76 @@ fn verify_smoke() {
         String::from_utf8_lossy(&output.stderr)
     );
     assert!(String::from_utf8_lossy(&output.stdout).contains("verified"));
+}
+
+#[test]
+fn analyze_fixture_smoke_writes_reports() {
+    let dir = tempfile::tempdir().unwrap();
+    let report = dir.path().join("parallelism.json");
+    let markdown = dir.path().join("parallelism.md");
+    let html = dir.path().join("parallelism.html");
+    let trace = dir.path().join("schedule.trace.json");
+    let fixture = workspace_root().join("fixtures/base-mini-trace.json");
+    let output = Command::new(bin())
+        .args([
+            "analyze-fixture",
+            "--fixture",
+            fixture.to_str().unwrap(),
+            "--out",
+            report.to_str().unwrap(),
+            "--markdown",
+            markdown.to_str().unwrap(),
+            "--html",
+            html.to_str().unwrap(),
+            "--trace",
+            trace.to_str().unwrap(),
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let json = std::fs::read_to_string(report).unwrap();
+    assert!(json.contains("\"tx_count\": 12"));
+    assert!(json.contains("\"conflict_pair_count\": 7"));
+    assert!(json.contains("\"deterministic_hash\""));
+    assert!(std::fs::read_to_string(markdown)
+        .unwrap()
+        .contains("Parallelism Report"));
+    assert!(std::fs::read_to_string(html)
+        .unwrap()
+        .contains("Parallelism Report"));
+    assert!(std::fs::read_to_string(trace)
+        .unwrap()
+        .contains("traceEvents"));
+}
+
+#[test]
+fn analyze_block_without_rpc_url_is_clear() {
+    let dir = tempfile::tempdir().unwrap();
+    let output = Command::new(bin())
+        .env_remove("BASE_RPC_URL")
+        .env_remove("ETH_RPC_URL")
+        .args([
+            "analyze-block",
+            "--chain",
+            "base",
+            "--block",
+            "38014901",
+            "--out",
+            dir.path().join("out.json").to_str().unwrap(),
+            "--markdown",
+            dir.path().join("out.md").to_str().unwrap(),
+            "--html",
+            dir.path().join("out.html").to_str().unwrap(),
+        ])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("missing RPC URL for analyze-block"));
+    assert!(!stderr.contains("http"));
 }

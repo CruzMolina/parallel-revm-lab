@@ -4,9 +4,13 @@ use std::process::Command;
 
 use anyhow::{bail, Context, Result};
 use clap::{Args, Parser, Subcommand};
+use parallel_revm_lab_analyzer::{
+    analyze_block_trace, render_html, render_markdown, schedule_trace_json,
+};
 use parallel_revm_lab_executor::{
     benchmark_report, run_access_list, run_optimistic, run_sequential, trace_json, ExecutionMode,
 };
+use parallel_revm_lab_trace_model::BlockAccessTrace;
 use parallel_revm_lab_workload::{generate_workload, WorkloadConfig, WorkloadKind};
 
 #[derive(Debug, Parser)]
@@ -25,6 +29,8 @@ enum Commands {
     Bench(BenchArgs),
     Verify(VerifyArgs),
     Inspect(InspectArgs),
+    AnalyzeFixture(AnalyzeFixtureArgs),
+    AnalyzeBlock(AnalyzeBlockArgs),
 }
 
 #[derive(Debug, Args)]
@@ -81,11 +87,43 @@ struct InspectArgs {
     vm_steps: u64,
 }
 
+#[derive(Debug, Args)]
+struct AnalyzeFixtureArgs {
+    #[arg(long)]
+    fixture: PathBuf,
+    #[arg(long)]
+    out: PathBuf,
+    #[arg(long)]
+    markdown: PathBuf,
+    #[arg(long)]
+    html: PathBuf,
+    #[arg(long)]
+    trace: Option<PathBuf>,
+}
+
+#[derive(Debug, Args)]
+struct AnalyzeBlockArgs {
+    #[arg(long)]
+    chain: String,
+    #[arg(long)]
+    block: u64,
+    #[arg(long)]
+    rpc_url: Option<String>,
+    #[arg(long)]
+    out: PathBuf,
+    #[arg(long)]
+    markdown: PathBuf,
+    #[arg(long)]
+    html: PathBuf,
+}
+
 fn main() -> Result<()> {
     match Cli::parse().command {
         Commands::Bench(args) => bench(args),
         Commands::Verify(args) => verify(args),
         Commands::Inspect(args) => inspect(args),
+        Commands::AnalyzeFixture(args) => analyze_fixture(args),
+        Commands::AnalyzeBlock(args) => analyze_block(args),
     }
 }
 
@@ -208,6 +246,57 @@ fn inspect(args: InspectArgs) -> Result<()> {
     Ok(())
 }
 
+fn analyze_fixture(args: AnalyzeFixtureArgs) -> Result<()> {
+    let trace = BlockAccessTrace::from_fixture_path(&args.fixture)
+        .with_context(|| format!("failed to load fixture {}", args.fixture.display()))?;
+    let report = analyze_block_trace(&trace, true, false);
+    write_json(&args.out, &report)?;
+    write_text(&args.markdown, &render_markdown(&report))?;
+    write_text(&args.html, &render_html(&report))?;
+    if let Some(trace_path) = args.trace {
+        write_json(&trace_path, &schedule_trace_json(&report))?;
+    }
+    println!(
+        "analyzed {} txs from {} into {}",
+        report.tx_count,
+        args.fixture.display(),
+        args.out.display()
+    );
+    println!(
+        "conflicts={} waves={} max_width={} ceiling={:.3}x hash={}",
+        report.conflict_pair_count,
+        report.wave_count,
+        report.max_wave_width,
+        report.theoretical_parallelism_ceiling,
+        report.deterministic_hash
+    );
+    Ok(())
+}
+
+fn analyze_block(args: AnalyzeBlockArgs) -> Result<()> {
+    let env_key = match args.chain.as_str() {
+        "base" => "BASE_RPC_URL",
+        _ => "ETH_RPC_URL",
+    };
+    let rpc_url = args
+        .rpc_url
+        .or_else(|| std::env::var(env_key).ok())
+        .or_else(|| std::env::var("ETH_RPC_URL").ok());
+
+    if rpc_url.is_none() {
+        bail!(
+            "missing RPC URL for analyze-block: pass --rpc-url or set {} / ETH_RPC_URL",
+            env_key
+        );
+    }
+
+    bail!(
+        "live RPC trace normalization is not implemented yet for chain={} block={}; use analyze-fixture with a normalized fixture. RPC URLs are intentionally not printed.",
+        args.chain,
+        args.block
+    )
+}
+
 fn parse_workload(input: &str) -> std::result::Result<WorkloadKind, String> {
     input
         .parse()
@@ -274,6 +363,15 @@ fn write_json(path: &Path, value: &impl serde::Serialize) -> Result<()> {
         File::create(path).with_context(|| format!("failed to create {}", path.display()))?;
     serde_json::to_writer_pretty(file, value)
         .with_context(|| format!("failed to write {}", path.display()))?;
+    Ok(())
+}
+
+fn write_text(path: &Path, value: &str) -> Result<()> {
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)
+            .with_context(|| format!("failed to create {}", parent.display()))?;
+    }
+    std::fs::write(path, value).with_context(|| format!("failed to write {}", path.display()))?;
     Ok(())
 }
 

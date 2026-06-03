@@ -1,0 +1,160 @@
+{
+  "traceEvents": [
+    {
+      "args": {
+        "conflict_degree": 1,
+        "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "cat": "parallelism-schedule",
+      "dur": 900,
+      "name": "tx-0",
+      "ph": "X",
+      "pid": 1,
+      "tid": "wave-0",
+      "ts": 0
+    },
+    {
+      "args": {
+        "conflict_degree": 2,
+        "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000001"
+      },
+      "cat": "parallelism-schedule",
+      "dur": 900,
+      "name": "tx-1",
+      "ph": "X",
+      "pid": 1,
+      "tid": "wave-0",
+      "ts": 0
+    },
+    {
+      "args": {
+        "conflict_degree": 2,
+        "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000002"
+      },
+      "cat": "parallelism-schedule",
+      "dur": 900,
+      "name": "tx-2",
+      "ph": "X",
+      "pid": 1,
+      "tid": "wave-0",
+      "ts": 0
+    },
+    {
+      "args": {
+        "conflict_degree": 2,
+        "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000003"
+      },
+      "cat": "parallelism-schedule",
+      "dur": 900,
+      "name": "tx-3",
+      "ph": "X",
+      "pid": 1,
+      "tid": "wave-1",
+      "ts": 1000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000004"
+      },
+      "cat": "parallelism-schedule",
+      "dur": 900,
+      "name": "tx-4",
+      "ph": "X",
+      "pid": 1,
+      "tid": "wave-0",
+      "ts": 0
+    },
+    {
+      "args": {
+        "conflict_degree": 1,
+        "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000005"
+      },
+      "cat": "parallelism-schedule",
+      "dur": 900,
+      "name": "tx-5",
+      "ph": "X",
+      "pid": 1,
+      "tid": "wave-1",
+      "ts": 1000
+    },
+    {
+      "args": {
+        "conflict_degree": 2,
+        "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000006"
+      },
+      "cat": "parallelism-schedule",
+      "dur": 900,
+      "name": "tx-6",
+      "ph": "X",
+      "pid": 1,
+      "tid": "wave-2",
+      "ts": 2000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000007"
+      },
+      "cat": "parallelism-schedule",
+      "dur": 900,
+      "name": "tx-7",
+      "ph": "X",
+      "pid": 1,
+      "tid": "wave-0",
+      "ts": 0
+    },
+    {
+      "args": {
+        "conflict_degree": 2,
+        "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000008"
+      },
+      "cat": "parallelism-schedule",
+      "dur": 900,
+      "name": "tx-8",
+      "ph": "X",
+      "pid": 1,
+      "tid": "wave-1",
+      "ts": 1000
+    },
+    {
+      "args": {
+        "conflict_degree": 2,
+        "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000009"
+      },
+      "cat": "parallelism-schedule",
+      "dur": 900,
+      "name": "tx-9",
+      "ph": "X",
+      "pid": 1,
+      "tid": "wave-2",
+      "ts": 2000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x000000000000000000000000000000000000000000000000000000000000000a"
+      },
+      "cat": "parallelism-schedule",
+      "dur": 900,
+      "name": "tx-10",
+      "ph": "X",
+      "pid": 1,
+      "tid": "wave-0",
+      "ts": 0
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x000000000000000000000000000000000000000000000000000000000000000b"
+      },
+      "cat": "parallelism-schedule",
+      "dur": 900,
+      "name": "tx-11",
+      "ph": "X",
+      "pid": 1,
+      "tid": "wave-0",
+      "ts": 0
+    }
+  ]
+}

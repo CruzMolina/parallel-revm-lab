@@ -1,0 +1,57 @@
+# Parallelism Report: base-fixture block 38014901
+
+## Summary
+
+- Transactions: 12
+- Conflict pairs: 7 (10.606%)
+- Waves: 3
+- Max wave width: 7
+- Critical path length: 3
+- Theoretical parallelism ceiling: 4.000x
+
+## Hot Contracts
+
+| contract | accesses |
+| --- | ---: |
+| `0xpool000000000000000000000000000000000000` | 5 |
+| `0xhot0000000000000000000000000000000000000` | 3 |
+| `0xapp0000000000000000000000000000000000000` | 2 |
+| `0xindependent00000000000000000000000000000` | 1 |
+| `0xpartial000000000000000000000000000000000` | 1 |
+
+## Hot Storage Slots
+
+| slot | accesses |
+| --- | ---: |
+| `0xhot0000000000000000000000000000000000000:0x00000000000000000000000000000000000000000000000000000000deadbeef` | 3 |
+| `0xpool000000000000000000000000000000000000:0x0000000000000000000000000000000000000000000000000000000000000001` | 3 |
+| `0xpool000000000000000000000000000000000000:0x0000000000000000000000000000000000000000000000000000000000000000` | 2 |
+| `0xapp0000000000000000000000000000000000000:0x0000000000000000000000000000000000000000000000000000000000000007` | 1 |
+| `0xindependent00000000000000000000000000000:0x0000000000000000000000000000000000000000000000000000000000000099` | 1 |
+
+## Waves
+
+| tx | wave | degree | reads | writes |
+| ---: | ---: | ---: | ---: | ---: |
+| 0 | 0 | 1 | 1 | 1 |
+| 1 | 0 | 2 | 1 | 1 |
+| 2 | 0 | 2 | 1 | 1 |
+| 3 | 1 | 2 | 1 | 1 |
+| 4 | 0 | 0 | 1 | 1 |
+| 5 | 1 | 1 | 1 | 1 |
+| 6 | 2 | 2 | 1 | 1 |
+| 7 | 0 | 0 | 0 | 1 |
+| 8 | 1 | 2 | 1 | 0 |
+| 9 | 2 | 2 | 0 | 1 |
+| 10 | 0 | 0 | 0 | 1 |
+| 11 | 0 | 0 | 1 | 1 |
+
+## Warnings
+
+- fixture is synthetic and is not claimed to be real Base chain data
+- analysis is a lower bound: read set is marked incomplete
+- trace marks read information as incomplete
+
+## Caveats
+
+This report studies access-set contention and deterministic scheduling structure. It is not a production throughput or gas benchmark. If a trace marks reads incomplete, conflict counts are lower bounds.

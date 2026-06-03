@@ -10,7 +10,21 @@ test:
 verify:
     cargo run -p parallel-revm-lab -- verify --workload mixed --txs 100 --conflicts 0.0,0.2,0.5,0.7,0.95 --threads 1,2,4 --seed-start 1 --seed-end 20
 
-validate: fmt clippy test verify
+analyze-fixture:
+    cargo run -p parallel-revm-lab -- analyze-fixture --fixture fixtures/base-mini-trace.json --out reports/base-mini-trace.parallelism.json --markdown reports/base-mini-trace.md --html reports/base-mini-trace.html --trace reports/base-mini-trace.schedule.trace.json
+
+analyze-fixture-open: analyze-fixture
+    open reports/base-mini-trace.html
+
+analyze-block-base-example:
+    cargo run -p parallel-revm-lab -- analyze-block --chain base --block 38014901 --out reports/base-38014901.parallelism.json --markdown reports/base-38014901.md --html reports/base-38014901.html
+
+revm-smoke:
+    cargo test -p parallel-revm-lab-revm-smoke --all-features
+
+validate: fmt clippy test verify analyze-fixture revm-smoke
+
+validate-full: validate bench-heavy-smoke
 
 bench-smoke:
     cargo run --release -p parallel-revm-lab -- bench --workload mixed --txs 1000 --conflict 0.5 --mode all --threads 4 --seed 42 --out reports/mixed-c50.json --trace reports/mixed-c50.trace.json

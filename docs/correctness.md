@@ -18,6 +18,23 @@ State hashes are stable across process runs because state is stored in determini
 
 Two transactions conflict if either writes a key the other reads or writes. Read/read overlap is allowed. Access-list waves are pairwise independent under this model before they execute in parallel. The scheduler also preserves canonical order by preventing later transactions from entering a wave when they conflict with an earlier transaction already deferred out of that wave.
 
+## Trace-Derived Conflict Graph
+
+For normalized block traces, the analyzer builds directed dependencies from lower `tx_index` to higher `tx_index` for every conflict pair. The wave invariant is:
+
+```text
+for every dependency earlier -> later:
+    wave(earlier) < wave(later)
+```
+
+Additional trace analyzer invariants:
+
+- waves partition every transaction index exactly once
+- wave assignment is deterministic for the same normalized trace
+- hot contract and hot slot rankings break ties by key
+- duplicate `tx_index` values are rejected
+- incomplete read information emits warnings and marks conflict counts as lower bounds
+
 ## Re-Execution Strategy
 
 Optimistic execution records every value read during speculative execution. Canonical validation compares those values against committed state. A changed read triggers deterministic re-execution against current state.
@@ -33,6 +50,10 @@ Covered edge cases include:
 - no-op transactions
 - storage writes that optionally skip prior reads
 - `vm_steps` synthetic CPU work that does not affect state semantics
+- duplicate trace transaction indices
+- incomplete trace read information
+- deterministic fixture wave shape and report hash
+- revm smoke bytecode fixtures for hot-slot and independent-slot behavior
 
 ## Property Testing
 
@@ -44,5 +65,7 @@ Covered edge cases include:
 - They do not prove EVM semantic equivalence.
 - They do not prove production performance.
 - They do not prove the non-cryptographic state hash is collision resistant.
+- Trace analyzer tests do not prove provider RPC traces are complete.
+- The revm smoke tests do not prove full block replay or general inspector extraction.
 
 They do prove the central lab invariant for the implemented synthetic model: parallel modes are sequentially equivalent across fixed, randomized, and high-contention workloads.

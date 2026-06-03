@@ -1,5 +1,7 @@
 # Failure Log
 
+See `docs/engineering-log.md` for the current validation history and upgrade decisions. This file keeps the original focused failure notes for quick review.
+
 ## Missing CLI Dependencies
 
 - Symptom: `cargo test --workspace --all-features` failed with unresolved `serde` and `parallel_revm_lab_model` in `crates/cli/src/main.rs`.
@@ -27,3 +29,24 @@
 - Root cause: scheduler deferrals, declared access-set conflicts, and optimistic validation failures were collapsed into one field.
 - Fix: report schema now splits `declared_conflict_pairs`, `scheduler_deferrals`, `validation_failures`, `reexecuted_txs`, `wave_count`, and `max_wave_width`.
 - Test added: benchmark report test asserts split metric consistency.
+
+## Nonce Write Cast Could Wrap
+
+- Symptom: generic nonce writes cast signed values to `u64`, allowing negative values to wrap into huge nonces.
+- Root cause: unchecked `as u64` conversion in `State::write`.
+- Fix: negative nonce writes clamp to zero and oversized writes saturate to `u64::MAX`.
+- Test added: `nonce_write_saturates_instead_of_wrapping`.
+
+## Incomplete Reads Were Overstated
+
+- Symptom: analyzer warnings initially described incomplete-read reports as conservative.
+- Root cause: missing reads can hide conflicts, so the analysis is a lower bound instead.
+- Fix: reports now use `declared-read-write-lower-bound` and explicit lower-bound warnings.
+- Test added: committed fixture analyzer test checks the warning.
+
+## revm MSRV Mismatch
+
+- Symptom: adding `revm 40.0.3` would make the old workspace `rust-version = "1.82"` claim false.
+- Root cause: `revm 40.0.3` declares `rust-version = 1.91.0`.
+- Fix: workspace `rust-version` is now `1.91`.
+- Test added: `cargo test -p parallel-revm-lab-revm-smoke --all-features`.

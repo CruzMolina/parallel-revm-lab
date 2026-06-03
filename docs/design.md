@@ -12,6 +12,24 @@ State storage uses deterministic maps:
 
 The state hash is an explicit FNV-1a 64-bit hash over canonical bytes. It avoids `DefaultHasher` because persistent comparisons must not depend on implementation-specific hash seeding or map iteration order.
 
+## Trace Model
+
+`crates/trace-model` represents normalized EVM/block access observations independently from live RPC. It models:
+
+- chain and block identity
+- canonical transaction index and hash
+- account, balance, nonce, code, and storage access keys
+- read, write, and read/write access kinds
+- per-transaction and block-level warnings
+
+The fixture parser sorts transactions by `tx_index`, canonicalizes addresses and storage keys, rejects duplicate transaction indices, and marks incomplete read information explicitly. All user-visible output depends on sorted vectors, `BTreeMap`, or `BTreeSet`.
+
+## Trace Analyzer
+
+`crates/analyzer` consumes a `BlockAccessTrace` and builds pairwise conflicts. A later transaction depends on an earlier transaction when their access sets overlap through write/write, earlier write/later read, or earlier read/later write. Read/read overlap is allowed.
+
+The wave builder is deterministic: it repeatedly selects all remaining transactions whose dependencies are already assigned. This yields a lower-bound schedule shape for incomplete-read traces and an exact schedule for complete declared access traces under the implemented conflict model.
+
 ## Transaction Semantics
 
 - `Transfer`: reads sender balance, sender nonce, recipient balance; writes sender balance, sender nonce, recipient balance. Insufficient balance deterministically increments the sender nonce and leaves balances unchanged.
@@ -55,6 +73,23 @@ Reports avoid a single ambiguous conflict counter:
 - `reexecuted_txs`: optimistic transactions re-executed after validation failure.
 - `wave_count` and `max_wave_width`: access-list wave shape, or optimistic batch shape.
 
+Trace-analysis reports add:
+
+- `conflict_pair_count` and `conflict_percentage`
+- `critical_path_length`
+- `theoretical_parallelism_ceiling`
+- hot contract and hot storage slot rankings
+- per-transaction read/write counts, conflict degree, and wave
+- a stable report hash over canonical JSON bytes
+
+Synthetic throughput metrics and trace-analysis parallelism metrics are intentionally separate.
+
+## revm Smoke Bridge
+
+`crates/revm-smoke` is intentionally small. It uses `revm 40.0.3` with `default-features = false` and `std` enabled, executes tiny bytecode fixtures against `CacheDB<EmptyDB>`, and converts known fixture behavior into the normalized trace model.
+
+This proves the analyzer can ingest observations from real EVM bytecode execution. It does not attempt general block replay, full inspector coverage, or provider RPC normalization.
+
 ## Concurrency Choice
 
 The project uses Rayon `ThreadPoolBuilder` rather than custom queues or shared mutable concurrent state. Rayon provides reliable parallel iteration while the model keeps mutation in a deterministic commit phase. Because no custom concurrency primitive is introduced, loom tests are not included.
@@ -65,3 +100,5 @@ The project uses Rayon `ThreadPoolBuilder` rather than custom queues or shared m
 - The optimistic executor currently speculates from one snapshot per run, which is simple and honest but not throughput-optimal for very long batches.
 - `vm_steps` is only deterministic CPU work for exploring scheduling overhead versus execution cost.
 - The state hash is stable and deterministic, but not a cryptographic commitment.
+- Incomplete trace reads make analyzer conflict counts lower bounds.
+- Live RPC tracing varies by provider and is not part of CI.

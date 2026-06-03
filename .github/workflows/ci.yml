@@ -16,6 +16,14 @@ jobs:
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       - name: test
         run: cargo test --workspace --all-features
+      - name: cli analyze fixture
+        run: |
+          cargo run -p parallel-revm-lab -- analyze-fixture \
+            --fixture fixtures/base-mini-trace.json \
+            --out reports/ci-base-mini-trace.parallelism.json \
+            --markdown reports/ci-base-mini-trace.md \
+            --html reports/ci-base-mini-trace.html \
+            --trace reports/ci-base-mini-trace.schedule.trace.json
       - name: cli help
         run: cargo run -p parallel-revm-lab -- --help
       - name: cli verify

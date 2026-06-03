@@ -145,7 +145,7 @@ impl State {
                 self.accounts
                     .entry(*account)
                     .or_insert_with(|| Account::new(0))
-                    .nonce = value.max(0) as u64;
+                    .nonce = u64::try_from(value.max(0)).unwrap_or(u64::MAX);
             }
             AccessKey::StorageSlot { contract, slot } => {
                 self.storage.insert((*contract, *slot), value);
@@ -605,5 +605,16 @@ mod tests {
             .delta
             .writes
             .contains_key(&AccessKey::account_nonce(AccountId(0))));
+    }
+
+    #[test]
+    fn nonce_write_saturates_instead_of_wrapping() {
+        let mut state = State::new();
+        let nonce = AccessKey::account_nonce(AccountId(0));
+        state.write(&nonce, i128::MAX);
+        assert_eq!(state.read(&nonce), i128::from(u64::MAX));
+
+        state.write(&nonce, -1);
+        assert_eq!(state.read(&nonce), 0);
     }
 }

@@ -1,23 +1,28 @@
 # parallel-revm-lab
 
-Deterministic conflict-aware parallel execution workbench for synthetic EVM-shaped state transitions.
+Deterministic parallel execution and EVM workload analysis in Rust.
 
-The thesis is simple: keep the final state identical to sequential execution, reduce wall-clock time when access sets allow it, and degrade honestly when contention is high. This is not a blockchain client and it does not claim production TPS.
+This repository is a protocol-engineering lab for studying deterministic parallel execution, EVM-shaped state contention, and real workload bottlenecks. It is not a production execution client, does not replay full blocks, and does not claim production TPS or gas throughput.
 
-## Why This Is Hard
+## What This Is
 
-Parallel execution can race in subtle ways: two transactions may touch the same account, a read may be invalidated by an earlier commit, or a scheduler may accidentally make output depend on worker timing. This repo keeps those edges visible by using deterministic state, canonical transaction order, explicit access sets, and sequential equivalence tests.
+`parallel-revm-lab` has three layers:
+
+- A synthetic scheduler lab that proves sequential equivalence for two parallel execution strategies.
+- A normalized EVM trace analyzer that turns fixture block traces into conflict graphs, waves, hot-state rankings, and reproducible reports.
+- A minimal `revm` smoke crate that executes tiny bytecode fixtures and feeds derived storage observations into the same analyzer.
+
+Real EVM contention matters because optimistic or access-list parallel execution is only useful when the block has enough independent state access. This repo makes that structure visible without hiding scheduler overhead or provider trace caveats.
 
 ## What It Demonstrates
 
-- Deterministic account, nonce, contract storage, access-key, delta, and state-hash model.
-- Sequential baseline executor.
-- Access-list wave scheduler with parallel execution and canonical commit order.
-- Optimistic executor with speculative reads, validation, and deterministic re-execution.
-- Seeded workloads with configurable conflict pressure.
-- Optional deterministic `--vm-steps` CPU work to simulate heavier interpreter execution.
-- JSON benchmark reports and minimal Chrome trace output.
-- Tests that assert parallel final state equals sequential final state.
+- Deterministic state, access-key, delta, and stable hash model.
+- Sequential baseline, access-list wave scheduler, and optimistic validation executor.
+- Seeded synthetic workloads with configurable conflict pressure and optional deterministic `--vm-steps` CPU work.
+- Normalized fixture parsing for EVM-like account, code, balance, nonce, and storage access observations.
+- Deterministic conflict graph, dependency waves, critical path, hot contract and hot storage slot rankings.
+- JSON, Markdown, static HTML, and Chrome trace schedule reports.
+- A compiling `revm 40.0.3` smoke path using in-memory state and tiny bytecode fixtures.
 
 ## Quick Start
 
@@ -27,7 +32,48 @@ cargo run -p parallel-revm-lab -- --help
 cargo run -p parallel-revm-lab -- inspect --workload mixed --txs 12 --conflict 0.5 --seed 42
 ```
 
-## One-Command Validation
+## Analyze Fixture
+
+Fixture mode is the reliable local and CI path:
+
+```sh
+cargo run -p parallel-revm-lab -- analyze-fixture \
+  --fixture fixtures/base-mini-trace.json \
+  --out reports/base-mini-trace.parallelism.json \
+  --markdown reports/base-mini-trace.md \
+  --html reports/base-mini-trace.html \
+  --trace reports/base-mini-trace.schedule.trace.json
+```
+
+Committed sample output from the synthetic Base-shaped fixture:
+
+- 12 transactions
+- 7 conflict pairs
+- 10.606% pairwise conflict rate
+- 3 deterministic waves
+- max wave width 7
+- critical path length 3
+- theoretical parallelism ceiling 4.000x
+
+The fixture is synthetic and is not claimed to be real Base chain data.
+
+## Analyze Block
+
+`analyze-block` is the live-RPC surface, but provider trace APIs differ and live RPC is not required in CI:
+
+```sh
+cargo run -p parallel-revm-lab -- analyze-block \
+  --chain base \
+  --block 38014901 \
+  --rpc-url "$BASE_RPC_URL" \
+  --out reports/base-38014901.parallelism.json \
+  --markdown reports/base-38014901.md \
+  --html reports/base-38014901.html
+```
+
+`--rpc-url` is preferred over `BASE_RPC_URL` or `ETH_RPC_URL`. The CLI does not print RPC URLs. Live trace normalization is intentionally documented as best-effort future work until provider-specific trace formats are implemented.
+
+## Validate
 
 ```sh
 cargo fmt --all -- --check
@@ -42,23 +88,7 @@ If `just` is installed:
 just validate
 ```
 
-## One-Command Benchmark
-
-```sh
-cargo run --release -p parallel-revm-lab -- bench \
-  --workload mixed \
-  --txs 1000 \
-  --conflict 0.5 \
-  --mode all \
-  --threads 4 \
-  --seed 42 \
-  --out reports/mixed-c50.json \
-  --trace reports/mixed-c50.trace.json
-```
-
-Reports use synthetic tx/s for this scheduler workbench. They are not full-node throughput numbers.
-
-To simulate heavier interpreter work per synthetic transaction:
+## Benchmark
 
 ```sh
 cargo run --release -p parallel-revm-lab -- bench \
@@ -72,79 +102,75 @@ cargo run --release -p parallel-revm-lab -- bench \
   --out reports/storage-c0-vmsteps.json
 ```
 
-`--vm-steps` runs deterministic CPU work inside each synthetic transaction. It does not model gas, opcodes, IO, database access, or production client throughput.
+Reports use synthetic scheduler/workbench throughput. They are not full-node throughput numbers. `--vm-steps` is deterministic CPU work, not gas, opcodes, IO, or database latency.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    W["Seeded workload generator"] --> T["Canonical tx list + declared access sets"]
-    T --> S["Sequential baseline"]
-    T --> A["Access-list wave scheduler"]
-    T --> O["Optimistic executor"]
-    S --> H["State hash"]
+    W["Seeded synthetic workloads"] --> S["Sequential baseline"]
+    W --> A["Access-list waves"]
+    W --> O["Optimistic validation"]
+    S --> H["State hash equivalence"]
     A --> H
     O --> H
-    H --> V["Sequential equivalence checks"]
-    A --> R["Benchmark report + trace"]
-    O --> R
-    S --> R
+
+    F["Normalized fixture traces"] --> M["trace-model"]
+    R["revm smoke bytecode"] --> M
+    M --> G["conflict graph"]
+    G --> V["deterministic waves"]
+    G --> P["hot contracts and slots"]
+    V --> Q["JSON / Markdown / HTML / Chrome trace"]
+    P --> Q
 ```
-
-## Benchmark Snapshots
-
-Cheap mixed transactions, generated by the first benchmark command above:
-
-| mode | synthetic tx/s | speedup vs sequential | deterministic | notes |
-| --- | ---: | ---: | --- | --- |
-| sequential | 1,352,876.08 | baseline | true | `vm_steps=0`, state hash `ac90d19c91175700` |
-| access-list | 17,868.76 | 0.013x | true | 309 waves; scheduling overhead dominates this small batch |
-| optimistic | 1,137,009.66 | 0.840x | true | 731 validation failures and re-executions |
-
-The raw report is `reports/mixed-c50.json`.
-
-Heavier low-contention storage transactions, generated by the second benchmark command above:
-
-| mode | synthetic tx/s | speedup vs sequential | deterministic | notes |
-| --- | ---: | ---: | --- | --- |
-| sequential | 10,763.02 | baseline | true | `vm_steps=50000`, state hash `1940c0cfba64e3cb` |
-| access-list | 34,784.98 | 3.232x | true | 4 waves; parallelism beats scheduling overhead |
-| optimistic | 23,182.58 | 2.154x | true | 173 validation failures and re-executions |
-
-The raw report is `reports/storage-c0-vmsteps.json`.
 
 ## Correctness Story
 
-The core invariant is sequential equivalence: for the same initial state and transaction list, both parallel modes must produce exactly the same final state hash and state contents as sequential execution.
+The synthetic executor invariant is:
 
-- The access-list scheduler builds waves whose transactions have no read/write or write/write conflicts, executes each wave against a pre-wave snapshot, then commits deltas in canonical transaction order.
-- The optimistic executor speculates on a snapshot, validates observed reads against the evolving committed state, and re-executes invalidated transactions before commit.
-- Benchmark reports split declared conflict pairs, scheduler deferrals, validation failures, re-executions, wave count, and max wave width.
-- State uses deterministic `BTreeMap`/`BTreeSet` ordering and an explicit stable FNV-1a hash over canonical bytes.
+```text
+hash(sequential(txs)) == hash(access_list(txs)) == hash(optimistic(txs))
+```
+
+The trace analyzer does not execute transactions. It proves structural properties of a normalized access trace:
+
+- conflict pairs are derived from write/write, write/read, and read/write overlap
+- dependencies point from earlier conflicting transactions to later ones
+- waves partition transaction indices exactly once
+- each conflict dependency crosses to a later wave
+- reports use deterministic sorting and stable hashes
+
+The `revm-smoke` crate proves that real EVM bytecode can be executed in-process and bridged into this analyzer for small fixture programs. It does not claim general trace extraction.
 
 ## Limitations
 
-- The state model is EVM-shaped, not a full EVM implementation.
-- Access lists are declared by the synthetic transaction generator.
+- The synthetic state model is EVM-shaped, not full EVM semantics.
+- Fixture trace quality determines analyzer quality; incomplete reads make conflict counts lower bounds.
+- `analyze-block` currently fails clearly unless live RPC trace normalization is implemented for the target provider.
+- The revm smoke path derives observations from known bytecode fixtures rather than a general inspector.
 - Benchmarks measure scheduler behavior on synthetic transactions only.
-- `--vm-steps` is a deterministic CPU loop for exploring scheduler overhead versus per-transaction execution cost; it is not an EVM interpreter.
-- The `revm` adapter is documented as future work; no broken feature-gated adapter is included.
+- The state/report hashes are stable FNV-1a hashes, not cryptographic commitments.
 
 ## Repository Map
 
-- `crates/model`: state, transactions, deltas, conflict detection, stable hashing.
-- `crates/workload`: seeded workload generation and conflict measurement.
+- `crates/model`: deterministic state, transactions, deltas, conflict detection, stable hashing.
+- `crates/workload`: seeded synthetic workload generation.
 - `crates/executor`: sequential, access-list, optimistic execution, reports, traces.
+- `crates/trace-model`: normalized EVM/block access trace types and fixture parsing.
+- `crates/analyzer`: conflict graph, waves, hot-state rankings, and report renderers.
+- `crates/revm-smoke`: minimal compiling revm bytecode smoke bridge.
 - `crates/cli`: `parallel-revm-lab` command-line interface.
-- `docs/design.md`: architecture and tradeoffs.
-- `docs/correctness.md`: invariants and tests.
-- `docs/benchmarks.md`: commands and benchmark interpretation.
-- `docs/failures.md`: real failures found during implementation.
+- `fixtures/base-mini-trace.json`: committed synthetic fixture.
+- `reports/base-mini-trace.*`: committed fixture report artifacts.
+- `docs/trace-analysis.md`: trace model and RPC caveats.
+- `docs/parallelism-report.md`: report interpretation.
+- `docs/engineering-log.md`: validation history and engineering decisions.
 
 ## What To Review In 90 Seconds
 
-1. `crates/executor/src/lib.rs`: scheduler and optimistic validation logic.
-2. `crates/model/src/lib.rs`: transaction semantics and stable state hash.
-3. `crates/executor/src/lib.rs` tests: sequential equivalence and property tests.
-4. `docs/correctness.md`: what the tests prove and do not prove.
-5. `reports/mixed-c50.json` and `reports/storage-c0-vmsteps.json`: generated benchmark reports for cheap and heavier synthetic transactions.
+1. `crates/analyzer/src/lib.rs`: conflict graph, wave builder, report hash.
+2. `crates/trace-model/src/lib.rs`: normalized access model and fixture validation.
+3. `crates/revm-smoke/src/lib.rs`: minimal revm bridge.
+4. `crates/executor/src/lib.rs`: synthetic scheduler correctness path.
+5. `reports/base-mini-trace.html`: fixture analysis artifact.
+6. `docs/trace-analysis.md` and `docs/correctness.md`: limitations and invariants.

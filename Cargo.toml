@@ -3,6 +3,9 @@ members = [
     "crates/model",
     "crates/workload",
     "crates/executor",
+    "crates/trace-model",
+    "crates/analyzer",
+    "crates/revm-smoke",
     "crates/cli",
 ]
 resolver = "2"
@@ -11,7 +14,7 @@ resolver = "2"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-rust-version = "1.82"
+rust-version = "1.91"
 
 [workspace.dependencies]
 anyhow = "1.0"
@@ -25,7 +28,11 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tempfile = "3.14"
 thiserror = "2.0"
+revm = { version = "=40.0.3", default-features = false, features = ["std"] }
 
 parallel-revm-lab-model = { path = "crates/model" }
 parallel-revm-lab-workload = { path = "crates/workload" }
 parallel-revm-lab-executor = { path = "crates/executor" }
+parallel-revm-lab-trace-model = { path = "crates/trace-model" }
+parallel-revm-lab-analyzer = { path = "crates/analyzer" }
+parallel-revm-lab-revm-smoke = { path = "crates/revm-smoke" }

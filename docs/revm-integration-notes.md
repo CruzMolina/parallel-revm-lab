@@ -1,22 +1,38 @@
 # revm Integration Notes
 
-No `revm` adapter is included in this revision.
-
-The core scheduler is implemented against an internal deterministic model because the P0/P1 goal is to prove conflict-aware scheduling, deterministic commit order, re-execution, state hashing, and reproducible reports without leaving broken feature-gated code.
+`crates/revm-smoke` is included and compile-tested. It is deliberately small: it proves this workspace can execute real EVM bytecode through `revm` and feed deterministic read/write-like observations into the shared trace analyzer.
 
 ## Current Status
 
-No compile-driven `revm` integration was attempted in the release-repair pass. The repository keeps the internal scheduler clean and avoids committing a token `revm` dependency or feature-gated code without a meaningful smoke path.
+- Crate: `crates/revm-smoke`
+- Dependency: `revm = "=40.0.3"`, `default-features = false`, `features = ["std"]`
+- MSRV impact: `revm 40.0.3` declares `rust-version = 1.91.0`, so the workspace `rust-version` is `1.91`
+- Database: in-memory `CacheDB<EmptyDB>`
+- Execution API: `Context::mainnet().with_db(...).build_mainnet().transact(tx)`
 
-Adding an adapter would require mapping EVM execution observations into this lab's `AccessKey` and `TxDelta` model without weakening the all-features build.
+## What The Smoke Path Does
+
+- Executes a counter bytecode fixture that reads and writes one storage slot.
+- Executes independent storage write fixtures that touch different slots.
+- Executes a hot-slot fixture that creates contention.
+- Converts the known fixture behavior into `BlockAccessTrace`.
+- Runs the analyzer and asserts expected conflict/wave behavior.
+
+## What It Does Not Do
+
+- It is not a full EVM block replay adapter.
+- It is not a general revm inspector or opcode tracer.
+- It does not claim complete read coverage for arbitrary bytecode.
+- It does not use live RPC.
+
+## Validation
+
+```sh
+cargo test -p parallel-revm-lab-revm-smoke --all-features
+```
+
+The full workspace validation also runs this crate through `cargo test --workspace --all-features`.
 
 ## Next Concrete Step
 
-Create a feature-gated adapter crate only after selecting a specific `revm` version and proving a tiny smoke path that compiles with:
-
-```sh
-cargo clippy --workspace --all-targets --all-features -- -D warnings
-cargo test --workspace --all-features
-```
-
-The adapter should remain out of the main scheduler path until it can expose deterministic read/write-like observations cleanly.
+Add a revm inspector that records `SLOAD`, `SSTORE`, account, balance, nonce, and code observations from arbitrary bytecode. Keep fixture-derived observations until inspector coverage is complete enough to avoid under-reporting conflicts.
