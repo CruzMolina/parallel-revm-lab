@@ -107,5 +107,6 @@ These commands passed in the latest packaging pass:
 - This does not execute/replay full EVM state transitions.
 - This does not claim production TPS or Ggas/s.
 - Trace completeness depends on tracer and provider behavior.
+- Warning summary: 66 of 436 transactions reported tracer faults; full per-transaction warnings are preserved in `dossier.json`.
 - Scheduler results are theoretical.
 - Contract labels are static convenience hints and are not part of analysis correctness.
