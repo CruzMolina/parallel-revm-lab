@@ -1,0 +1,22 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: fmt
+        run: cargo fmt --all -- --check
+      - name: clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - name: test
+        run: cargo test --workspace --all-features
+      - name: cli help
+        run: cargo run -p parallel-revm-lab -- --help
+      - name: cli verify
+        run: cargo run -p parallel-revm-lab -- verify --workload mixed --txs 50 --conflicts 0.0,0.5 --threads 1,2 --seed-start 1 --seed-end 5

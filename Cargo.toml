@@ -1,0 +1,31 @@
+[workspace]
+members = [
+    "crates/model",
+    "crates/workload",
+    "crates/executor",
+    "crates/cli",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+rust-version = "1.82"
+
+[workspace.dependencies]
+anyhow = "1.0"
+clap = { version = "4.5", features = ["derive"] }
+criterion = "0.5"
+proptest = "1.6"
+rand = "0.8"
+rand_chacha = "0.3"
+rayon = "1.10"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tempfile = "3.14"
+thiserror = "2.0"
+
+parallel-revm-lab-model = { path = "crates/model" }
+parallel-revm-lab-workload = { path = "crates/workload" }
+parallel-revm-lab-executor = { path = "crates/executor" }

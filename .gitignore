@@ -1,0 +1,5 @@
+/target/
+/reports/*.trace.json
+/reports/tmp-*
+*.profraw
+.DS_Store
