@@ -485,15 +485,19 @@ fn collect_block_range(args: CollectBlockRangeArgs) -> Result<()> {
     }
     let rpc_url = resolve_rpc_url(&args.chain, args.rpc_url)?;
     if args.dry_run {
-        for block_number in [args.start_block, args.end_block]
-            .into_iter()
-            .collect::<std::collections::BTreeSet<_>>()
-        {
+        for block_number in block_numbers(args.start_block, args.end_block) {
             let block = rpc_call(
                 &rpc_url,
                 "eth_getBlockByNumber",
                 serde_json::json!([hex_u64(block_number), false]),
             )?;
+            if block.is_null() {
+                bail!(
+                    "dry-run {} block {} returned null",
+                    args.chain,
+                    block_number
+                );
+            }
             let tx_count = block
                 .get("transactions")
                 .and_then(serde_json::Value::as_array)
@@ -512,10 +516,14 @@ fn collect_block_range(args: CollectBlockRangeArgs) -> Result<()> {
 
     let per_block_limit = args.max_transactions.unwrap_or(usize::MAX);
     let mut blocks = Vec::new();
-    for block_number in args.start_block..=args.end_block {
-        let block_path = args.out.join("blocks").join(format!("{block_number}.json"));
+    for block_number in block_numbers(args.start_block, args.end_block) {
+        let block_path = trace_pack_block_path(&args.out, block_number);
         if args.resume && block_path.exists() {
-            blocks.push(read_json(&block_path)?);
+            blocks.push(read_resumed_block(
+                &block_path,
+                block_number,
+                ChainKind::new(&args.chain),
+            )?);
             println!("resume: kept existing block file for {block_number}");
             continue;
         }
@@ -525,6 +533,9 @@ fn collect_block_range(args: CollectBlockRangeArgs) -> Result<()> {
             "eth_getBlockByNumber",
             serde_json::json!([hex_u64(block_number), true]),
         )?;
+        if block_value.is_null() {
+            bail!("eth_getBlockByNumber returned null for block {block_number}");
+        }
         let tx_values = block_value
             .get("transactions")
             .and_then(serde_json::Value::as_array)
@@ -603,7 +614,7 @@ fn collect_block_range(args: CollectBlockRangeArgs) -> Result<()> {
             .map(|tx| tx.gas_used)
             .collect::<Option<Vec<_>>>()
             .map(|gas| gas.into_iter().sum());
-        blocks.push(TracePackBlock {
+        let block = TracePackBlock {
             chain: ChainKind::new(&args.chain),
             block_number,
             block_hash: value_string(block_value.get("hash")),
@@ -612,7 +623,9 @@ fn collect_block_range(args: CollectBlockRangeArgs) -> Result<()> {
             total_gas_used,
             transactions,
             warnings: block_warnings,
-        });
+        };
+        persist_trace_pack_block(&args.out, &block)?;
+        blocks.push(block);
         println!(
             "collected {} transaction(s) for {} block {}",
             take, args.chain, block_number
@@ -651,6 +664,50 @@ fn collect_block_range(args: CollectBlockRangeArgs) -> Result<()> {
         args.out.display()
     );
     Ok(())
+}
+
+fn block_numbers(start: u64, end: u64) -> std::ops::RangeInclusive<u64> {
+    start..=end
+}
+
+fn trace_pack_block_path(root: &Path, block_number: u64) -> PathBuf {
+    root.join("blocks").join(format!("{block_number}.json"))
+}
+
+fn read_resumed_block(
+    path: &Path,
+    expected_block_number: u64,
+    expected_chain: ChainKind,
+) -> Result<TracePackBlock> {
+    let mut block: TracePackBlock = read_json(path)?;
+    block.normalize();
+    block
+        .validate()
+        .with_context(|| format!("invalid resumed block file {}", path.display()))?;
+    if block.block_number != expected_block_number {
+        bail!(
+            "resumed block file {} contains block {}, expected {}",
+            path.display(),
+            block.block_number,
+            expected_block_number
+        );
+    }
+    if block.chain != expected_chain {
+        bail!(
+            "resumed block file {} has chain {}, expected {}",
+            path.display(),
+            block.chain,
+            expected_chain
+        );
+    }
+    Ok(block)
+}
+
+fn persist_trace_pack_block(root: &Path, block: &TracePackBlock) -> Result<()> {
+    let mut block = block.clone();
+    block.normalize();
+    block.validate()?;
+    write_json(&trace_pack_block_path(root, block.block_number), &block)
 }
 
 fn analyze_fixture_command(args: &AnalyzeFixtureArgs) -> String {
@@ -977,5 +1034,69 @@ mod tests {
         assert_eq!(parse_hex_u64("0x2a"), Some(42));
         assert_eq!(parse_hex_u64("2a"), Some(42));
         assert_eq!(parse_hex_u64("not-hex"), None);
+    }
+
+    #[test]
+    fn collect_dry_run_numbers_cover_entire_range() {
+        let numbers = block_numbers(7, 10).collect::<Vec<_>>();
+
+        assert_eq!(numbers, vec![7, 8, 9, 10]);
+    }
+
+    #[test]
+    fn collect_persists_valid_block_immediately() {
+        let dir = tempfile::tempdir().unwrap();
+        let block = test_trace_pack_block(42);
+
+        persist_trace_pack_block(dir.path(), &block).unwrap();
+
+        let path = trace_pack_block_path(dir.path(), 42);
+        assert!(path.exists());
+        let loaded: TracePackBlock = read_json(&path).unwrap();
+        assert_eq!(loaded.block_number, 42);
+        assert_eq!(loaded.total_gas_used, Some(7));
+    }
+
+    #[test]
+    fn collect_rejects_wrong_resumed_block_number() {
+        let dir = tempfile::tempdir().unwrap();
+        let block = test_trace_pack_block(41);
+        persist_trace_pack_block(dir.path(), &block).unwrap();
+
+        let err = read_resumed_block(
+            &trace_pack_block_path(dir.path(), 41),
+            42,
+            ChainKind::new("base"),
+        )
+        .unwrap_err()
+        .to_string();
+
+        assert!(err.contains("expected 42"));
+    }
+
+    fn test_trace_pack_block(block_number: u64) -> TracePackBlock {
+        TracePackBlock {
+            chain: ChainKind::new("base"),
+            block_number,
+            block_hash: Some(format!("0x{block_number:064x}")),
+            parent_hash: Some(format!("0x{:064x}", block_number.saturating_sub(1))),
+            tx_count: 1,
+            total_gas_used: Some(7),
+            transactions: vec![TracePackTx {
+                tx_index: TxIndex(0),
+                tx_hash: TxHash(format!("0x{block_number:064x}")),
+                from: Some(Address::canonical(
+                    "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                )),
+                to: Some(Address::canonical(
+                    "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                )),
+                gas_used: Some(7),
+                status: Some("0x1".to_owned()),
+                accesses: Vec::new(),
+                warnings: Vec::new(),
+            }],
+            warnings: Vec::new(),
+        }
     }
 }

@@ -22,7 +22,7 @@ cargo run -p parallel-revm-lab -- collect-block-range \
   --resume
 ```
 
-Use `--dry-run` first to check block availability without tracing transactions:
+Use `--dry-run` first to check every requested block header and transaction count without tracing transactions:
 
 ```sh
 cargo run -p parallel-revm-lab -- collect-block-range \

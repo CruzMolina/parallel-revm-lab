@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
 use std::path::{Path, PathBuf};
 
@@ -60,9 +60,9 @@ impl TracePack {
 
     pub fn validate(&self) -> Result<(), TracePackError> {
         self.manifest.validate()?;
-        let mut seen_blocks = BTreeSet::new();
+        let mut blocks_by_number = BTreeMap::new();
         for block in &self.blocks {
-            if !seen_blocks.insert(block.block_number) {
+            if blocks_by_number.insert(block.block_number, block).is_some() {
                 return Err(TracePackError::DuplicateBlock(block.block_number));
             }
             if block.chain != self.manifest.chain {
@@ -92,6 +92,36 @@ impl TracePack {
                     self.blocks.len()
                 ),
             });
+        }
+        for number in self.manifest.start_block..=self.manifest.end_block {
+            if !blocks_by_number.contains_key(&number) {
+                return Err(TracePackError::InvalidManifest {
+                    reason: format!("manifest range is missing block {number}"),
+                });
+            }
+        }
+        if self.manifest.start_block < self.manifest.end_block {
+            for number in (self.manifest.start_block + 1)..=self.manifest.end_block {
+                let previous = blocks_by_number
+                    .get(&(number - 1))
+                    .expect("previous block exists after range check");
+                let current = blocks_by_number
+                    .get(&number)
+                    .expect("current block exists after range check");
+                if let (Some(previous_hash), Some(parent_hash)) =
+                    (&previous.block_hash, &current.parent_hash)
+                {
+                    if parent_hash != previous_hash {
+                        return Err(TracePackError::InvalidBlock {
+                            block_number: current.block_number,
+                            reason: format!(
+                                "parent_hash `{parent_hash}` does not match previous block {} hash `{previous_hash}`",
+                                previous.block_number
+                            ),
+                        });
+                    }
+                }
+            }
         }
         Ok(())
     }
@@ -225,6 +255,30 @@ impl TracePackBlock {
                 });
             }
             tx.validate(self.block_number)?;
+        }
+        if let Some(total_gas_used) = self.total_gas_used {
+            let mut complete = true;
+            let mut tx_gas_sum = 0_u64;
+            for tx in &self.transactions {
+                let Some(gas_used) = tx.gas_used else {
+                    complete = false;
+                    break;
+                };
+                tx_gas_sum = tx_gas_sum.checked_add(gas_used).ok_or_else(|| {
+                    TracePackError::InvalidBlock {
+                        block_number: self.block_number,
+                        reason: "sum of transaction gas_used values overflows u64".to_owned(),
+                    }
+                })?;
+            }
+            if complete && total_gas_used != tx_gas_sum {
+                return Err(TracePackError::InvalidBlock {
+                    block_number: self.block_number,
+                    reason: format!(
+                        "total_gas_used {total_gas_used} does not match sum of transaction gas_used values {tx_gas_sum}"
+                    ),
+                });
+            }
         }
         Ok(())
     }
@@ -635,6 +689,26 @@ mod tests {
         assert_eq!(pack.blocks[0].transactions[0].accesses.len(), 1);
     }
 
+    #[test]
+    fn complete_gas_total_must_match_tx_sum() {
+        let mut pack = valid_pack();
+        pack.blocks[0].total_gas_used = Some(21_001);
+
+        let err = pack.validate().unwrap_err().to_string();
+        assert!(err.contains("total_gas_used 21001"));
+        assert!(err.contains("sum of transaction gas_used values 21000"));
+    }
+
+    #[test]
+    fn parent_hash_must_match_previous_block_hash_when_present() {
+        let mut pack = two_block_pack();
+        pack.blocks[1].parent_hash = Some(format!("0x{:064x}", 99));
+
+        let err = pack.validate().unwrap_err().to_string();
+        assert!(err.contains("parent_hash"));
+        assert!(err.contains("previous block 1 hash"));
+    }
+
     fn valid_pack() -> TracePack {
         TracePack {
             manifest: TracePackManifest {
@@ -681,5 +755,17 @@ mod tests {
                 warnings: Vec::new(),
             }],
         }
+    }
+
+    fn two_block_pack() -> TracePack {
+        let mut pack = valid_pack();
+        pack.manifest.end_block = 2;
+        let mut second = pack.blocks[0].clone();
+        second.block_number = 2;
+        second.block_hash = Some(format!("0x{:064x}", 2));
+        second.parent_hash = Some(format!("0x{:064x}", 1));
+        second.transactions[0].tx_hash = TxHash(format!("0x{:064x}", 11));
+        pack.blocks.push(second);
+        pack
     }
 }

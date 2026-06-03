@@ -46,7 +46,16 @@
 
 - Synthetic demo fixture; do not cite as real-chain evidence.
 - block 38014901: Block is a compact synthetic demo, not a Base RPC capture.
+- block 38014901: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical
+- block 38014901: tx_index 0: trace marks read information as incomplete
+- block 38014901: tx_index 1: trace marks read information as incomplete
+- block 38014901: tx_index 2: trace marks read information as incomplete
+- block 38014901: tx_index 3: trace marks read information as incomplete
 - block 38014902: Block is a compact synthetic demo, not a Base RPC capture.
+- block 38014902: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical
+- block 38014902: tx_index 0: trace marks read information as incomplete
+- block 38014902: tx_index 1: trace marks read information as incomplete
+- block 38014902: tx_index 2: trace marks read information as incomplete
 
 ## What This Proves
 

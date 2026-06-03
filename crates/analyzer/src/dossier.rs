@@ -1,6 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use parallel_revm_lab_trace_model::{TraceAccessKey, TracePack, TracePackBlock, TxIndex};
+use parallel_revm_lab_trace_model::{
+    BlockAccessTrace, TraceAccessKey, TracePack, TracePackBlock, TraceParseWarning, TxIndex,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -690,7 +692,28 @@ fn analyze_trace_pack_block(
         top_hot_contracts: block_hot.top_contracts(5, gas_complete),
         worker_simulation,
         tx_summaries,
-        warnings: block.warnings.clone(),
+        warnings: trace_pack_block_warnings(&trace),
+    }
+}
+
+fn trace_pack_block_warnings(trace: &BlockAccessTrace) -> Vec<String> {
+    let mut warnings = trace
+        .warnings
+        .iter()
+        .map(trace_warning_message)
+        .collect::<Vec<_>>();
+    for tx in &trace.transactions {
+        warnings.extend(tx.warnings.iter().map(trace_warning_message));
+    }
+    warnings.sort();
+    warnings.dedup();
+    warnings
+}
+
+fn trace_warning_message(warning: &TraceParseWarning) -> String {
+    match warning.tx_index {
+        Some(tx_index) => format!("tx_index {}: {}", tx_index.0, warning.message),
+        None => warning.message.clone(),
     }
 }
 
@@ -1225,6 +1248,32 @@ mod tests {
 
         assert_eq!(dossier.top_hot_storage_slots[0].touching_txs, 3);
         assert_eq!(dossier.top_hot_storage_slots[0].conflict_contribution, 3);
+    }
+
+    #[test]
+    fn tx_warnings_are_preserved_in_dossier() {
+        let mut pack = demo_pack();
+        pack.blocks[0].transactions[0]
+            .warnings
+            .push("provider returned truncated trace".to_owned());
+
+        let dossier = analyze_trace_pack(&pack, &[1]);
+
+        assert!(dossier.blocks[0]
+            .warnings
+            .iter()
+            .any(|warning| warning.contains("tx_index 0: provider returned truncated trace")));
+        assert!(dossier
+            .warnings
+            .iter()
+            .any(|warning| warning
+                .contains("block 1: tx_index 0: provider returned truncated trace")));
+        assert!(
+            dossier
+                .parallelism_loss_decomposition
+                .unknown_incomplete_trace_warning_count
+                > 0
+        );
     }
 
     fn demo_pack() -> TracePack {

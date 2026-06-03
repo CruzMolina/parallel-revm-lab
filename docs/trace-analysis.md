@@ -55,13 +55,15 @@ Validated fields:
 - storage slots: `0x` plus 64 hex characters
 - tx hashes: `0x` plus 64 hex characters
 - block files must match the manifest chain/range
+- adjacent block hashes must chain through `parent_hash` when both hashes are present
+- complete block gas must equal the sum of transaction `gas_used` values
 - duplicate transactions and duplicate exact accesses are normalized deterministically
 
 Missing gas is allowed. Dossier reports then mark gas-weighted metrics unavailable and fall back to one duration unit per tx for worker simulation.
 
 ## Gas-Weighted Scheduling
 
-`analyze-trace-pack` computes tx-count metrics and gas-weighted metrics. Tx-count metrics include conflict pairs, deterministic waves, critical path length, and `tx_count / critical_path`. Gas-weighted metrics include weighted conflict percentage, gas critical path, and `total_gas / gas_critical_path` when every included tx has gas.
+`analyze-trace-pack` computes tx-count metrics and gas-weighted metrics. Tx-count metrics include conflict pairs, deterministic waves, critical path length, and `tx_count / critical_path`. Gas-weighted metrics include weighted conflict percentage, gas critical path, and `total_gas / gas_critical_path` when every included tx has gas and the block total reconciles with transaction gas.
 
 Worker simulation uses deterministic list scheduling over the dependency graph. It uses receipt `gas_used` as task duration when available, otherwise one unit per transaction. This is a theoretical model, not measured Ggas/s.
 
@@ -88,6 +90,7 @@ Different Ethereum providers expose different debug and trace APIs. Even when a 
 - CI uses normalized fixture, Geth struct-log fixture, and committed demo trace-pack mode only.
 - RPC URLs are never printed.
 - `--rpc-url` takes precedence over `BASE_RPC_URL` and `ETH_RPC_URL`.
+- `collect-block-range --resume` resumes from validated per-block trace-pack files already written under `blocks/`.
 - Live RPC normalization should be implemented provider by provider with fixtures and tests.
 
 ## Why Fixture Mode Exists

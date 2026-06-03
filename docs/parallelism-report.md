@@ -41,7 +41,7 @@ Open the Chrome trace JSON with `chrome://tracing` or compatible trace viewers.
 Trace-pack dossiers extend the single-block report with range-level fields:
 
 - `provenance`: whether data is a synthetic/demo fixture or user-collected RPC trace pack
-- `total_gas_used`: present only when gas is available for all included transactions
+- `total_gas_used`: present only when gas is available for all included transactions and block totals reconcile with transaction gas
 - `gas_weighted_conflict_percentage`: conflict percentage weighted by pair gas
 - `gas_weighted_critical_path`: longest dependency path by gas duration
 - `theoretical_parallelism_ceiling_by_gas`: `total_gas / gas_weighted_critical_path`

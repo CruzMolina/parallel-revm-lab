@@ -39,6 +39,13 @@
 
 - Storage opcode observations only; account/code/balance reads are not represented
 - block 0: revm smoke inspector records SLOAD/SSTORE storage access only; account, balance, nonce, and code reads are not represented
+- block 0: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical
+- block 0: tx_index 0: revm smoke inspector marks reads incomplete outside SLOAD
+- block 0: tx_index 0: trace marks read information as incomplete
+- block 0: tx_index 1: revm smoke inspector marks reads incomplete outside SLOAD
+- block 0: tx_index 1: trace marks read information as incomplete
+- block 0: tx_index 2: revm smoke inspector marks reads incomplete outside SLOAD
+- block 0: tx_index 2: trace marks read information as incomplete
 - one or more blocks/transactions are missing gas; gas-weighted range metrics are unavailable
 
 ## What This Proves

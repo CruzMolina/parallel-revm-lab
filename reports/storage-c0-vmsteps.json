@@ -11,8 +11,8 @@
   "modes": [
     {
       "mode": "sequential",
-      "elapsed_ns": 88624458,
-      "tx_per_sec": 11283.566890756048,
+      "elapsed_ns": 93089417,
+      "tx_per_sec": 10742.359681981896,
       "speedup_vs_sequential": null,
       "state_hash": "1940c0cfba64e3cb",
       "declared_conflict_pairs": 245,
@@ -26,9 +26,9 @@
     },
     {
       "mode": "access-list",
-      "elapsed_ns": 27768250,
-      "tx_per_sec": 36012.35223681723,
-      "speedup_vs_sequential": 3.1915751982930147,
+      "elapsed_ns": 28632666,
+      "tx_per_sec": 34925.144588352334,
+      "speedup_vs_sequential": 3.2511613483704243,
       "state_hash": "1940c0cfba64e3cb",
       "declared_conflict_pairs": 245,
       "scheduler_deferrals": 245,
@@ -41,9 +41,9 @@
     },
     {
       "mode": "optimistic",
-      "elapsed_ns": 39257125,
-      "tx_per_sec": 25473.082911700745,
-      "speedup_vs_sequential": 2.25753816663854,
+      "elapsed_ns": 40298958,
+      "tx_per_sec": 24814.53738828681,
+      "speedup_vs_sequential": 2.309970818600322,
       "state_hash": "1940c0cfba64e3cb",
       "declared_conflict_pairs": 245,
       "scheduler_deferrals": 0,

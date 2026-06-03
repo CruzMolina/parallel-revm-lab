@@ -102,7 +102,7 @@ Commands run after the trace analyzer and revm smoke upgrade:
 - `cargo test --workspace --all-features`: passed.
 - `cargo run -p parallel-revm-lab -- verify --workload mixed --txs 100 --conflicts 0.0,0.2,0.5,0.7,0.95 --threads 1,2,4 --seed-start 1 --seed-end 20`: passed, 300 workload/thread combinations.
 - `cargo run -p parallel-revm-lab -- analyze-fixture --fixture fixtures/base-mini-trace.json --out reports/base-mini-trace.parallelism.json --markdown reports/base-mini-trace.md --html reports/base-mini-trace.html --trace reports/base-mini-trace.schedule.trace.json`: passed, 12 txs, 7 conflicts, 3 waves, max width 7, hash `3df71a7c236db9d9`.
-- `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.192x and optimistic 2.258x vs sequential.
+- `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.251x and optimistic 2.310x vs sequential.
 - `cargo test -p parallel-revm-lab-revm-smoke --all-features`: passed, 3 tests.
 - `just --version`: passed with `just 1.51.0`.
 - `just validate`: passed.
@@ -122,7 +122,7 @@ Current fixture report:
 Current benchmark snapshots:
 
 - cheap mixed c50: access-list 0.011x and optimistic 0.806x vs sequential; scheduling overhead dominates access-list for this tiny synthetic batch.
-- heavier storage c0 with `vm_steps=50000`: access-list 3.192x and optimistic 2.258x vs sequential; parallelism wins under low contention.
+- heavier storage c0 with `vm_steps=50000`: access-list 3.251x and optimistic 2.310x vs sequential; parallelism wins under low contention.
 
 ## 2026-06-03 Final Credibility Pass Plan
 
@@ -158,7 +158,7 @@ Assumptions:
 - `cargo run -p parallel-revm-lab -- verify --workload mixed --txs 100 --conflicts 0.0,0.2,0.5,0.7,0.95 --threads 1,2,4 --seed-start 1 --seed-end 20`: passed, 300 workload/thread combinations.
 - `cargo run -p parallel-revm-lab -- analyze-fixture --fixture fixtures/base-mini-trace.json --out reports/base-mini-trace.parallelism.json --markdown reports/base-mini-trace.md --html reports/base-mini-trace.html --trace reports/base-mini-trace.schedule.trace.json`: passed, 12 txs, 7 conflicts, 3 waves, max width 7, hash `3df71a7c236db9d9`.
 - `cargo run -p parallel-revm-lab -- analyze-trace --format geth-struct-logs --fixture fixtures/geth-mini-struct-logs.json --out reports/geth-mini.parallelism.json --markdown reports/geth-mini.md --html reports/geth-mini.html --trace reports/geth-mini.schedule.trace.json`: passed, 3 txs, 1 conflict, 2 waves, max width 2, hash `1c9e9d1d244efdde`.
-- `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.192x and optimistic 2.258x vs sequential.
+- `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.251x and optimistic 2.310x vs sequential.
 - `cargo test -p parallel-revm-lab-revm-smoke --all-features`: passed, 3 tests.
 - `just validate`: passed.
 - `just analyze-fixture`: passed, hash `3df71a7c236db9d9`.
@@ -212,7 +212,34 @@ Current demo dossier:
 - `cargo run -p parallel-revm-lab -- analyze-trace-pack --trace-dir trace-packs/demo-mini --workers 1,2,4,8 --out reports/demo-dossier.json --markdown reports/demo-dossier.md --html reports/demo-dossier.html --trace reports/demo-schedule.trace.json`: passed, 2 blocks, 7 txs, 2 conflicts, gas ceiling 1.593x.
 - `cargo run -p parallel-revm-lab -- recommend-access-lists --trace-dir trace-packs/demo-mini --out reports/access-list-recommendations.json`: passed, 7 observed access hints.
 - `cargo run -p parallel-revm-lab-revm-smoke --example emit_trace_pack`: passed; refreshed `trace-packs/revm-smoke-mini` and `reports/revm-smoke-dossier.*`.
-- `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.192x and optimistic 2.258x vs sequential.
+- `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.251x and optimistic 2.310x vs sequential.
 - `just validate-full`: passed; reran fmt, clippy, workspace tests, verifier sweep, fixture analysis, trace-pack dossier generation, revm smoke tests, revm trace-pack emission, and the release storage benchmark smoke.
 
 Note: one earlier focused multi-crate test attempt hit a transient Apple clang linker segmentation fault while linking `parallel-revm-lab-revm-smoke`; rerunning the revm smoke test and the full workspace test passed.
+
+## 2026-06-03 Review Finding Fix Plan
+
+Milestones:
+
+1. Reject complete-gas trace-pack blocks whose `total_gas_used` does not equal the sum of transaction `gas_used` values.
+2. Reject adjacent block hash discontinuity when both previous `block_hash` and current `parent_hash` are present.
+3. Preserve tx-level trace warnings in block and range dossiers, including incomplete-read/provider warnings.
+4. Make `collect-block-range --resume` durable at block granularity by writing validated block files immediately.
+5. Make collector dry-run iterate every requested block and update docs accordingly.
+
+## 2026-06-03 Review Finding Fix Implementation
+
+- Added trace-pack validation for complete-gas reconciliation and parent-hash continuity.
+- Added analyzer warning collection from normalized block and transaction trace warnings.
+- Added collector helpers for all-block dry-run iteration, immediate block persistence, and resumed-block validation.
+- Updated public docs and failure notes so dry-run/resume/gas-weighted semantics match behavior.
+
+## 2026-06-03 Review Finding Fix Validation Results
+
+- `cargo fmt --all -- --check`: passed.
+- `cargo clippy --workspace --all-targets --all-features -- -D warnings`: passed.
+- `cargo test --workspace --all-features`: passed, 58 tests.
+- `cargo run -p parallel-revm-lab -- verify --workload mixed --txs 100 --conflicts 0.0,0.2,0.5,0.7,0.95 --threads 1,2,4 --seed-start 1 --seed-end 20`: passed, 300 workload/thread combinations.
+- `just validate-full`: passed; reran fmt, clippy, workspace tests, verifier sweep, fixture analysis, trace-pack dossier generation, revm smoke tests, revm trace-pack emission, and the release storage benchmark smoke.
+- Review-fix artifacts: demo dossier now reports 9 incomplete-trace warning signals; revm-smoke dossier now reports 7 incomplete-trace warning signals.
+- Release storage smoke: access-list 3.251x and optimistic 2.310x vs sequential, all modes state hash `1940c0cfba64e3cb`.

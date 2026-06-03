@@ -71,3 +71,31 @@ See `docs/engineering-log.md` for the current validation history and upgrade dec
 - Root cause: collection depends on a user-supplied debug-capable RPC endpoint and provider support for JavaScript tracers.
 - Fix: committed only reproduction instructions under `case-studies/base-38014901-38014910/`; the committed dossier uses `trace-packs/demo-mini` and labels itself synthetic/demo.
 - Tests added: CLI dossier smoke tests run on the committed demo trace pack without network access.
+
+## Trace-Pack Gas Totals Could Skew Ceilings
+
+- Symptom: a trace pack could claim a `total_gas_used` that did not equal the included transaction gas values.
+- Root cause: validation checked gas presence, but not gas reconciliation.
+- Fix: complete-gas blocks now reject mismatched totals before gas-weighted dossier metrics are produced.
+- Test added: trace-pack validation rejects mismatched complete gas totals.
+
+## Trace-Pack Warnings Were Too Shallow
+
+- Symptom: tx-level trace warnings, including incomplete-read and provider-fault messages, did not appear in trace-pack dossiers.
+- Root cause: dossier block summaries copied only block-level warning strings.
+- Fix: dossier warning collection now includes block-level and tx-level normalized trace warnings with tx context.
+- Test added: analyzer test verifies tx warnings reach both block and range dossier warnings.
+
+## Collector Resume Was Not Durable Enough
+
+- Symptom: `collect-block-range --resume` only helped after a previous full successful write.
+- Root cause: collected blocks were kept in memory until the full range completed.
+- Fix: each validated block file is now written under `blocks/` immediately after collection, and resumed files are validated against expected chain/block number.
+- Tests added: CLI unit tests cover immediate block persistence and resumed-block mismatch rejection.
+
+## Dry Run Only Checked Endpoints
+
+- Symptom: `--dry-run` sounded like a range check but only queried the start and end blocks.
+- Root cause: the collector used an endpoint set for the dry-run path.
+- Fix: dry-run now iterates every requested block in the inclusive range.
+- Test added: CLI unit test locks all-block dry-run iteration.

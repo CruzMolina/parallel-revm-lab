@@ -88,7 +88,7 @@ cargo run -p parallel-revm-lab -- collect-block-range \
   --resume
 ```
 
-Use `--dry-run` first to check block availability. RPC URLs are never printed, and live RPC collection is not required in CI.
+Use `--dry-run` first to check every requested block header and transaction count without tracing. RPC URLs are never printed, and live RPC collection is not required in CI.
 
 Then analyze the collected trace pack:
 

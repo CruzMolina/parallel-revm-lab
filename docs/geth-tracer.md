@@ -80,7 +80,7 @@ Not every provider supports:
 - historical state for the requested block
 - enough timeout or payload size for large transactions
 
-Run `--dry-run` first to check block availability. A successful dry run does not prove tracing support.
+Run `--dry-run` first to check every requested block header and transaction count. A successful dry run does not prove tracing support.
 
 ## Security Notes
 

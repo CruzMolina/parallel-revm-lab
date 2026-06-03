@@ -53,9 +53,10 @@ Covered edge cases include:
 - `vm_steps` synthetic CPU work that does not affect state semantics
 - duplicate trace transaction indices
 - invalid fixture addresses, storage keys, and transaction hashes
-- trace-pack schema validation, manifest roundtrip, deterministic access normalization, and missing-gas fallback
+- trace-pack schema validation, manifest roundtrip, deterministic access normalization, complete-gas reconciliation, parent-hash continuity, and missing-gas fallback
 - gas-weighted critical path and worker simulation on a known DAG
-- incomplete trace read information
+- incomplete trace read information and tx-level trace warnings in dossiers
+- block-level collector persistence and all-block dry-run iteration helpers
 - deterministic fixture wave shape and report hash
 - Geth struct-log fixture parsing for `SLOAD`/`SSTORE`
 - revm inspector bytecode fixtures for hot-slot and independent-slot behavior, including trace-pack conversion
