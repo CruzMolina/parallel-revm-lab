@@ -33,6 +33,7 @@ Additional trace analyzer invariants:
 - wave assignment is deterministic for the same normalized trace
 - hot contract and hot slot rankings break ties by key
 - duplicate `tx_index` values are rejected
+- malformed fixture addresses, storage keys, and transaction hashes are rejected
 - incomplete read information emits warnings and marks conflict counts as lower bounds
 
 ## Re-Execution Strategy
@@ -51,9 +52,11 @@ Covered edge cases include:
 - storage writes that optionally skip prior reads
 - `vm_steps` synthetic CPU work that does not affect state semantics
 - duplicate trace transaction indices
+- invalid fixture addresses, storage keys, and transaction hashes
 - incomplete trace read information
 - deterministic fixture wave shape and report hash
-- revm smoke bytecode fixtures for hot-slot and independent-slot behavior
+- Geth struct-log fixture parsing for `SLOAD`/`SSTORE`
+- revm inspector bytecode fixtures for hot-slot and independent-slot behavior
 
 ## Property Testing
 
@@ -66,6 +69,7 @@ Covered edge cases include:
 - They do not prove production performance.
 - They do not prove the non-cryptographic state hash is collision resistant.
 - Trace analyzer tests do not prove provider RPC traces are complete.
-- The revm smoke tests do not prove full block replay or general inspector extraction.
+- The Geth parser tests do not prove every Geth trace shape.
+- The revm smoke tests do not prove full block replay or account/code/balance extraction.
 
 They do prove the central lab invariant for the implemented synthetic model: parallel modes are sequentially equivalent across fixed, randomized, and high-contention workloads.

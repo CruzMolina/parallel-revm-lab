@@ -20,7 +20,10 @@ fn help_smoke() {
         "{}",
         String::from_utf8_lossy(&output.stderr)
     );
-    assert!(String::from_utf8_lossy(&output.stdout).contains("parallel-revm-lab"));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("parallel-revm-lab"));
+    assert!(stdout.contains("analyze-trace"));
+    assert!(!stdout.contains("analyze-block"));
 }
 
 #[test]
@@ -134,6 +137,53 @@ fn analyze_fixture_smoke_writes_reports() {
     assert!(std::fs::read_to_string(html)
         .unwrap()
         .contains("Parallelism Report"));
+    assert!(std::fs::read_to_string(trace)
+        .unwrap()
+        .contains("traceEvents"));
+}
+
+#[test]
+fn analyze_trace_geth_struct_logs_smoke_writes_reports() {
+    let dir = tempfile::tempdir().unwrap();
+    let report = dir.path().join("geth.json");
+    let markdown = dir.path().join("geth.md");
+    let html = dir.path().join("geth.html");
+    let trace = dir.path().join("geth.trace.json");
+    let fixture = workspace_root().join("fixtures/geth-mini-struct-logs.json");
+    let output = Command::new(bin())
+        .args([
+            "analyze-trace",
+            "--format",
+            "geth-struct-logs",
+            "--fixture",
+            fixture.to_str().unwrap(),
+            "--out",
+            report.to_str().unwrap(),
+            "--markdown",
+            markdown.to_str().unwrap(),
+            "--html",
+            html.to_str().unwrap(),
+            "--trace",
+            trace.to_str().unwrap(),
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let json = std::fs::read_to_string(report).unwrap();
+    assert!(json.contains("\"tx_count\": 3"));
+    assert!(json.contains("\"conflict_pair_count\": 1"));
+    assert!(json.contains("\"access_model\": \"declared-read-write-lower-bound\""));
+    assert!(std::fs::read_to_string(markdown)
+        .unwrap()
+        .contains("Parallelism Report"));
+    assert!(std::fs::read_to_string(html)
+        .unwrap()
+        .contains("Hot Storage Slots"));
     assert!(std::fs::read_to_string(trace)
         .unwrap()
         .contains("traceEvents"));

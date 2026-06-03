@@ -1,0 +1,111 @@
+{
+  "report_version": "1",
+  "chain": "geth-struct-logs-fixture",
+  "block": {
+    "number": 1,
+    "hash": "0x8888888888888888888888888888888888888888888888888888888888888888"
+  },
+  "tx_count": 3,
+  "access_model": "declared-read-write-lower-bound",
+  "conflict_pair_count": 1,
+  "conflict_percentage": 33.33333333333333,
+  "wave_count": 2,
+  "max_wave_width": 2,
+  "critical_path_length": 2,
+  "theoretical_parallelism_ceiling": 1.5,
+  "top_hot_contracts": [
+    {
+      "key": "0x1111111111111111111111111111111111111111",
+      "count": 4
+    }
+  ],
+  "top_hot_storage_slots": [
+    {
+      "key": "0x1111111111111111111111111111111111111111:0x0000000000000000000000000000000000000000000000000000000000000000",
+      "count": 3
+    },
+    {
+      "key": "0x1111111111111111111111111111111111111111:0x0000000000000000000000000000000000000000000000000000000000000001",
+      "count": 1
+    }
+  ],
+  "access_histogram": {
+    "read": 1,
+    "write": 3
+  },
+  "tx_summaries": [
+    {
+      "tx_index": 0,
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000100",
+      "read_count": 1,
+      "write_count": 1,
+      "conflict_degree": 1,
+      "wave": 0
+    },
+    {
+      "tx_index": 1,
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000101",
+      "read_count": 0,
+      "write_count": 1,
+      "conflict_degree": 0,
+      "wave": 0
+    },
+    {
+      "tx_index": 2,
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000102",
+      "read_count": 0,
+      "write_count": 1,
+      "conflict_degree": 1,
+      "wave": 1
+    }
+  ],
+  "warnings": [
+    {
+      "tx_index": null,
+      "message": "fixture is sanitized and intentionally tiny; it is not a real mainnet transaction trace"
+    },
+    {
+      "tx_index": null,
+      "message": "geth struct-log parser captures SLOAD/SSTORE storage accesses only; account, balance, nonce, and code reads are not represented"
+    },
+    {
+      "tx_index": 0,
+      "message": "analysis is a lower bound: read set is marked incomplete"
+    },
+    {
+      "tx_index": 0,
+      "message": "geth struct-log storage parser marks reads incomplete outside SLOAD"
+    },
+    {
+      "tx_index": 0,
+      "message": "trace marks read information as incomplete"
+    },
+    {
+      "tx_index": 1,
+      "message": "analysis is a lower bound: read set is marked incomplete"
+    },
+    {
+      "tx_index": 1,
+      "message": "geth struct-log storage parser marks reads incomplete outside SLOAD"
+    },
+    {
+      "tx_index": 1,
+      "message": "trace marks read information as incomplete"
+    },
+    {
+      "tx_index": 2,
+      "message": "analysis is a lower bound: read set is marked incomplete"
+    },
+    {
+      "tx_index": 2,
+      "message": "geth struct-log storage parser marks reads incomplete outside SLOAD"
+    },
+    {
+      "tx_index": 2,
+      "message": "trace marks read information as incomplete"
+    }
+  ],
+  "generated_from_fixture": true,
+  "generated_from_rpc": false,
+  "deterministic_hash": "1c9e9d1d244efdde"
+}

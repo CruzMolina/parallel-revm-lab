@@ -1,0 +1,43 @@
+{
+  "traceEvents": [
+    {
+      "args": {
+        "conflict_degree": 1,
+        "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000100"
+      },
+      "cat": "parallelism-schedule",
+      "dur": 900,
+      "name": "tx-0",
+      "ph": "X",
+      "pid": 1,
+      "tid": "wave-0",
+      "ts": 0
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000101"
+      },
+      "cat": "parallelism-schedule",
+      "dur": 900,
+      "name": "tx-1",
+      "ph": "X",
+      "pid": 1,
+      "tid": "wave-0",
+      "ts": 0
+    },
+    {
+      "args": {
+        "conflict_degree": 1,
+        "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000102"
+      },
+      "cat": "parallelism-schedule",
+      "dur": 900,
+      "name": "tx-2",
+      "ph": "X",
+      "pid": 1,
+      "tid": "wave-1",
+      "ts": 1000
+    }
+  ]
+}

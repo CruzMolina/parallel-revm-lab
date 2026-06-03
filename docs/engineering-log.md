@@ -82,15 +82,16 @@ Assumptions:
 - Attempt: inspected `cargo info revm` and local crate sources, then used a compile-tested minimal API: `Context::mainnet`, `CacheDB<EmptyDB>`, `TxEnv::builder`, and `build_mainnet().transact(...)`.
 - Version: `revm = 40.0.3`, exact-pinned, `default-features = false`, `features = ["std"]`.
 - MSRV impact: `revm 40.0.3` declares `rust-version = 1.91.0`; workspace `rust-version` now matches that floor.
-- Implementation: `crates/revm-smoke` executes tiny bytecode fixtures against in-memory revm state and converts known fixture behavior into this repo's normalized trace model.
-- Limitation: this is not a general EVM tracer or block replay adapter. It is a compiling bridge proving the analyzer can consume observations from real EVM bytecode execution.
+- Initial implementation: `crates/revm-smoke` executed tiny bytecode fixtures against in-memory revm state and converted known fixture behavior into this repo's normalized trace model.
+- Superseding implementation: the final credibility pass below replaced fixture-derived storage observations with an actual `revm` inspector that records `SLOAD` and `SSTORE` during bytecode execution.
+- Limitation: this is not a general EVM tracer or block replay adapter. It is a compiling bridge proving the analyzer can consume storage observations from real EVM bytecode execution.
 
 ## 2026-06-03 Live RPC Decision
 
 - Attempt scope: CLI surface, environment handling, and provider caveat review.
 - Decision: keep `analyze-block` as a clear, non-secret-printing failure path until a provider-specific trace normalizer is implemented with fixtures.
 - Blocker: Ethereum JSON-RPC trace/debug APIs differ across providers and clients, and reliable read/write extraction cannot be claimed without endpoint-specific fixtures.
-- Reliable path for this revision: `analyze-fixture` and committed normalized fixtures.
+- Reliable paths for this revision: `analyze-trace`, `analyze-fixture`, and committed offline fixtures.
 
 ## 2026-06-03 Validation Results
 
@@ -100,8 +101,8 @@ Commands run after the trace analyzer and revm smoke upgrade:
 - `cargo clippy --workspace --all-targets --all-features -- -D warnings`: passed.
 - `cargo test --workspace --all-features`: passed.
 - `cargo run -p parallel-revm-lab -- verify --workload mixed --txs 100 --conflicts 0.0,0.2,0.5,0.7,0.95 --threads 1,2,4 --seed-start 1 --seed-end 20`: passed, 300 workload/thread combinations.
-- `cargo run -p parallel-revm-lab -- analyze-fixture --fixture fixtures/base-mini-trace.json --out reports/base-mini-trace.parallelism.json --markdown reports/base-mini-trace.md --html reports/base-mini-trace.html --trace reports/base-mini-trace.schedule.trace.json`: passed, 12 txs, 7 conflicts, 3 waves, max width 7, hash `45027250c9c34541`.
-- `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.215x and optimistic 2.295x vs sequential.
+- `cargo run -p parallel-revm-lab -- analyze-fixture --fixture fixtures/base-mini-trace.json --out reports/base-mini-trace.parallelism.json --markdown reports/base-mini-trace.md --html reports/base-mini-trace.html --trace reports/base-mini-trace.schedule.trace.json`: passed, 12 txs, 7 conflicts, 3 waves, max width 7, hash `3df71a7c236db9d9`.
+- `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.187x and optimistic 2.285x vs sequential.
 - `cargo test -p parallel-revm-lab-revm-smoke --all-features`: passed, 3 tests.
 - `just --version`: passed with `just 1.51.0`.
 - `just validate`: passed.
@@ -120,5 +121,45 @@ Current fixture report:
 
 Current benchmark snapshots:
 
-- cheap mixed c50: access-list 0.012x and optimistic 0.967x vs sequential; scheduling overhead dominates access-list for this tiny synthetic batch.
-- heavier storage c0 with `vm_steps=50000`: access-list 3.215x and optimistic 2.295x vs sequential; parallelism wins under low contention.
+- cheap mixed c50: access-list 0.011x and optimistic 0.806x vs sequential; scheduling overhead dominates access-list for this tiny synthetic batch.
+- heavier storage c0 with `vm_steps=50000`: access-list 3.187x and optimistic 2.285x vs sequential; parallelism wins under low contention.
+
+## 2026-06-03 Final Credibility Pass Plan
+
+Milestones:
+
+1. Replace synthetic mnemonic fixture addresses with valid `0x`-prefixed 20-byte hex addresses and keep the same 12-tx/3-wave shape.
+2. Validate fixture addresses, tx hashes, and storage keys with clear `tx_index` context.
+3. Add a working offline `analyze-trace --format geth-struct-logs` path for a tiny committed struct-log fixture.
+4. Replace revm-smoke's fixture-derived access observations with an actual revm inspector that records `SLOAD` and `SSTORE`.
+5. Demote live `analyze-block` from the README headline path and make offline trace/fixture analysis the working public story.
+6. Regenerate reports and run the full validation gate.
+
+Assumptions:
+
+- No live RPC support is added in this pass.
+- Geth struct-log support targets the tiny documented fixture shape only; wider provider support remains future work.
+- Incomplete or stack-limited traces must emit lower-bound warnings instead of pretending complete coverage.
+
+## 2026-06-03 Final Credibility Pass Implementation
+
+- Replaced mnemonic fixture addresses with valid `0x` plus 40-hex EVM addresses while preserving the 12-transaction, 7-conflict, 3-wave fixture shape.
+- Added trace validation for tx hashes, sender/recipient addresses, access addresses, and storage keys with `tx_index` and access-position context.
+- Added `analyze-trace --format geth-struct-logs` for the committed tiny sanitized struct-log fixture. It derives storage slots from `SLOAD` and `SSTORE` stack values and marks reads incomplete outside those observations.
+- Replaced revm-smoke's fixture-derived storage observations with a real `revm` inspector over `build_mainnet_with_inspector(...).inspect_tx(...)`.
+- Hid `analyze-block` from the public help path and documented it as future/provider-specific RPC work.
+- Regenerated normalized fixture and Geth struct-log reports.
+
+## 2026-06-03 Final Credibility Pass Validation Results
+
+- `cargo fmt --all -- --check`: passed.
+- `cargo clippy --workspace --all-targets --all-features -- -D warnings`: passed.
+- `cargo test --workspace --all-features`: passed, 38 tests.
+- `cargo run -p parallel-revm-lab -- verify --workload mixed --txs 100 --conflicts 0.0,0.2,0.5,0.7,0.95 --threads 1,2,4 --seed-start 1 --seed-end 20`: passed, 300 workload/thread combinations.
+- `cargo run -p parallel-revm-lab -- analyze-fixture --fixture fixtures/base-mini-trace.json --out reports/base-mini-trace.parallelism.json --markdown reports/base-mini-trace.md --html reports/base-mini-trace.html --trace reports/base-mini-trace.schedule.trace.json`: passed, 12 txs, 7 conflicts, 3 waves, max width 7, hash `3df71a7c236db9d9`.
+- `cargo run -p parallel-revm-lab -- analyze-trace --format geth-struct-logs --fixture fixtures/geth-mini-struct-logs.json --out reports/geth-mini.parallelism.json --markdown reports/geth-mini.md --html reports/geth-mini.html --trace reports/geth-mini.schedule.trace.json`: passed, 3 txs, 1 conflict, 2 waves, max width 2, hash `1c9e9d1d244efdde`.
+- `cargo run --release -p parallel-revm-lab -- bench --workload storage --txs 1000 --conflict 0.0 --mode all --threads 4 --seed 42 --vm-steps 50000 --out reports/storage-c0-vmsteps.json`: passed; access-list 3.187x and optimistic 2.285x vs sequential.
+- `cargo test -p parallel-revm-lab-revm-smoke --all-features`: passed, 3 tests.
+- `just validate`: passed.
+- `just analyze-fixture`: passed, hash `3df71a7c236db9d9`.
+- `just bench-smoke`: passed; mixed c50 access-list 0.011x and optimistic 0.806x vs sequential.

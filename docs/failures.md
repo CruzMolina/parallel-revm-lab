@@ -50,3 +50,17 @@ See `docs/engineering-log.md` for the current validation history and upgrade dec
 - Root cause: `revm 40.0.3` declares `rust-version = 1.91.0`.
 - Fix: workspace `rust-version` is now `1.91`.
 - Test added: `cargo test -p parallel-revm-lab-revm-smoke --all-features`.
+
+## Mnemonic Fixture Addresses Were Not Hex
+
+- Symptom: the public fixture used mnemonic strings such as `0xpool...`, which are not valid EVM addresses.
+- Root cause: the first fixture optimized readability over literal EVM hex validity.
+- Fix: replaced addresses with valid 20-byte hex values and added validation for addresses, storage keys, and tx hashes.
+- Tests added: invalid address, invalid storage key, invalid tx hash, and committed fixture validation.
+
+## revm Smoke Observations Were Fixture-Derived
+
+- Symptom: the smoke crate executed revm bytecode but derived storage observations from the fixture enum.
+- Root cause: the first revm bridge prioritized a compiling smoke path before implementing inspector hooks.
+- Fix: added a revm inspector that records `SLOAD` and `SSTORE` from opcode, target address, and stack.
+- Tests added: existing revm conflict/wave tests now run through inspector-captured observations.

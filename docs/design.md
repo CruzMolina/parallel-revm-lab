@@ -22,7 +22,9 @@ The state hash is an explicit FNV-1a 64-bit hash over canonical bytes. It avoids
 - read, write, and read/write access kinds
 - per-transaction and block-level warnings
 
-The fixture parser sorts transactions by `tx_index`, canonicalizes addresses and storage keys, rejects duplicate transaction indices, and marks incomplete read information explicitly. All user-visible output depends on sorted vectors, `BTreeMap`, or `BTreeSet`.
+The fixture parser sorts transactions by `tx_index`, canonicalizes addresses and storage keys, rejects duplicate transaction indices, validates EVM hex-shaped addresses/storage keys/tx hashes, and marks incomplete read information explicitly. All user-visible output depends on sorted vectors, `BTreeMap`, or `BTreeSet`.
+
+The Geth struct-log parser supports one committed offline fixture shape. It scans `structLogs`, records `SLOAD` as storage reads, records `SSTORE` as storage writes, and derives the slot from the top stack value. It intentionally marks broader read coverage incomplete.
 
 ## Trace Analyzer
 
@@ -86,9 +88,9 @@ Synthetic throughput metrics and trace-analysis parallelism metrics are intentio
 
 ## revm Smoke Bridge
 
-`crates/revm-smoke` is intentionally small. It uses `revm 40.0.3` with `default-features = false` and `std` enabled, executes tiny bytecode fixtures against `CacheDB<EmptyDB>`, and converts known fixture behavior into the normalized trace model.
+`crates/revm-smoke` is intentionally small. It uses `revm 40.0.3` with `default-features = false` and `std` enabled, executes tiny bytecode fixtures against `CacheDB<EmptyDB>`, records `SLOAD` and `SSTORE` with a revm inspector, and converts those observations into the normalized trace model.
 
-This proves the analyzer can ingest observations from real EVM bytecode execution. It does not attempt general block replay, full inspector coverage, or provider RPC normalization.
+This proves the analyzer can ingest observations from real EVM bytecode execution. It does not attempt general block replay, full account/code/balance inspector coverage, or provider RPC normalization.
 
 ## Concurrency Choice
 
@@ -102,3 +104,4 @@ The project uses Rayon `ThreadPoolBuilder` rather than custom queues or shared m
 - The state hash is stable and deterministic, but not a cryptographic commitment.
 - Incomplete trace reads make analyzer conflict counts lower bounds.
 - Live RPC tracing varies by provider and is not part of CI.
+- The current Geth parser and revm inspector are storage-access focused.

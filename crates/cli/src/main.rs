@@ -3,9 +3,9 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{bail, Context, Result};
-use clap::{Args, Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 use parallel_revm_lab_analyzer::{
-    analyze_block_trace, render_html, render_markdown, schedule_trace_json,
+    analyze_block_trace, render_html_with_command, render_markdown, schedule_trace_json,
 };
 use parallel_revm_lab_executor::{
     benchmark_report, run_access_list, run_optimistic, run_sequential, trace_json, ExecutionMode,
@@ -17,7 +17,7 @@ use parallel_revm_lab_workload::{generate_workload, WorkloadConfig, WorkloadKind
 #[command(
     name = "parallel-revm-lab",
     version,
-    about = "Deterministic conflict-aware parallel execution workbench"
+    about = "Deterministic parallel execution and EVM trace analysis workbench"
 )]
 struct Cli {
     #[command(subcommand)]
@@ -30,6 +30,8 @@ enum Commands {
     Verify(VerifyArgs),
     Inspect(InspectArgs),
     AnalyzeFixture(AnalyzeFixtureArgs),
+    AnalyzeTrace(AnalyzeTraceArgs),
+    #[command(hide = true)]
     AnalyzeBlock(AnalyzeBlockArgs),
 }
 
@@ -101,6 +103,35 @@ struct AnalyzeFixtureArgs {
     trace: Option<PathBuf>,
 }
 
+#[derive(Clone, Copy, Debug, ValueEnum)]
+enum TraceFormat {
+    GethStructLogs,
+}
+
+impl std::fmt::Display for TraceFormat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TraceFormat::GethStructLogs => write!(f, "geth-struct-logs"),
+        }
+    }
+}
+
+#[derive(Debug, Args)]
+struct AnalyzeTraceArgs {
+    #[arg(long, value_enum)]
+    format: TraceFormat,
+    #[arg(long)]
+    fixture: PathBuf,
+    #[arg(long)]
+    out: PathBuf,
+    #[arg(long)]
+    markdown: PathBuf,
+    #[arg(long)]
+    html: PathBuf,
+    #[arg(long)]
+    trace: Option<PathBuf>,
+}
+
 #[derive(Debug, Args)]
 struct AnalyzeBlockArgs {
     #[arg(long)]
@@ -123,6 +154,7 @@ fn main() -> Result<()> {
         Commands::Verify(args) => verify(args),
         Commands::Inspect(args) => inspect(args),
         Commands::AnalyzeFixture(args) => analyze_fixture(args),
+        Commands::AnalyzeTrace(args) => analyze_trace(args),
         Commands::AnalyzeBlock(args) => analyze_block(args),
     }
 }
@@ -250,9 +282,13 @@ fn analyze_fixture(args: AnalyzeFixtureArgs) -> Result<()> {
     let trace = BlockAccessTrace::from_fixture_path(&args.fixture)
         .with_context(|| format!("failed to load fixture {}", args.fixture.display()))?;
     let report = analyze_block_trace(&trace, true, false);
+    let command = analyze_fixture_command(&args);
     write_json(&args.out, &report)?;
     write_text(&args.markdown, &render_markdown(&report))?;
-    write_text(&args.html, &render_html(&report))?;
+    write_text(
+        &args.html,
+        &render_html_with_command(&report, Some(&command)),
+    )?;
     if let Some(trace_path) = args.trace {
         write_json(&trace_path, &schedule_trace_json(&report))?;
     }
@@ -271,6 +307,75 @@ fn analyze_fixture(args: AnalyzeFixtureArgs) -> Result<()> {
         report.deterministic_hash
     );
     Ok(())
+}
+
+fn analyze_trace(args: AnalyzeTraceArgs) -> Result<()> {
+    let trace = match args.format {
+        TraceFormat::GethStructLogs => BlockAccessTrace::from_geth_struct_logs_path(&args.fixture)
+            .with_context(|| {
+                format!(
+                    "failed to load {} trace fixture {}",
+                    args.format,
+                    args.fixture.display()
+                )
+            })?,
+    };
+    let report = analyze_block_trace(&trace, true, false);
+    let command = analyze_trace_command(&args);
+    write_json(&args.out, &report)?;
+    write_text(&args.markdown, &render_markdown(&report))?;
+    write_text(
+        &args.html,
+        &render_html_with_command(&report, Some(&command)),
+    )?;
+    if let Some(trace_path) = args.trace {
+        write_json(&trace_path, &schedule_trace_json(&report))?;
+    }
+    println!(
+        "analyzed {} {} txs from {} into {}",
+        args.format,
+        report.tx_count,
+        args.fixture.display(),
+        args.out.display()
+    );
+    println!(
+        "conflicts={} waves={} max_width={} ceiling={:.3}x hash={}",
+        report.conflict_pair_count,
+        report.wave_count,
+        report.max_wave_width,
+        report.theoretical_parallelism_ceiling,
+        report.deterministic_hash
+    );
+    Ok(())
+}
+
+fn analyze_fixture_command(args: &AnalyzeFixtureArgs) -> String {
+    let mut command = format!(
+        "cargo run -p parallel-revm-lab -- analyze-fixture --fixture {} --out {} --markdown {} --html {}",
+        args.fixture.display(),
+        args.out.display(),
+        args.markdown.display(),
+        args.html.display()
+    );
+    if let Some(trace) = &args.trace {
+        command.push_str(&format!(" --trace {}", trace.display()));
+    }
+    command
+}
+
+fn analyze_trace_command(args: &AnalyzeTraceArgs) -> String {
+    let mut command = format!(
+        "cargo run -p parallel-revm-lab -- analyze-trace --format {} --fixture {} --out {} --markdown {} --html {}",
+        args.format,
+        args.fixture.display(),
+        args.out.display(),
+        args.markdown.display(),
+        args.html.display()
+    );
+    if let Some(trace) = &args.trace {
+        command.push_str(&format!(" --trace {}", trace.display()));
+    }
+    command
 }
 
 fn analyze_block(args: AnalyzeBlockArgs) -> Result<()> {

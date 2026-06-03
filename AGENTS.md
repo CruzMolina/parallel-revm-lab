@@ -16,11 +16,13 @@
 - `cargo test --workspace --all-features`
 - `cargo run -p parallel-revm-lab -- verify --workload mixed --txs 100 --conflicts 0.0,0.5 --threads 1,2 --seed-start 1 --seed-end 5`
 - `cargo run -p parallel-revm-lab -- analyze-fixture --fixture fixtures/base-mini-trace.json --out reports/base-mini-trace.parallelism.json --markdown reports/base-mini-trace.md --html reports/base-mini-trace.html --trace reports/base-mini-trace.schedule.trace.json`
+- `cargo run -p parallel-revm-lab -- analyze-trace --format geth-struct-logs --fixture fixtures/geth-mini-struct-logs.json --out reports/geth-mini.parallelism.json --markdown reports/geth-mini.md --html reports/geth-mini.html --trace reports/geth-mini.schedule.trace.json`
 - `cargo test -p parallel-revm-lab-revm-smoke --all-features`
 
 ## Done Means
 - Parallel executors produce the same final state hash as sequential execution.
 - Trace analyzer reports are deterministic and honest about incomplete-read lower bounds.
+- Public fixtures use valid EVM hex addresses, storage keys, and transaction hashes.
 - All feature-gated code compiles with `--all-features`.
 - Public docs match commands that were actually run.
 

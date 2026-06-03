@@ -6,9 +6,13 @@ use parallel_revm_lab_trace_model::{
 use revm::{
     context::TxEnv,
     database::{CacheDB, EmptyDB},
+    interpreter::{
+        interpreter_types::{InputsTr, Jumps, StackTr},
+        Interpreter, InterpreterTypes,
+    },
     primitives::{Address, Bytes, TxKind, U256},
-    state::{AccountInfo, Bytecode},
-    Context, ExecuteEvm, MainBuilder, MainContext,
+    state::{bytecode::opcode, AccountInfo, Bytecode},
+    Context, InspectEvm, Inspector, MainBuilder, MainContext,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -33,8 +37,8 @@ pub fn smoke_report(txs: &[RevmSmokeTx]) -> Result<ParallelismReport, RevmSmokeE
 pub fn smoke_trace(txs: &[RevmSmokeTx]) -> Result<BlockAccessTrace, RevmSmokeError> {
     let mut traces = Vec::with_capacity(txs.len());
     for tx in txs {
-        execute_fixture(tx)?;
-        traces.push(tx_trace(tx));
+        let accesses = execute_fixture(tx)?;
+        traces.push(tx_trace(tx, accesses));
     }
 
     let mut trace = BlockAccessTrace {
@@ -46,7 +50,7 @@ pub fn smoke_trace(txs: &[RevmSmokeTx]) -> Result<BlockAccessTrace, RevmSmokeErr
         transactions: traces,
         warnings: vec![TraceParseWarning {
             tx_index: None,
-            message: "revm smoke derives storage observations from known bytecode fixtures; it is not a general EVM tracer".to_owned(),
+            message: "revm smoke inspector records SLOAD/SSTORE storage access only; account, balance, nonce, and code reads are not represented".to_owned(),
         }],
     };
     trace.normalize();
@@ -54,7 +58,7 @@ pub fn smoke_trace(txs: &[RevmSmokeTx]) -> Result<BlockAccessTrace, RevmSmokeErr
     Ok(trace)
 }
 
-fn execute_fixture(tx: &RevmSmokeTx) -> Result<(), RevmSmokeError> {
+fn execute_fixture(tx: &RevmSmokeTx) -> Result<Vec<ObservedStorageAccess>, RevmSmokeError> {
     let mut db = CacheDB::<EmptyDB>::default();
     db.insert_account_info(
         tx.caller,
@@ -71,7 +75,7 @@ fn execute_fixture(tx: &RevmSmokeTx) -> Result<(), RevmSmokeError> {
         .map_err(|_| RevmSmokeError::StorageSeed)?;
 
     let ctx = Context::mainnet().with_db(db);
-    let mut evm = ctx.build_mainnet();
+    let mut evm = ctx.build_mainnet_with_inspector(StorageAccessInspector::default());
     let tx_env = TxEnv::builder()
         .caller(tx.caller)
         .kind(TxKind::Call(tx.contract))
@@ -79,39 +83,72 @@ fn execute_fixture(tx: &RevmSmokeTx) -> Result<(), RevmSmokeError> {
         .build()
         .map_err(|err| RevmSmokeError::BuildTx(err.to_string()))?;
     let result = evm
-        .transact(tx_env)
+        .inspect_tx(tx_env)
         .map_err(|err| RevmSmokeError::Execution(err.to_string()))?;
     if result.result.is_success() {
-        Ok(())
+        Ok(evm.inspector.accesses)
     } else {
         Err(RevmSmokeError::Unsuccessful(format!("{:?}", result.result)))
     }
 }
 
-fn tx_trace(tx: &RevmSmokeTx) -> TxTrace {
-    let access_kind = match tx.fixture {
-        BytecodeFixture::CounterSlot { .. } | BytecodeFixture::HotSlot { .. } => {
-            TraceAccessKind::ReadWrite
-        }
-        BytecodeFixture::WriteSlot { .. } => TraceAccessKind::Write,
-    };
+fn tx_trace(tx: &RevmSmokeTx, observed: Vec<ObservedStorageAccess>) -> TxTrace {
     TxTrace {
         tx_index: TxIndex(tx.tx_index),
         tx_hash: TxHash(format!("0x{:064x}", tx.tx_index)),
         from: trace_address(tx.caller),
         to: Some(trace_address(tx.contract)),
-        read_info_complete: matches!(
-            tx.fixture,
-            BytecodeFixture::CounterSlot { .. } | BytecodeFixture::HotSlot { .. }
-        ),
-        accesses: vec![TraceAccess {
-            kind: access_kind,
-            key: TraceAccessKey::Storage {
-                address: trace_address(tx.contract),
-                slot: StorageKey::canonical(format!("0x{:064x}", slot(tx.fixture))),
-            },
+        read_info_complete: false,
+        accesses: observed
+            .into_iter()
+            .map(|access| TraceAccess {
+                kind: access.kind,
+                key: TraceAccessKey::Storage {
+                    address: trace_address(access.contract),
+                    slot: u256_storage_key(access.slot),
+                },
+            })
+            .collect(),
+        warnings: vec![TraceParseWarning {
+            tx_index: Some(TxIndex(tx.tx_index)),
+            message: "revm smoke inspector marks reads incomplete outside SLOAD".to_owned(),
         }],
-        warnings: Vec::new(),
+    }
+}
+
+#[derive(Clone, Debug)]
+struct ObservedStorageAccess {
+    contract: Address,
+    slot: U256,
+    kind: TraceAccessKind,
+}
+
+#[derive(Default, Debug)]
+struct StorageAccessInspector {
+    accesses: Vec<ObservedStorageAccess>,
+}
+
+impl<CTX, INTR> Inspector<CTX, INTR> for StorageAccessInspector
+where
+    INTR: InterpreterTypes,
+    INTR::Bytecode: Jumps,
+    INTR::Stack: StackTr,
+    INTR::Input: InputsTr,
+{
+    fn step(&mut self, interp: &mut Interpreter<INTR>, _context: &mut CTX) {
+        let kind = match interp.bytecode.opcode() {
+            opcode::SLOAD => TraceAccessKind::Read,
+            opcode::SSTORE => TraceAccessKind::Write,
+            _ => return,
+        };
+        let Some(slot) = interp.stack.data().last().copied() else {
+            return;
+        };
+        self.accesses.push(ObservedStorageAccess {
+            contract: interp.input.target_address(),
+            slot,
+            kind,
+        });
     }
 }
 
@@ -138,6 +175,10 @@ fn slot(fixture: BytecodeFixture) -> u8 {
 
 fn trace_address(address: Address) -> TraceAddress {
     TraceAddress::canonical(address.to_string())
+}
+
+fn u256_storage_key(value: U256) -> StorageKey {
+    StorageKey::canonical(format!("0x{value:064x}"))
 }
 
 #[derive(Debug, thiserror::Error)]

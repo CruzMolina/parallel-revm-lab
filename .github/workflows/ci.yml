@@ -24,6 +24,15 @@ jobs:
             --markdown reports/ci-base-mini-trace.md \
             --html reports/ci-base-mini-trace.html \
             --trace reports/ci-base-mini-trace.schedule.trace.json
+      - name: cli analyze geth trace fixture
+        run: |
+          cargo run -p parallel-revm-lab -- analyze-trace \
+            --format geth-struct-logs \
+            --fixture fixtures/geth-mini-struct-logs.json \
+            --out reports/ci-geth-mini.parallelism.json \
+            --markdown reports/ci-geth-mini.md \
+            --html reports/ci-geth-mini.html \
+            --trace reports/ci-geth-mini.schedule.trace.json
       - name: cli help
         run: cargo run -p parallel-revm-lab -- --help
       - name: cli verify

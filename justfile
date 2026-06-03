@@ -13,16 +13,16 @@ verify:
 analyze-fixture:
     cargo run -p parallel-revm-lab -- analyze-fixture --fixture fixtures/base-mini-trace.json --out reports/base-mini-trace.parallelism.json --markdown reports/base-mini-trace.md --html reports/base-mini-trace.html --trace reports/base-mini-trace.schedule.trace.json
 
+analyze-trace:
+    cargo run -p parallel-revm-lab -- analyze-trace --format geth-struct-logs --fixture fixtures/geth-mini-struct-logs.json --out reports/geth-mini.parallelism.json --markdown reports/geth-mini.md --html reports/geth-mini.html --trace reports/geth-mini.schedule.trace.json
+
 analyze-fixture-open: analyze-fixture
     open reports/base-mini-trace.html
-
-analyze-block-base-example:
-    cargo run -p parallel-revm-lab -- analyze-block --chain base --block 38014901 --out reports/base-38014901.parallelism.json --markdown reports/base-38014901.md --html reports/base-38014901.html
 
 revm-smoke:
     cargo test -p parallel-revm-lab-revm-smoke --all-features
 
-validate: fmt clippy test verify analyze-fixture revm-smoke
+validate: fmt clippy test verify analyze-fixture analyze-trace revm-smoke
 
 validate-full: validate bench-heavy-smoke
 

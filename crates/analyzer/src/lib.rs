@@ -184,7 +184,7 @@ pub fn render_markdown(report: &ParallelismReport) -> String {
     if !report.warnings.is_empty() {
         out.push_str("\n## Warnings\n\n");
         for warning in &report.warnings {
-            out.push_str(&format!("- {}\n", warning.message));
+            out.push_str(&format!("- {}\n", warning_label(warning)));
         }
     }
     out.push_str("\n## Caveats\n\nThis report studies access-set contention and deterministic scheduling structure. It is not a production throughput or gas benchmark. If a trace marks reads incomplete, conflict counts are lower bounds.\n");
@@ -192,6 +192,10 @@ pub fn render_markdown(report: &ParallelismReport) -> String {
 }
 
 pub fn render_html(report: &ParallelismReport) -> String {
+    render_html_with_command(report, None)
+}
+
+pub fn render_html_with_command(report: &ParallelismReport, command: Option<&str>) -> String {
     let contract_bars = report
         .top_hot_contracts
         .iter()
@@ -234,11 +238,14 @@ pub fn render_html(report: &ParallelismReport) -> String {
     let warning_items = report
         .warnings
         .iter()
-        .map(|warning| format!("<li>{}</li>", escape_html(&warning.message)))
+        .map(|warning| format!("<li>{}</li>", escape_html(&warning_label(warning))))
         .collect::<Vec<_>>()
         .join("");
+    let command = command.map(escape_html).unwrap_or_else(|| {
+        "see README.md for the exact command that generated this report".to_owned()
+    });
     format!(
-        "<!doctype html><html><head><meta charset=\"utf-8\"><title>Parallelism Report</title><style>body{{font-family:system-ui,sans-serif;margin:32px;line-height:1.4}}.cards{{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}}.card{{border:1px solid #ddd;padding:12px;border-radius:6px}}table{{border-collapse:collapse;width:100%;margin-top:16px}}td,th{{border:1px solid #ddd;padding:6px;text-align:left}}code{{font-size:12px}}</style></head><body><h1>Parallelism Report</h1><p>{} block {}</p><div class=\"cards\"><div class=\"card\"><b>txs</b><br>{}</div><div class=\"card\"><b>conflicts</b><br>{}</div><div class=\"card\"><b>waves</b><br>{}</div><div class=\"card\"><b>max width</b><br>{}</div><div class=\"card\"><b>ceiling</b><br>{:.3}x</div></div><h2>Hot Contracts</h2>{}<h2>Hot Storage Slots</h2>{}<h2>Waves</h2><table><tr><th>tx</th><th>wave</th><th>degree</th><th>reads</th><th>writes</th></tr>{}</table><h2>Warnings</h2><ul>{}</ul><h2>Commands</h2><pre>cargo run -p parallel-revm-lab -- analyze-fixture --fixture fixtures/base-mini-trace.json --out reports/base-mini-trace.parallelism.json --markdown reports/base-mini-trace.md --html reports/base-mini-trace.html --trace reports/base-mini-trace.schedule.trace.json</pre></body></html>",
+        "<!doctype html><html><head><meta charset=\"utf-8\"><title>Parallelism Report</title><style>body{{font-family:system-ui,sans-serif;margin:32px;line-height:1.4}}.cards{{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}}.card{{border:1px solid #ddd;padding:12px;border-radius:6px}}table{{border-collapse:collapse;width:100%;margin-top:16px}}td,th{{border:1px solid #ddd;padding:6px;text-align:left}}code{{font-size:12px}}</style></head><body><h1>Parallelism Report</h1><p>{} block {}</p><div class=\"cards\"><div class=\"card\"><b>txs</b><br>{}</div><div class=\"card\"><b>conflicts</b><br>{}</div><div class=\"card\"><b>waves</b><br>{}</div><div class=\"card\"><b>max width</b><br>{}</div><div class=\"card\"><b>ceiling</b><br>{:.3}x</div></div><h2>Hot Contracts</h2>{}<h2>Hot Storage Slots</h2>{}<h2>Waves</h2><table><tr><th>tx</th><th>wave</th><th>degree</th><th>reads</th><th>writes</th></tr>{}</table><h2>Warnings</h2><ul>{}</ul><h2>Commands</h2><pre>{}</pre></body></html>",
         escape_html(&report.chain),
         report.block.number,
         report.tx_count,
@@ -249,7 +256,8 @@ pub fn render_html(report: &ParallelismReport) -> String {
         contract_bars,
         storage_bars,
         tx_rows,
-        warning_items
+        warning_items,
+        command
     )
 }
 
@@ -475,6 +483,13 @@ fn escape_html(value: &str) -> String {
         .replace('"', "&quot;")
 }
 
+fn warning_label(warning: &TraceParseWarning) -> String {
+    warning
+        .tx_index
+        .map(|tx_index| format!("tx_index {}: {}", tx_index.0, warning.message))
+        .unwrap_or_else(|| warning.message.clone())
+}
+
 #[cfg(test)]
 mod tests {
     use parallel_revm_lab_trace_model::{
@@ -485,7 +500,7 @@ mod tests {
 
     #[test]
     fn independent_txs_form_one_wide_wave() {
-        let trace = trace_with_slots(&["0x01", "0x02", "0x03"]);
+        let trace = trace_with_slots(&[1, 2, 3]);
         let report = analyze_block_trace(&trace, true, false);
         assert_eq!(report.conflict_pair_count, 0);
         assert_eq!(report.wave_count, 1);
@@ -494,7 +509,7 @@ mod tests {
 
     #[test]
     fn hot_slot_txs_form_serial_waves() {
-        let trace = trace_with_slots(&["0x01", "0x01", "0x01"]);
+        let trace = trace_with_slots(&[1, 1, 1]);
         let report = analyze_block_trace(&trace, true, false);
         assert_eq!(report.conflict_pair_count, 3);
         assert_eq!(report.wave_count, 3);
@@ -503,7 +518,7 @@ mod tests {
 
     #[test]
     fn report_is_stable_across_runs() {
-        let trace = trace_with_slots(&["0x01", "0x02", "0x01", "0x03"]);
+        let trace = trace_with_slots(&[1, 2, 1, 3]);
         let left = analyze_block_trace(&trace, true, false);
         let right = analyze_block_trace(&trace, true, false);
         assert_eq!(left.deterministic_hash, right.deterministic_hash);
@@ -524,7 +539,7 @@ mod tests {
         assert_eq!(report.critical_path_length, 3);
         assert_eq!(
             report.top_hot_contracts[0].key,
-            "0xpool000000000000000000000000000000000000"
+            "0x1111111111111111111111111111111111111111"
         );
         assert!(report
             .warnings
@@ -554,7 +569,7 @@ mod tests {
         }
     }
 
-    fn trace_with_slots(slots: &[&str]) -> BlockAccessTrace {
+    fn trace_with_slots(slots: &[u64]) -> BlockAccessTrace {
         BlockAccessTrace {
             chain: ChainKind::new("fixture"),
             block: BlockRef {
@@ -567,14 +582,18 @@ mod tests {
                 .map(|(idx, slot)| TxTrace {
                     tx_index: TxIndex(idx as u64),
                     tx_hash: TxHash(format!("0x{idx:064x}")),
-                    from: Address::canonical(format!("0xfrom{idx}")),
-                    to: Some(Address::canonical("0xpool")),
+                    from: Address::canonical(format!("0x{:040x}", idx + 1)),
+                    to: Some(Address::canonical(
+                        "0x1111111111111111111111111111111111111111",
+                    )),
                     read_info_complete: true,
                     accesses: vec![TraceAccess {
                         kind: TraceAccessKind::ReadWrite,
                         key: TraceAccessKey::Storage {
-                            address: Address::canonical("0xpool"),
-                            slot: StorageKey::canonical(*slot),
+                            address: Address::canonical(
+                                "0x1111111111111111111111111111111111111111",
+                            ),
+                            slot: StorageKey::canonical(format!("0x{slot:064x}")),
                         },
                     }],
                     warnings: Vec::new(),
