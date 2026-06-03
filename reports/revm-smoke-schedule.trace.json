@@ -1,0 +1,43 @@
+{
+  "traceEvents": [
+    {
+      "args": {
+        "conflict_degree": 1,
+        "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 1,
+      "name": "block-0-tx-0",
+      "ph": "X",
+      "pid": 0,
+      "tid": "wave-0",
+      "ts": 0
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000001"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 1,
+      "name": "block-0-tx-1",
+      "ph": "X",
+      "pid": 0,
+      "tid": "wave-0",
+      "ts": 0
+    },
+    {
+      "args": {
+        "conflict_degree": 1,
+        "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000002"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 1,
+      "name": "block-0-tx-2",
+      "ph": "X",
+      "pid": 0,
+      "tid": "wave-1",
+      "ts": 1000
+    }
+  ]
+}

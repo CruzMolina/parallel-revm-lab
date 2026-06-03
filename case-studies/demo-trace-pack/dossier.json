@@ -1,0 +1,398 @@
+{
+  "report_version": "trace-pack-dossier-v1",
+  "chain": "base",
+  "provenance": "synthetic/demo fixture (not real Base data)",
+  "source": "committed-demo-trace-pack",
+  "tracer_kind": "sanitized-geth-js-storage",
+  "start_block": 38014901,
+  "end_block": 38014902,
+  "block_count": 2,
+  "tx_count": 7,
+  "total_gas_used": 645,
+  "total_accesses": 7,
+  "unique_contracts": 3,
+  "unique_storage_slots": 4,
+  "conflict_pair_count": 2,
+  "conflict_percentage": 22.22222222222222,
+  "gas_weighted_conflict_percentage": 24.695121951219512,
+  "critical_path_length_by_tx": 4,
+  "gas_weighted_critical_path": 405,
+  "theoretical_parallelism_ceiling_by_tx": 1.75,
+  "theoretical_parallelism_ceiling_by_gas": 1.5925925925925926,
+  "top_hot_contracts": [
+    {
+      "address": "0x1111111111111111111111111111111111111111",
+      "touching_txs": 4,
+      "unique_slots": 2,
+      "gas_of_touching_txs": 410,
+      "conflict_contribution": 1
+    },
+    {
+      "address": "0x3333333333333333333333333333333333333333",
+      "touching_txs": 2,
+      "unique_slots": 1,
+      "gas_of_touching_txs": 185,
+      "conflict_contribution": 1
+    },
+    {
+      "address": "0x2222222222222222222222222222222222222222",
+      "touching_txs": 1,
+      "unique_slots": 1,
+      "gas_of_touching_txs": 50,
+      "conflict_contribution": 0
+    }
+  ],
+  "top_hot_storage_slots": [
+    {
+      "key": "0x1111111111111111111111111111111111111111:0x0000000000000000000000000000000000000000000000000000000000000000",
+      "address": "0x1111111111111111111111111111111111111111",
+      "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "touching_txs": 3,
+      "gas_of_touching_txs": 330,
+      "conflict_contribution": 1
+    },
+    {
+      "key": "0x3333333333333333333333333333333333333333:0x0000000000000000000000000000000000000000000000000000000000000007",
+      "address": "0x3333333333333333333333333333333333333333",
+      "slot": "0x0000000000000000000000000000000000000000000000000000000000000007",
+      "touching_txs": 2,
+      "gas_of_touching_txs": 185,
+      "conflict_contribution": 1
+    },
+    {
+      "key": "0x1111111111111111111111111111111111111111:0x0000000000000000000000000000000000000000000000000000000000000002",
+      "address": "0x1111111111111111111111111111111111111111",
+      "slot": "0x0000000000000000000000000000000000000000000000000000000000000002",
+      "touching_txs": 1,
+      "gas_of_touching_txs": 80,
+      "conflict_contribution": 0
+    },
+    {
+      "key": "0x2222222222222222222222222222222222222222:0x0000000000000000000000000000000000000000000000000000000000000001",
+      "address": "0x2222222222222222222222222222222222222222",
+      "slot": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "touching_txs": 1,
+      "gas_of_touching_txs": 50,
+      "conflict_contribution": 0
+    }
+  ],
+  "contention_concentration": {
+    "top_1_conflict_percent": 50.0,
+    "top_5_conflict_percent": 100.0,
+    "top_10_conflict_percent": 100.0
+  },
+  "parallelism_loss_decomposition": {
+    "hot_slot_conflict_contributions": 2,
+    "account_level_conflict_contributions": 0,
+    "unknown_incomplete_trace_warning_count": 0,
+    "max_worker_idle_percentage": 80.0925925925926,
+    "interpretation": "loss decomposition is based on observed access keys and theoretical list scheduling; incomplete traces may hide additional dependencies"
+  },
+  "worst_blocks_by_conflict_percentage": [
+    {
+      "block_number": 38014902,
+      "tx_count": 3,
+      "conflict_pair_count": 1,
+      "conflict_percentage": 33.33333333333333,
+      "gas_weighted_critical_path": 185
+    },
+    {
+      "block_number": 38014901,
+      "tx_count": 4,
+      "conflict_pair_count": 1,
+      "conflict_percentage": 16.666666666666664,
+      "gas_weighted_critical_path": 220
+    }
+  ],
+  "worst_blocks_by_gas_weighted_critical_path": [
+    {
+      "block_number": 38014901,
+      "tx_count": 4,
+      "conflict_pair_count": 1,
+      "conflict_percentage": 16.666666666666664,
+      "gas_weighted_critical_path": 220
+    },
+    {
+      "block_number": 38014902,
+      "tx_count": 3,
+      "conflict_pair_count": 1,
+      "conflict_percentage": 33.33333333333333,
+      "gas_weighted_critical_path": 185
+    }
+  ],
+  "worker_simulation": [
+    {
+      "workers": 1,
+      "makespan": 645,
+      "speedup_vs_one_worker": 1.0,
+      "idle_percentage": 0.0,
+      "critical_path_bound": 405,
+      "interpretation": "worker-bound: workers stay mostly occupied under observed dependencies"
+    },
+    {
+      "workers": 2,
+      "makespan": 405,
+      "speedup_vs_one_worker": 1.5925925925925926,
+      "idle_percentage": 20.37037037037037,
+      "critical_path_bound": 405,
+      "interpretation": "dependency-bound: makespan is at the critical-path lower bound"
+    },
+    {
+      "workers": 4,
+      "makespan": 405,
+      "speedup_vs_one_worker": 1.5925925925925926,
+      "idle_percentage": 60.18518518518518,
+      "critical_path_bound": 405,
+      "interpretation": "dependency-bound: makespan is at the critical-path lower bound"
+    },
+    {
+      "workers": 8,
+      "makespan": 405,
+      "speedup_vs_one_worker": 1.5925925925925926,
+      "idle_percentage": 80.0925925925926,
+      "critical_path_bound": 405,
+      "interpretation": "dependency-bound: makespan is at the critical-path lower bound"
+    }
+  ],
+  "blocks": [
+    {
+      "block_number": 38014901,
+      "tx_count": 4,
+      "gas_used": 350,
+      "total_accesses": 4,
+      "conflict_pair_count": 1,
+      "conflict_percentage": 16.666666666666664,
+      "gas_weighted_conflict_percentage": 20.952380952380953,
+      "wave_count": 2,
+      "max_wave_width": 3,
+      "critical_path_length": 2,
+      "gas_critical_path": 220,
+      "ceiling_by_tx": 2.0,
+      "ceiling_by_gas": 1.5909090909090908,
+      "top_hot_slots": [
+        {
+          "key": "0x1111111111111111111111111111111111111111:0x0000000000000000000000000000000000000000000000000000000000000000",
+          "address": "0x1111111111111111111111111111111111111111",
+          "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "touching_txs": 2,
+          "gas_of_touching_txs": 220,
+          "conflict_contribution": 1
+        },
+        {
+          "key": "0x1111111111111111111111111111111111111111:0x0000000000000000000000000000000000000000000000000000000000000002",
+          "address": "0x1111111111111111111111111111111111111111",
+          "slot": "0x0000000000000000000000000000000000000000000000000000000000000002",
+          "touching_txs": 1,
+          "gas_of_touching_txs": 80,
+          "conflict_contribution": 0
+        },
+        {
+          "key": "0x2222222222222222222222222222222222222222:0x0000000000000000000000000000000000000000000000000000000000000001",
+          "address": "0x2222222222222222222222222222222222222222",
+          "slot": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "touching_txs": 1,
+          "gas_of_touching_txs": 50,
+          "conflict_contribution": 0
+        }
+      ],
+      "top_hot_contracts": [
+        {
+          "address": "0x1111111111111111111111111111111111111111",
+          "touching_txs": 3,
+          "unique_slots": 2,
+          "gas_of_touching_txs": 300,
+          "conflict_contribution": 1
+        },
+        {
+          "address": "0x2222222222222222222222222222222222222222",
+          "touching_txs": 1,
+          "unique_slots": 1,
+          "gas_of_touching_txs": 50,
+          "conflict_contribution": 0
+        }
+      ],
+      "worker_simulation": [
+        {
+          "workers": 1,
+          "makespan": 350,
+          "speedup_vs_one_worker": 1.0,
+          "idle_percentage": 0.0,
+          "critical_path_bound": 220,
+          "interpretation": "worker-bound: workers stay mostly occupied under observed dependencies"
+        },
+        {
+          "workers": 2,
+          "makespan": 220,
+          "speedup_vs_one_worker": 1.5909090909090908,
+          "idle_percentage": 20.454545454545457,
+          "critical_path_bound": 220,
+          "interpretation": "dependency-bound: makespan is at the critical-path lower bound"
+        },
+        {
+          "workers": 4,
+          "makespan": 220,
+          "speedup_vs_one_worker": 1.5909090909090908,
+          "idle_percentage": 60.22727272727273,
+          "critical_path_bound": 220,
+          "interpretation": "dependency-bound: makespan is at the critical-path lower bound"
+        },
+        {
+          "workers": 8,
+          "makespan": 220,
+          "speedup_vs_one_worker": 1.5909090909090908,
+          "idle_percentage": 80.11363636363636,
+          "critical_path_bound": 220,
+          "interpretation": "dependency-bound: makespan is at the critical-path lower bound"
+        }
+      ],
+      "tx_summaries": [
+        {
+          "tx_index": 0,
+          "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000100",
+          "wave": 0,
+          "conflict_degree": 1,
+          "duration_units": 100
+        },
+        {
+          "tx_index": 1,
+          "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000101",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 50
+        },
+        {
+          "tx_index": 2,
+          "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000102",
+          "wave": 1,
+          "conflict_degree": 1,
+          "duration_units": 120
+        },
+        {
+          "tx_index": 3,
+          "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000103",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 80
+        }
+      ],
+      "warnings": [
+        "Block is a compact synthetic demo, not a Base RPC capture."
+      ]
+    },
+    {
+      "block_number": 38014902,
+      "tx_count": 3,
+      "gas_used": 295,
+      "total_accesses": 3,
+      "conflict_pair_count": 1,
+      "conflict_percentage": 33.33333333333333,
+      "gas_weighted_conflict_percentage": 31.35593220338983,
+      "wave_count": 2,
+      "max_wave_width": 2,
+      "critical_path_length": 2,
+      "gas_critical_path": 185,
+      "ceiling_by_tx": 1.5,
+      "ceiling_by_gas": 1.5945945945945945,
+      "top_hot_slots": [
+        {
+          "key": "0x3333333333333333333333333333333333333333:0x0000000000000000000000000000000000000000000000000000000000000007",
+          "address": "0x3333333333333333333333333333333333333333",
+          "slot": "0x0000000000000000000000000000000000000000000000000000000000000007",
+          "touching_txs": 2,
+          "gas_of_touching_txs": 185,
+          "conflict_contribution": 1
+        },
+        {
+          "key": "0x1111111111111111111111111111111111111111:0x0000000000000000000000000000000000000000000000000000000000000000",
+          "address": "0x1111111111111111111111111111111111111111",
+          "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "touching_txs": 1,
+          "gas_of_touching_txs": 110,
+          "conflict_contribution": 0
+        }
+      ],
+      "top_hot_contracts": [
+        {
+          "address": "0x3333333333333333333333333333333333333333",
+          "touching_txs": 2,
+          "unique_slots": 1,
+          "gas_of_touching_txs": 185,
+          "conflict_contribution": 1
+        },
+        {
+          "address": "0x1111111111111111111111111111111111111111",
+          "touching_txs": 1,
+          "unique_slots": 1,
+          "gas_of_touching_txs": 110,
+          "conflict_contribution": 0
+        }
+      ],
+      "worker_simulation": [
+        {
+          "workers": 1,
+          "makespan": 295,
+          "speedup_vs_one_worker": 1.0,
+          "idle_percentage": 0.0,
+          "critical_path_bound": 185,
+          "interpretation": "worker-bound: workers stay mostly occupied under observed dependencies"
+        },
+        {
+          "workers": 2,
+          "makespan": 185,
+          "speedup_vs_one_worker": 1.5945945945945945,
+          "idle_percentage": 20.27027027027027,
+          "critical_path_bound": 185,
+          "interpretation": "dependency-bound: makespan is at the critical-path lower bound"
+        },
+        {
+          "workers": 4,
+          "makespan": 185,
+          "speedup_vs_one_worker": 1.5945945945945945,
+          "idle_percentage": 60.13513513513513,
+          "critical_path_bound": 185,
+          "interpretation": "dependency-bound: makespan is at the critical-path lower bound"
+        },
+        {
+          "workers": 8,
+          "makespan": 185,
+          "speedup_vs_one_worker": 1.5945945945945945,
+          "idle_percentage": 80.06756756756756,
+          "critical_path_bound": 185,
+          "interpretation": "dependency-bound: makespan is at the critical-path lower bound"
+        }
+      ],
+      "tx_summaries": [
+        {
+          "tx_index": 0,
+          "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000200",
+          "wave": 0,
+          "conflict_degree": 1,
+          "duration_units": 90
+        },
+        {
+          "tx_index": 1,
+          "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000201",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 110
+        },
+        {
+          "tx_index": 2,
+          "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000202",
+          "wave": 1,
+          "conflict_degree": 1,
+          "duration_units": 95
+        }
+      ],
+      "warnings": [
+        "Block is a compact synthetic demo, not a Base RPC capture."
+      ]
+    }
+  ],
+  "warnings": [
+    "Synthetic demo fixture; do not cite as real-chain evidence.",
+    "block 38014901: Block is a compact synthetic demo, not a Base RPC capture.",
+    "block 38014902: Block is a compact synthetic demo, not a Base RPC capture."
+  ],
+  "deterministic_hash": "e83091d8a4cd42ef"
+}

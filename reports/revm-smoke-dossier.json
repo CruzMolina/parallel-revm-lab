@@ -1,0 +1,207 @@
+{
+  "report_version": "trace-pack-dossier-v1",
+  "chain": "revm-smoke",
+  "provenance": "real revm bytecode execution over tiny in-memory fixtures",
+  "source": "revm-smoke-inspector",
+  "tracer_kind": "revm-inspector-sload-sstore",
+  "start_block": 0,
+  "end_block": 0,
+  "block_count": 1,
+  "tx_count": 3,
+  "total_gas_used": null,
+  "total_accesses": 5,
+  "unique_contracts": 1,
+  "unique_storage_slots": 2,
+  "conflict_pair_count": 1,
+  "conflict_percentage": 33.33333333333333,
+  "gas_weighted_conflict_percentage": null,
+  "critical_path_length_by_tx": 2,
+  "gas_weighted_critical_path": null,
+  "theoretical_parallelism_ceiling_by_tx": 1.5,
+  "theoretical_parallelism_ceiling_by_gas": null,
+  "top_hot_contracts": [
+    {
+      "address": "0x2222222222222222222222222222222222222222",
+      "touching_txs": 3,
+      "unique_slots": 2,
+      "gas_of_touching_txs": null,
+      "conflict_contribution": 1
+    }
+  ],
+  "top_hot_storage_slots": [
+    {
+      "key": "0x2222222222222222222222222222222222222222:0x0000000000000000000000000000000000000000000000000000000000000007",
+      "address": "0x2222222222222222222222222222222222222222",
+      "slot": "0x0000000000000000000000000000000000000000000000000000000000000007",
+      "touching_txs": 2,
+      "gas_of_touching_txs": null,
+      "conflict_contribution": 1
+    },
+    {
+      "key": "0x2222222222222222222222222222222222222222:0x0000000000000000000000000000000000000000000000000000000000000008",
+      "address": "0x2222222222222222222222222222222222222222",
+      "slot": "0x0000000000000000000000000000000000000000000000000000000000000008",
+      "touching_txs": 1,
+      "gas_of_touching_txs": null,
+      "conflict_contribution": 0
+    }
+  ],
+  "contention_concentration": {
+    "top_1_conflict_percent": 100.0,
+    "top_5_conflict_percent": 100.0,
+    "top_10_conflict_percent": 100.0
+  },
+  "parallelism_loss_decomposition": {
+    "hot_slot_conflict_contributions": 1,
+    "account_level_conflict_contributions": 0,
+    "unknown_incomplete_trace_warning_count": 0,
+    "max_worker_idle_percentage": 62.5,
+    "interpretation": "loss decomposition is based on observed access keys and theoretical list scheduling; incomplete traces may hide additional dependencies"
+  },
+  "worst_blocks_by_conflict_percentage": [
+    {
+      "block_number": 0,
+      "tx_count": 3,
+      "conflict_pair_count": 1,
+      "conflict_percentage": 33.33333333333333,
+      "gas_weighted_critical_path": null
+    }
+  ],
+  "worst_blocks_by_gas_weighted_critical_path": [
+    {
+      "block_number": 0,
+      "tx_count": 3,
+      "conflict_pair_count": 1,
+      "conflict_percentage": 33.33333333333333,
+      "gas_weighted_critical_path": null
+    }
+  ],
+  "worker_simulation": [
+    {
+      "workers": 1,
+      "makespan": 3,
+      "speedup_vs_one_worker": 1.0,
+      "idle_percentage": 0.0,
+      "critical_path_bound": 2,
+      "interpretation": "worker-bound: workers stay mostly occupied under observed dependencies"
+    },
+    {
+      "workers": 2,
+      "makespan": 2,
+      "speedup_vs_one_worker": 1.5,
+      "idle_percentage": 25.0,
+      "critical_path_bound": 2,
+      "interpretation": "dependency-bound: makespan is at the critical-path lower bound"
+    },
+    {
+      "workers": 4,
+      "makespan": 2,
+      "speedup_vs_one_worker": 1.5,
+      "idle_percentage": 62.5,
+      "critical_path_bound": 2,
+      "interpretation": "dependency-bound: makespan is at the critical-path lower bound"
+    }
+  ],
+  "blocks": [
+    {
+      "block_number": 0,
+      "tx_count": 3,
+      "gas_used": null,
+      "total_accesses": 5,
+      "conflict_pair_count": 1,
+      "conflict_percentage": 33.33333333333333,
+      "gas_weighted_conflict_percentage": null,
+      "wave_count": 2,
+      "max_wave_width": 2,
+      "critical_path_length": 2,
+      "gas_critical_path": null,
+      "ceiling_by_tx": 1.5,
+      "ceiling_by_gas": null,
+      "top_hot_slots": [
+        {
+          "key": "0x2222222222222222222222222222222222222222:0x0000000000000000000000000000000000000000000000000000000000000007",
+          "address": "0x2222222222222222222222222222222222222222",
+          "slot": "0x0000000000000000000000000000000000000000000000000000000000000007",
+          "touching_txs": 2,
+          "gas_of_touching_txs": null,
+          "conflict_contribution": 1
+        },
+        {
+          "key": "0x2222222222222222222222222222222222222222:0x0000000000000000000000000000000000000000000000000000000000000008",
+          "address": "0x2222222222222222222222222222222222222222",
+          "slot": "0x0000000000000000000000000000000000000000000000000000000000000008",
+          "touching_txs": 1,
+          "gas_of_touching_txs": null,
+          "conflict_contribution": 0
+        }
+      ],
+      "top_hot_contracts": [
+        {
+          "address": "0x2222222222222222222222222222222222222222",
+          "touching_txs": 3,
+          "unique_slots": 2,
+          "gas_of_touching_txs": null,
+          "conflict_contribution": 1
+        }
+      ],
+      "worker_simulation": [
+        {
+          "workers": 1,
+          "makespan": 3,
+          "speedup_vs_one_worker": 1.0,
+          "idle_percentage": 0.0,
+          "critical_path_bound": 2,
+          "interpretation": "worker-bound: workers stay mostly occupied under observed dependencies"
+        },
+        {
+          "workers": 2,
+          "makespan": 2,
+          "speedup_vs_one_worker": 1.5,
+          "idle_percentage": 25.0,
+          "critical_path_bound": 2,
+          "interpretation": "dependency-bound: makespan is at the critical-path lower bound"
+        },
+        {
+          "workers": 4,
+          "makespan": 2,
+          "speedup_vs_one_worker": 1.5,
+          "idle_percentage": 62.5,
+          "critical_path_bound": 2,
+          "interpretation": "dependency-bound: makespan is at the critical-path lower bound"
+        }
+      ],
+      "tx_summaries": [
+        {
+          "tx_index": 0,
+          "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "wave": 0,
+          "conflict_degree": 1,
+          "duration_units": 1
+        },
+        {
+          "tx_index": 1,
+          "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 1
+        },
+        {
+          "tx_index": 2,
+          "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000002",
+          "wave": 1,
+          "conflict_degree": 1,
+          "duration_units": 1
+        }
+      ],
+      "warnings": [
+        "revm smoke inspector records SLOAD/SSTORE storage access only; account, balance, nonce, and code reads are not represented"
+      ]
+    }
+  ],
+  "warnings": [
+    "Storage opcode observations only; account/code/balance reads are not represented",
+    "block 0: revm smoke inspector records SLOAD/SSTORE storage access only; account, balance, nonce, and code reads are not represented",
+    "one or more blocks/transactions are missing gas; gas-weighted range metrics are unavailable"
+  ],
+  "deterministic_hash": "674806fcfd329758"
+}

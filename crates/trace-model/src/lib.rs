@@ -5,6 +5,10 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
+mod trace_pack;
+
+pub use trace_pack::*;
+
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct ChainKind(pub String);
 

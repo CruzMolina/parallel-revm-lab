@@ -2,7 +2,7 @@
 
 Benchmarks in this repository measure synthetic scheduler/workbench throughput. They are not full-node TPS, gas throughput, or production blockchain-client benchmarks.
 
-Trace-analysis reports are a different artifact: they summarize access contention, deterministic wave shape, hot contracts, hot slots, and parallelism ceilings for a normalized fixture or offline trace fixture. They do not contain synthetic tx/s and should not be compared with gas throughput.
+Trace-analysis reports are a different artifact: they summarize access contention, deterministic wave shape, hot contracts, hot slots, and parallelism ceilings for a normalized fixture or offline trace fixture. They do not contain synthetic tx/s and should not be compared with gas throughput. Trace-pack dossiers add gas-weighted theoretical scheduling when receipt gas is present; those numbers are still schedule-model outputs, not measured gas throughput.
 
 ## Smoke Command
 
@@ -116,6 +116,33 @@ Current Geth mini summary:
 
 This fixture is sanitized and intentionally tiny; it proves one offline ingestion path, not broad provider coverage.
 
+## Trace-Pack Dossier Example
+
+```sh
+cargo run -p parallel-revm-lab -- analyze-trace-pack \
+  --trace-dir trace-packs/demo-mini \
+  --workers 1,2,4,8 \
+  --out reports/demo-dossier.json \
+  --markdown reports/demo-dossier.md \
+  --html reports/demo-dossier.html \
+  --trace reports/demo-schedule.trace.json
+```
+
+Current demo dossier:
+
+| field | value |
+| --- | ---: |
+| blocks | 2 |
+| tx count | 7 |
+| conflict pairs | 2 |
+| conflict percentage | 22.222% |
+| critical path by tx | 4 |
+| gas-weighted critical path | 405 |
+| theoretical ceiling by tx | 1.750x |
+| theoretical ceiling by gas | 1.593x |
+
+This demo is synthetic and exists to validate the dossier workflow. It is not real Base data.
+
 ## Latest Local Snapshots
 
 Recorded after running the commands above in release mode.
@@ -157,8 +184,8 @@ Heavier low-contention storage transactions (`reports/storage-c0-vmsteps.json`):
 
 | mode | elapsed ns | synthetic tx/s | speedup vs sequential | declared conflicts | scheduler/validation metric |
 | --- | ---: | ---: | ---: | --- | --- |
-| sequential | 89,226,500 | 11,207.43 | baseline | 245 | input-order baseline |
-| access-list | 27,992,834 | 35,723.43 | 3.187x | 245 | 245 deferrals; 4 waves, max width 793 |
-| optimistic | 39,049,084 | 25,608.80 | 2.285x | 245 | 173 validation failures and re-executions |
+| sequential | 88,624,458 | 11,283.57 | baseline | 245 | input-order baseline |
+| access-list | 27,768,250 | 36,012.35 | 3.192x | 245 | 245 deferrals; 4 waves, max width 793 |
+| optimistic | 39,257,125 | 25,473.08 | 2.258x | 245 | 173 validation failures and re-executions |
 
 All modes reported `deterministic_passed: true` and state hash `1940c0cfba64e3cb`. This scenario shows that parallel execution can win when deterministic synthetic execution work is heavy enough and declared contention is low.

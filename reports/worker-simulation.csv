@@ -1,0 +1,5 @@
+workers,makespan,speedup_vs_one_worker,idle_percentage,critical_path_bound,interpretation
+1,645,1.000000,0.000000,405,worker-bound: workers stay mostly occupied under observed dependencies
+2,405,1.592593,20.370370,405,dependency-bound: makespan is at the critical-path lower bound
+4,405,1.592593,60.185185,405,dependency-bound: makespan is at the critical-path lower bound
+8,405,1.592593,80.092593,405,dependency-bound: makespan is at the critical-path lower bound

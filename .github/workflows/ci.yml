@@ -33,6 +33,22 @@ jobs:
             --markdown reports/ci-geth-mini.md \
             --html reports/ci-geth-mini.html \
             --trace reports/ci-geth-mini.schedule.trace.json
+      - name: cli analyze demo trace pack
+        run: |
+          cargo run -p parallel-revm-lab -- analyze-trace-pack \
+            --trace-dir trace-packs/demo-mini \
+            --workers 1,2,4,8 \
+            --out reports/ci-demo-dossier.json \
+            --markdown reports/ci-demo-dossier.md \
+            --html reports/ci-demo-dossier.html \
+            --trace reports/ci-demo-schedule.trace.json
+      - name: cli recommend observed access hints
+        run: |
+          cargo run -p parallel-revm-lab -- recommend-access-lists \
+            --trace-dir trace-packs/demo-mini \
+            --out reports/ci-access-list-recommendations.json
+      - name: revm trace-pack smoke
+        run: cargo run -p parallel-revm-lab-revm-smoke --example emit_trace_pack
       - name: cli help
         run: cargo run -p parallel-revm-lab -- --help
       - name: cli verify

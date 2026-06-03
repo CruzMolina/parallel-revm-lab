@@ -64,3 +64,10 @@ See `docs/engineering-log.md` for the current validation history and upgrade dec
 - Root cause: the first revm bridge prioritized a compiling smoke path before implementing inspector hooks.
 - Fix: added a revm inspector that records `SLOAD` and `SSTORE` from opcode, target address, and stack.
 - Tests added: existing revm conflict/wave tests now run through inspector-captured observations.
+
+## Base Case Study Could Invite Overclaiming
+
+- Symptom: a public Base block range is useful as a target, but committing synthetic output under that path would look like real-chain evidence.
+- Root cause: collection depends on a user-supplied debug-capable RPC endpoint and provider support for JavaScript tracers.
+- Fix: committed only reproduction instructions under `case-studies/base-38014901-38014910/`; the committed dossier uses `trace-packs/demo-mini` and labels itself synthetic/demo.
+- Tests added: CLI dossier smoke tests run on the committed demo trace pack without network access.

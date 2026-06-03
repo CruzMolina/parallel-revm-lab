@@ -53,10 +53,12 @@ Covered edge cases include:
 - `vm_steps` synthetic CPU work that does not affect state semantics
 - duplicate trace transaction indices
 - invalid fixture addresses, storage keys, and transaction hashes
+- trace-pack schema validation, manifest roundtrip, deterministic access normalization, and missing-gas fallback
+- gas-weighted critical path and worker simulation on a known DAG
 - incomplete trace read information
 - deterministic fixture wave shape and report hash
 - Geth struct-log fixture parsing for `SLOAD`/`SSTORE`
-- revm inspector bytecode fixtures for hot-slot and independent-slot behavior
+- revm inspector bytecode fixtures for hot-slot and independent-slot behavior, including trace-pack conversion
 
 ## Property Testing
 
@@ -71,5 +73,6 @@ Covered edge cases include:
 - Trace analyzer tests do not prove provider RPC traces are complete.
 - The Geth parser tests do not prove every Geth trace shape.
 - The revm smoke tests do not prove full block replay or account/code/balance extraction.
+- Worker simulation tests prove deterministic scheduling over the modeled dependency graph, not real executor performance.
 
 They do prove the central lab invariant for the implemented synthetic model: parallel modes are sequentially equivalent across fixed, randomized, and high-contention workloads.

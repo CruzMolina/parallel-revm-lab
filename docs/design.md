@@ -26,6 +26,8 @@ The fixture parser sorts transactions by `tx_index`, canonicalizes addresses and
 
 The Geth struct-log parser supports one committed offline fixture shape. It scans `structLogs`, records `SLOAD` as storage reads, records `SSTORE` as storage writes, and derives the slot from the top stack value. It intentionally marks broader read coverage incomplete.
 
+Trace packs extend the normalized model with a manifest, per-block files, gas-used metadata, provenance, and compact per-op observations. The schema is deterministic: block files are loaded by manifest range, transactions sort by `tx_index`, exact duplicate accesses are deduplicated, and all persistent output uses sorted maps or vectors.
+
 ## Trace Analyzer
 
 `crates/analyzer` consumes a `BlockAccessTrace` and builds pairwise conflicts. A later transaction depends on an earlier transaction when their access sets overlap through write/write, earlier write/later read, or earlier read/later write. Read/read overlap is allowed.
@@ -83,6 +85,7 @@ Trace-analysis reports add:
 - hot contract and hot storage slot rankings
 - per-transaction read/write counts, conflict degree, and wave
 - a stable report hash over canonical JSON bytes
+- trace-pack dossiers with gas-weighted critical paths, worker simulation, hot-state concentration, and CSV sidecars
 
 Synthetic throughput metrics and trace-analysis parallelism metrics are intentionally separate.
 
@@ -90,7 +93,7 @@ Synthetic throughput metrics and trace-analysis parallelism metrics are intentio
 
 `crates/revm-smoke` is intentionally small. It uses `revm 40.0.3` with `default-features = false` and `std` enabled, executes tiny bytecode fixtures against `CacheDB<EmptyDB>`, records `SLOAD` and `SSTORE` with a revm inspector, and converts those observations into the normalized trace model.
 
-This proves the analyzer can ingest observations from real EVM bytecode execution. It does not attempt general block replay, full account/code/balance inspector coverage, or provider RPC normalization.
+This proves the analyzer can ingest observations from real EVM bytecode execution. The smoke crate can also emit a tiny trace pack and dossier. It does not attempt general block replay, full account/code/balance inspector coverage, or provider RPC normalization.
 
 ## Concurrency Choice
 
@@ -105,3 +108,4 @@ The project uses Rayon `ThreadPoolBuilder` rather than custom queues or shared m
 - Incomplete trace reads make analyzer conflict counts lower bounds.
 - Live RPC tracing varies by provider and is not part of CI.
 - The current Geth parser and revm inspector are storage-access focused.
+- Trace-pack worker simulation is theoretical scheduling, not measured execution throughput.

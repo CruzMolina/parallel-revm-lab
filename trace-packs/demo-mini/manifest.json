@@ -1,0 +1,17 @@
+{
+  "schema_version": "trace-pack-v1",
+  "chain": "base",
+  "source": "committed-demo-trace-pack",
+  "provenance": "synthetic/demo fixture (not real Base data)",
+  "start_block": 38014901,
+  "end_block": 38014902,
+  "created_by_tool_version": "0.1.0",
+  "tracer_kind": "sanitized-geth-js-storage",
+  "notes": [
+    "Tiny committed trace pack for deterministic dossier validation.",
+    "Targets the public Base-style block range shape but does not contain real Base data."
+  ],
+  "warnings": [
+    "Synthetic demo fixture; do not cite as real-chain evidence."
+  ]
+}

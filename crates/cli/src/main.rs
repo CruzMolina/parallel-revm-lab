@@ -2,15 +2,21 @@ use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use parallel_revm_lab_analyzer::{
-    analyze_block_trace, render_html_with_command, render_markdown, schedule_trace_json,
+    analyze_block_trace, analyze_trace_pack as analyze_trace_pack_report,
+    dossier_schedule_trace_json, recommend_access_lists, render_dossier_html,
+    render_dossier_markdown, render_hot_contracts_csv, render_hot_slots_csv,
+    render_html_with_command, render_markdown, render_worker_simulation_csv, schedule_trace_json,
 };
 use parallel_revm_lab_executor::{
     benchmark_report, run_access_list, run_optimistic, run_sequential, trace_json, ExecutionMode,
 };
-use parallel_revm_lab_trace_model::BlockAccessTrace;
+use parallel_revm_lab_trace_model::{
+    Address, BlockAccessTrace, ChainKind, TracePack, TracePackAccess, TracePackBlock,
+    TracePackManifest, TracePackTx, TxHash, TxIndex, TRACE_PACK_SCHEMA_VERSION,
+};
 use parallel_revm_lab_workload::{generate_workload, WorkloadConfig, WorkloadKind};
 
 #[derive(Debug, Parser)]
@@ -31,6 +37,9 @@ enum Commands {
     Inspect(InspectArgs),
     AnalyzeFixture(AnalyzeFixtureArgs),
     AnalyzeTrace(AnalyzeTraceArgs),
+    AnalyzeTracePack(AnalyzeTracePackArgs),
+    RecommendAccessLists(RecommendAccessListsArgs),
+    CollectBlockRange(CollectBlockRangeArgs),
     #[command(hide = true)]
     AnalyzeBlock(AnalyzeBlockArgs),
 }
@@ -133,6 +142,65 @@ struct AnalyzeTraceArgs {
 }
 
 #[derive(Debug, Args)]
+struct AnalyzeTracePackArgs {
+    #[arg(long)]
+    trace_dir: PathBuf,
+    #[arg(long, default_value = "1,2,4,8")]
+    workers: String,
+    #[arg(long)]
+    out: PathBuf,
+    #[arg(long)]
+    markdown: PathBuf,
+    #[arg(long)]
+    html: PathBuf,
+    #[arg(long)]
+    trace: Option<PathBuf>,
+}
+
+#[derive(Debug, Args)]
+struct RecommendAccessListsArgs {
+    #[arg(long)]
+    trace_dir: PathBuf,
+    #[arg(long)]
+    out: PathBuf,
+}
+
+#[derive(Clone, Copy, Debug, ValueEnum)]
+enum CollectorTracer {
+    GethJsStorage,
+}
+
+impl std::fmt::Display for CollectorTracer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CollectorTracer::GethJsStorage => write!(f, "geth-js-storage"),
+        }
+    }
+}
+
+#[derive(Debug, Args)]
+struct CollectBlockRangeArgs {
+    #[arg(long)]
+    chain: String,
+    #[arg(long)]
+    start_block: u64,
+    #[arg(long)]
+    end_block: u64,
+    #[arg(long)]
+    rpc_url: Option<String>,
+    #[arg(long, value_enum, default_value = "geth-js-storage")]
+    tracer: CollectorTracer,
+    #[arg(long)]
+    out: PathBuf,
+    #[arg(long)]
+    max_transactions: Option<usize>,
+    #[arg(long)]
+    resume: bool,
+    #[arg(long)]
+    dry_run: bool,
+}
+
+#[derive(Debug, Args)]
 struct AnalyzeBlockArgs {
     #[arg(long)]
     chain: String,
@@ -155,6 +223,9 @@ fn main() -> Result<()> {
         Commands::Inspect(args) => inspect(args),
         Commands::AnalyzeFixture(args) => analyze_fixture(args),
         Commands::AnalyzeTrace(args) => analyze_trace(args),
+        Commands::AnalyzeTracePack(args) => analyze_trace_pack(args),
+        Commands::RecommendAccessLists(args) => recommend_access_lists_command(args),
+        Commands::CollectBlockRange(args) => collect_block_range(args),
         Commands::AnalyzeBlock(args) => analyze_block(args),
     }
 }
@@ -349,6 +420,239 @@ fn analyze_trace(args: AnalyzeTraceArgs) -> Result<()> {
     Ok(())
 }
 
+fn analyze_trace_pack(args: AnalyzeTracePackArgs) -> Result<()> {
+    let pack = TracePack::load_dir(&args.trace_dir)
+        .with_context(|| format!("failed to load trace pack {}", args.trace_dir.display()))?;
+    let workers = parse_thread_list(&args.workers)?;
+    let dossier = analyze_trace_pack_report(&pack, &workers);
+    let command = analyze_trace_pack_command(&args);
+    write_json(&args.out, &dossier)?;
+    write_text(&args.markdown, &render_dossier_markdown(&dossier))?;
+    write_text(&args.html, &render_dossier_html(&dossier, &command))?;
+    if let Some(trace_path) = args.trace {
+        write_json(&trace_path, &dossier_schedule_trace_json(&dossier))?;
+    }
+    if let Some(parent) = args.out.parent() {
+        write_text(
+            &parent.join("hot-contracts.csv"),
+            &render_hot_contracts_csv(&dossier),
+        )?;
+        write_text(
+            &parent.join("hot-slots.csv"),
+            &render_hot_slots_csv(&dossier),
+        )?;
+        write_text(
+            &parent.join("worker-simulation.csv"),
+            &render_worker_simulation_csv(&dossier),
+        )?;
+    }
+    println!(
+        "analyzed trace pack {} into {}",
+        args.trace_dir.display(),
+        args.out.display()
+    );
+    println!(
+        "blocks={} txs={} conflicts={} ({:.3}%) tx_ceiling={:.3}x gas_ceiling={}",
+        dossier.block_count,
+        dossier.tx_count,
+        dossier.conflict_pair_count,
+        dossier.conflict_percentage,
+        dossier.theoretical_parallelism_ceiling_by_tx,
+        dossier
+            .theoretical_parallelism_ceiling_by_gas
+            .map(|value| format!("{value:.3}x"))
+            .unwrap_or_else(|| "unavailable".to_owned())
+    );
+    Ok(())
+}
+
+fn recommend_access_lists_command(args: RecommendAccessListsArgs) -> Result<()> {
+    let pack = TracePack::load_dir(&args.trace_dir)
+        .with_context(|| format!("failed to load trace pack {}", args.trace_dir.display()))?;
+    let report = recommend_access_lists(&pack);
+    write_json(&args.out, &report)?;
+    println!(
+        "wrote {} observed access hint(s) to {}",
+        report.tx_hints.len(),
+        args.out.display()
+    );
+    Ok(())
+}
+
+fn collect_block_range(args: CollectBlockRangeArgs) -> Result<()> {
+    if args.start_block > args.end_block {
+        bail!("--start-block must be <= --end-block");
+    }
+    let rpc_url = resolve_rpc_url(&args.chain, args.rpc_url)?;
+    if args.dry_run {
+        for block_number in [args.start_block, args.end_block]
+            .into_iter()
+            .collect::<std::collections::BTreeSet<_>>()
+        {
+            let block = rpc_call(
+                &rpc_url,
+                "eth_getBlockByNumber",
+                serde_json::json!([hex_u64(block_number), false]),
+            )?;
+            let tx_count = block
+                .get("transactions")
+                .and_then(serde_json::Value::as_array)
+                .map(Vec::len)
+                .unwrap_or(0);
+            println!(
+                "dry-run {} block {} hash={} txs={}",
+                args.chain,
+                block_number,
+                value_string(block.get("hash")).unwrap_or_else(|| "unknown".to_owned()),
+                tx_count
+            );
+        }
+        return Ok(());
+    }
+
+    let per_block_limit = args.max_transactions.unwrap_or(usize::MAX);
+    let mut blocks = Vec::new();
+    for block_number in args.start_block..=args.end_block {
+        let block_path = args.out.join("blocks").join(format!("{block_number}.json"));
+        if args.resume && block_path.exists() {
+            blocks.push(read_json(&block_path)?);
+            println!("resume: kept existing block file for {block_number}");
+            continue;
+        }
+
+        let block_value = rpc_call(
+            &rpc_url,
+            "eth_getBlockByNumber",
+            serde_json::json!([hex_u64(block_number), true]),
+        )?;
+        let tx_values = block_value
+            .get("transactions")
+            .and_then(serde_json::Value::as_array)
+            .ok_or_else(|| anyhow!("eth_getBlockByNumber returned no transactions array"))?;
+        let take = tx_values.len().min(per_block_limit);
+        let mut transactions = Vec::new();
+        let mut block_warnings = Vec::new();
+        if take < tx_values.len() {
+            block_warnings.push(format!(
+                "collection truncated to {take} of {} transactions by --max-transactions",
+                tx_values.len()
+            ));
+        }
+        for (idx, tx_value) in tx_values.iter().take(take).enumerate() {
+            let tx_hash = required_string(tx_value, "hash")?;
+            let from = value_string(tx_value.get("from")).map(Address::canonical);
+            let to = value_string(tx_value.get("to")).map(Address::canonical);
+            let mut tx_warnings = Vec::new();
+            let receipt = match rpc_call(
+                &rpc_url,
+                "eth_getTransactionReceipt",
+                serde_json::json!([tx_hash]),
+            ) {
+                Ok(value) => Some(value),
+                Err(err) => {
+                    tx_warnings.push(format!(
+                        "receipt unavailable; gas/status omitted: {}",
+                        redact_rpc_url(&err.to_string())
+                    ));
+                    None
+                }
+            };
+            let gas_used = receipt
+                .as_ref()
+                .and_then(|value| value.get("gasUsed"))
+                .and_then(serde_json::Value::as_str)
+                .and_then(parse_hex_u64);
+            let status = receipt
+                .as_ref()
+                .and_then(|value| value.get("status"))
+                .and_then(serde_json::Value::as_str)
+                .map(ToOwned::to_owned);
+            let trace = rpc_call(
+                &rpc_url,
+                "debug_traceTransaction",
+                serde_json::json!([
+                    tx_hash,
+                    {
+                        "tracer": geth_storage_access_tracer_source(),
+                        "timeout": "20s"
+                    }
+                ]),
+            )
+            .with_context(|| {
+                format!(
+                    "debug_traceTransaction failed for block {block_number} tx_index {idx}; provider may not support debug tracing or JavaScript tracers"
+                )
+            })?;
+            let mut accesses = trace_accesses_from_rpc(&trace)?;
+            accesses.sort();
+            accesses.dedup();
+            tx_warnings.extend(trace_warnings_from_rpc(&trace));
+            transactions.push(TracePackTx {
+                tx_index: TxIndex(idx as u64),
+                tx_hash: TxHash(tx_hash.to_owned()),
+                from,
+                to,
+                gas_used,
+                status,
+                accesses,
+                warnings: tx_warnings,
+            });
+        }
+        let total_gas_used = transactions
+            .iter()
+            .map(|tx| tx.gas_used)
+            .collect::<Option<Vec<_>>>()
+            .map(|gas| gas.into_iter().sum());
+        blocks.push(TracePackBlock {
+            chain: ChainKind::new(&args.chain),
+            block_number,
+            block_hash: value_string(block_value.get("hash")),
+            parent_hash: value_string(block_value.get("parentHash")),
+            tx_count: transactions.len(),
+            total_gas_used,
+            transactions,
+            warnings: block_warnings,
+        });
+        println!(
+            "collected {} transaction(s) for {} block {}",
+            take, args.chain, block_number
+        );
+    }
+
+    let mut pack = TracePack {
+        manifest: TracePackManifest {
+            schema_version: TRACE_PACK_SCHEMA_VERSION.to_owned(),
+            chain: ChainKind::new(&args.chain),
+            source: "rpc-debug_traceTransaction".to_owned(),
+            provenance: "user-collected RPC trace pack".to_owned(),
+            start_block: args.start_block,
+            end_block: args.end_block,
+            created_by_tool_version: env!("CARGO_PKG_VERSION").to_owned(),
+            tracer_kind: args.tracer.to_string(),
+            notes: vec![format!(
+                "Collected with parallel-revm-lab collect-block-range over {} blocks {}-{}",
+                args.chain, args.start_block, args.end_block
+            )],
+            warnings: vec![
+                "Provider trace completeness varies; verify tracer support before making claims"
+                    .to_owned(),
+            ],
+        },
+        blocks,
+    };
+    pack.normalize();
+    pack.validate()?;
+    pack.write_dir(&args.out)?;
+    println!(
+        "wrote trace pack for {} blocks {}-{} to {}",
+        args.chain,
+        args.start_block,
+        args.end_block,
+        args.out.display()
+    );
+    Ok(())
+}
+
 fn analyze_fixture_command(args: &AnalyzeFixtureArgs) -> String {
     let mut command = format!(
         "cargo run -p parallel-revm-lab -- analyze-fixture --fixture {} --out {} --markdown {} --html {}",
@@ -368,6 +672,21 @@ fn analyze_trace_command(args: &AnalyzeTraceArgs) -> String {
         "cargo run -p parallel-revm-lab -- analyze-trace --format {} --fixture {} --out {} --markdown {} --html {}",
         args.format,
         args.fixture.display(),
+        args.out.display(),
+        args.markdown.display(),
+        args.html.display()
+    );
+    if let Some(trace) = &args.trace {
+        command.push_str(&format!(" --trace {}", trace.display()));
+    }
+    command
+}
+
+fn analyze_trace_pack_command(args: &AnalyzeTracePackArgs) -> String {
+    let mut command = format!(
+        "cargo run -p parallel-revm-lab -- analyze-trace-pack --trace-dir {} --workers {} --out {} --markdown {} --html {}",
+        args.trace_dir.display(),
+        args.workers,
         args.out.display(),
         args.markdown.display(),
         args.html.display()
@@ -400,6 +719,132 @@ fn analyze_block(args: AnalyzeBlockArgs) -> Result<()> {
         args.chain,
         args.block
     )
+}
+
+fn resolve_rpc_url(chain: &str, explicit: Option<String>) -> Result<String> {
+    if let Some(url) = explicit {
+        return Ok(url);
+    }
+    let env_key = match chain {
+        "base" => "BASE_RPC_URL",
+        "ethereum" => "ETH_RPC_URL",
+        _ => "ETH_RPC_URL",
+    };
+    std::env::var(env_key)
+        .or_else(|_| std::env::var("ETH_RPC_URL"))
+        .with_context(|| {
+            format!(
+                "missing RPC URL for collect-block-range: pass --rpc-url or set {env_key} / ETH_RPC_URL"
+            )
+        })
+}
+
+fn rpc_call(url: &str, method: &str, params: serde_json::Value) -> Result<serde_json::Value> {
+    let body = serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": method,
+        "params": params,
+    });
+    let response = ureq::post(url)
+        .set("Content-Type", "application/json")
+        .send_string(&body.to_string())
+        .map_err(|err| {
+            anyhow!(
+                "RPC call {method} failed: {}",
+                redact_rpc_url(&err.to_string())
+            )
+        })?;
+    let text = response
+        .into_string()
+        .map_err(|err| anyhow!("RPC call {method} response read failed: {err}"))?;
+    let value: serde_json::Value = serde_json::from_str(&text)
+        .with_context(|| format!("RPC call {method} returned non-JSON response"))?;
+    if let Some(error) = value.get("error") {
+        bail!(
+            "RPC call {} returned error: {}",
+            method,
+            redact_rpc_url(&error.to_string())
+        );
+    }
+    Ok(value
+        .get("result")
+        .cloned()
+        .unwrap_or(serde_json::Value::Null))
+}
+
+fn trace_accesses_from_rpc(value: &serde_json::Value) -> Result<Vec<TracePackAccess>> {
+    let access_value = value
+        .get("accesses")
+        .unwrap_or(value)
+        .as_array()
+        .ok_or_else(|| anyhow!("debug tracer result did not contain an accesses array"))?;
+    access_value
+        .iter()
+        .cloned()
+        .map(|value| {
+            serde_json::from_value(value)
+                .context("debug tracer returned an access entry that does not match schema")
+        })
+        .collect()
+}
+
+fn trace_warnings_from_rpc(value: &serde_json::Value) -> Vec<String> {
+    let mut warnings = value
+        .get("warnings")
+        .and_then(serde_json::Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(serde_json::Value::as_str)
+        .map(ToOwned::to_owned)
+        .collect::<Vec<_>>();
+    if let Some(faults) = value.get("faults").and_then(serde_json::Value::as_array) {
+        if !faults.is_empty() {
+            warnings.push(format!("debug tracer reported {} fault(s)", faults.len()));
+        }
+    }
+    warnings.sort();
+    warnings.dedup();
+    warnings
+}
+
+fn required_string<'a>(value: &'a serde_json::Value, field: &str) -> Result<&'a str> {
+    value
+        .get(field)
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| anyhow!("expected transaction field `{field}`"))
+}
+
+fn value_string(value: Option<&serde_json::Value>) -> Option<String> {
+    value
+        .and_then(serde_json::Value::as_str)
+        .map(ToOwned::to_owned)
+}
+
+fn parse_hex_u64(value: &str) -> Option<u64> {
+    u64::from_str_radix(value.strip_prefix("0x").unwrap_or(value), 16).ok()
+}
+
+fn hex_u64(value: u64) -> String {
+    format!("0x{value:x}")
+}
+
+fn geth_storage_access_tracer_source() -> &'static str {
+    include_str!("../../../tracers/geth-storage-access-tracer.js")
+}
+
+fn redact_rpc_url(value: &str) -> String {
+    let mut out = value.to_owned();
+    for scheme in ["https://", "http://"] {
+        while let Some(start) = out.find(scheme) {
+            let end = out[start..]
+                .find(|ch: char| ch.is_whitespace() || ch == '"' || ch == '\'')
+                .map(|offset| start + offset)
+                .unwrap_or(out.len());
+            out.replace_range(start..end, "<redacted-rpc-url>");
+        }
+    }
+    out
 }
 
 fn parse_workload(input: &str) -> std::result::Result<WorkloadKind, String> {
@@ -471,6 +916,14 @@ fn write_json(path: &Path, value: &impl serde::Serialize) -> Result<()> {
     Ok(())
 }
 
+fn read_json<T>(path: &Path) -> Result<T>
+where
+    T: serde::de::DeserializeOwned,
+{
+    let file = File::open(path).with_context(|| format!("failed to open {}", path.display()))?;
+    serde_json::from_reader(file).with_context(|| format!("failed to read {}", path.display()))
+}
+
 fn write_text(path: &Path, value: &str) -> Result<()> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)
@@ -502,4 +955,27 @@ fn format_accesses(
         .collect::<Vec<_>>()
         .join(", ");
     format!("[{joined}]")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn collect_redacts_rpc_urls() {
+        let input =
+            "failed: https://example.com/base?key=redactme and http://credential.example.org";
+        let redacted = redact_rpc_url(input);
+
+        assert!(!redacted.contains("redactme"));
+        assert!(!redacted.contains("credential.example"));
+        assert_eq!(redacted.matches("<redacted-rpc-url>").count(), 2);
+    }
+
+    #[test]
+    fn collect_parses_hex_u64() {
+        assert_eq!(parse_hex_u64("0x2a"), Some(42));
+        assert_eq!(parse_hex_u64("2a"), Some(42));
+        assert_eq!(parse_hex_u64("not-hex"), None);
+    }
 }

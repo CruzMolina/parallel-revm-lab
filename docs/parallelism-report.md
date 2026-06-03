@@ -35,3 +35,20 @@ The fixture command writes:
 - Chrome trace JSON: deterministic schedule visualization
 
 Open the Chrome trace JSON with `chrome://tracing` or compatible trace viewers.
+
+## Trace-Pack Dossiers
+
+Trace-pack dossiers extend the single-block report with range-level fields:
+
+- `provenance`: whether data is a synthetic/demo fixture or user-collected RPC trace pack
+- `total_gas_used`: present only when gas is available for all included transactions
+- `gas_weighted_conflict_percentage`: conflict percentage weighted by pair gas
+- `gas_weighted_critical_path`: longest dependency path by gas duration
+- `theoretical_parallelism_ceiling_by_gas`: `total_gas / gas_weighted_critical_path`
+- `worker_simulation`: deterministic list scheduling for requested worker counts
+- `top_hot_contracts` and `top_hot_storage_slots`: tx count, gas, unique slots, and conflict contribution
+- `contention_concentration`: percent of conflict contributions caused by top 1/5/10 keys
+
+Worker simulation reports a makespan in duration units, speedup versus one worker, idle percentage, and whether the schedule appears dependency-bound, worker-bound, or mixed. These are theoretical scheduling numbers, not measured execution throughput.
+
+CSV sidecars are emitted for hot contracts, hot slots, and worker simulation.

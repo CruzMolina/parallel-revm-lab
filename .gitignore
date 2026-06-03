@@ -2,6 +2,8 @@
 /reports/*.trace.json
 !/reports/base-mini-trace.schedule.trace.json
 !/reports/geth-mini.schedule.trace.json
+!/reports/demo-schedule.trace.json
+!/reports/revm-smoke-schedule.trace.json
 /reports/tmp-*
 *.profraw
 .DS_Store

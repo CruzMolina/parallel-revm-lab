@@ -16,15 +16,32 @@ analyze-fixture:
 analyze-trace:
     cargo run -p parallel-revm-lab -- analyze-trace --format geth-struct-logs --fixture fixtures/geth-mini-struct-logs.json --out reports/geth-mini.parallelism.json --markdown reports/geth-mini.md --html reports/geth-mini.html --trace reports/geth-mini.schedule.trace.json
 
+analyze-trace-pack:
+    cargo run -p parallel-revm-lab -- analyze-trace-pack --trace-dir trace-packs/demo-mini --workers 1,2,4,8 --out reports/demo-dossier.json --markdown reports/demo-dossier.md --html reports/demo-dossier.html --trace reports/demo-schedule.trace.json
+
+dossier-demo:
+    cargo run -p parallel-revm-lab -- analyze-trace-pack --trace-dir trace-packs/demo-mini --workers 1,2,4,8 --out case-studies/demo-trace-pack/dossier.json --markdown case-studies/demo-trace-pack/summary.md --html case-studies/demo-trace-pack/dossier.html --trace case-studies/demo-trace-pack/schedule.trace.json
+
+recommend-access-lists:
+    cargo run -p parallel-revm-lab -- recommend-access-lists --trace-dir trace-packs/demo-mini --out reports/access-list-recommendations.json
+
+collect-base-dry-run:
+    cargo run -p parallel-revm-lab -- collect-block-range --chain base --start-block 38014901 --end-block 38014910 --tracer geth-js-storage --out trace-packs/base-38014901-38014910 --dry-run
+
+revm-trace-pack-smoke:
+    cargo run -p parallel-revm-lab-revm-smoke --example emit_trace_pack
+
 analyze-fixture-open: analyze-fixture
     open reports/base-mini-trace.html
 
 revm-smoke:
     cargo test -p parallel-revm-lab-revm-smoke --all-features
 
-validate: fmt clippy test verify analyze-fixture analyze-trace revm-smoke
+validate-dossier: analyze-trace-pack dossier-demo recommend-access-lists
 
-validate-full: validate bench-heavy-smoke
+validate: fmt clippy test verify analyze-fixture analyze-trace validate-dossier revm-smoke
+
+validate-full: validate revm-trace-pack-smoke bench-heavy-smoke
 
 bench-smoke:
     cargo run --release -p parallel-revm-lab -- bench --workload mixed --txs 1000 --conflict 0.5 --mode all --threads 4 --seed 42 --out reports/mixed-c50.json --trace reports/mixed-c50.trace.json

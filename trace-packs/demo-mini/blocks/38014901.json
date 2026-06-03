@@ -1,0 +1,93 @@
+{
+  "chain": "base",
+  "block_number": 38014901,
+  "block_hash": "0x00000000000000000000000000000000000000000000000000000000024413f5",
+  "parent_hash": "0x00000000000000000000000000000000000000000000000000000000024413f4",
+  "tx_count": 4,
+  "total_gas_used": 350,
+  "transactions": [
+    {
+      "tx_index": 0,
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000100",
+      "from": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "to": "0x1111111111111111111111111111111111111111",
+      "gas_used": 100,
+      "status": "0x1",
+      "accesses": [
+        {
+          "address": "0x1111111111111111111111111111111111111111",
+          "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "kind": "read_write",
+          "op": "SSTORE",
+          "pc": 7,
+          "depth": 1,
+          "gas_remaining": 64000
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "tx_index": 1,
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000101",
+      "from": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "to": "0x2222222222222222222222222222222222222222",
+      "gas_used": 50,
+      "status": "0x1",
+      "accesses": [
+        {
+          "address": "0x2222222222222222222222222222222222222222",
+          "slot": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "kind": "write",
+          "op": "SSTORE",
+          "pc": 5,
+          "depth": 1,
+          "gas_remaining": 71000
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "tx_index": 2,
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000102",
+      "from": "0xcccccccccccccccccccccccccccccccccccccccc",
+      "to": "0x1111111111111111111111111111111111111111",
+      "gas_used": 120,
+      "status": "0x1",
+      "accesses": [
+        {
+          "address": "0x1111111111111111111111111111111111111111",
+          "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "kind": "write",
+          "op": "SSTORE",
+          "pc": 9,
+          "depth": 1,
+          "gas_remaining": 52000
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "tx_index": 3,
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000103",
+      "from": "0xdddddddddddddddddddddddddddddddddddddddd",
+      "to": "0x1111111111111111111111111111111111111111",
+      "gas_used": 80,
+      "status": "0x1",
+      "accesses": [
+        {
+          "address": "0x1111111111111111111111111111111111111111",
+          "slot": "0x0000000000000000000000000000000000000000000000000000000000000002",
+          "kind": "read",
+          "op": "SLOAD",
+          "pc": 3,
+          "depth": 1,
+          "gas_remaining": 68000
+        }
+      ],
+      "warnings": []
+    }
+  ],
+  "warnings": [
+    "Block is a compact synthetic demo, not a Base RPC capture."
+  ]
+}

@@ -1,6 +1,6 @@
 # revm Integration Notes
 
-`crates/revm-smoke` is included and compile-tested. It is deliberately small: it proves this workspace can execute real EVM bytecode through `revm`, record storage opcodes with an inspector, and feed those observations into the shared trace analyzer.
+`crates/revm-smoke` is included and compile-tested. It is deliberately small: it proves this workspace can execute real EVM bytecode through `revm`, record storage opcodes with an inspector, emit a compact trace pack, and feed those observations into the shared dossier analyzer.
 
 ## Current Status
 
@@ -17,6 +17,7 @@
 - Executes a hot-slot fixture that creates contention.
 - Records `SLOAD` and `SSTORE` in an inspector from opcode, target address, and stack.
 - Converts inspector observations into `BlockAccessTrace`.
+- Converts the same observations into a trace pack via `smoke_trace_pack`.
 - Runs the analyzer and asserts expected conflict/wave behavior.
 
 ## What It Does Not Do
@@ -30,6 +31,7 @@
 
 ```sh
 cargo test -p parallel-revm-lab-revm-smoke --all-features
+cargo run -p parallel-revm-lab-revm-smoke --example emit_trace_pack
 ```
 
 The full workspace validation also runs this crate through `cargo test --workspace --all-features`.

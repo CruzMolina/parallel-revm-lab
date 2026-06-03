@@ -5,6 +5,10 @@ use parallel_revm_lab_trace_model::{
 };
 use serde::{Deserialize, Serialize};
 
+mod dossier;
+
+pub use dossier::*;
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ParallelismReport {
     pub report_version: String,
@@ -284,7 +288,7 @@ pub fn schedule_trace_json(report: &ParallelismReport) -> serde_json::Value {
     serde_json::json!({ "traceEvents": events })
 }
 
-fn conflict_pairs(trace: &BlockAccessTrace) -> Vec<ConflictPair> {
+pub(crate) fn conflict_pairs(trace: &BlockAccessTrace) -> Vec<ConflictPair> {
     let sets = trace
         .transactions
         .iter()
@@ -311,7 +315,7 @@ fn conflict_pairs(trace: &BlockAccessTrace) -> Vec<ConflictPair> {
     pairs
 }
 
-fn dependency_graph(conflicts: &[ConflictPair]) -> BTreeMap<TxIndex, BTreeSet<TxIndex>> {
+pub(crate) fn dependency_graph(conflicts: &[ConflictPair]) -> BTreeMap<TxIndex, BTreeSet<TxIndex>> {
     let mut graph = BTreeMap::<TxIndex, BTreeSet<TxIndex>>::new();
     for conflict in conflicts {
         graph
@@ -322,7 +326,7 @@ fn dependency_graph(conflicts: &[ConflictPair]) -> BTreeMap<TxIndex, BTreeSet<Tx
     graph
 }
 
-fn build_waves(
+pub(crate) fn build_waves(
     trace: &BlockAccessTrace,
     dependencies: &BTreeMap<TxIndex, BTreeSet<TxIndex>>,
 ) -> Vec<Vec<TxIndex>> {
@@ -359,7 +363,7 @@ fn build_waves(
     waves
 }
 
-fn tx_wave_map(waves: &[Vec<TxIndex>]) -> BTreeMap<TxIndex, usize> {
+pub(crate) fn tx_wave_map(waves: &[Vec<TxIndex>]) -> BTreeMap<TxIndex, usize> {
     let mut out = BTreeMap::new();
     for (wave_idx, wave) in waves.iter().enumerate() {
         for tx in wave {
@@ -369,7 +373,7 @@ fn tx_wave_map(waves: &[Vec<TxIndex>]) -> BTreeMap<TxIndex, usize> {
     out
 }
 
-fn critical_path_length(
+pub(crate) fn critical_path_length(
     trace: &BlockAccessTrace,
     dependencies: &BTreeMap<TxIndex, BTreeSet<TxIndex>>,
 ) -> usize {
@@ -390,7 +394,7 @@ fn critical_path_length(
     depth.values().copied().max().unwrap_or(0)
 }
 
-fn conflict_degrees(conflicts: &[ConflictPair]) -> BTreeMap<TxIndex, u64> {
+pub(crate) fn conflict_degrees(conflicts: &[ConflictPair]) -> BTreeMap<TxIndex, u64> {
     let mut degrees = BTreeMap::new();
     for conflict in conflicts {
         *degrees.entry(conflict.earlier).or_insert(0) += 1;
@@ -458,7 +462,7 @@ fn deterministic_hash(report: &ParallelismReport) -> String {
     format!("{:016x}", stable_fnv1a64(&bytes))
 }
 
-fn stable_fnv1a64(bytes: &[u8]) -> u64 {
+pub(crate) fn stable_fnv1a64(bytes: &[u8]) -> u64 {
     let mut hash = 0xcbf2_9ce4_8422_2325_u64;
     for byte in bytes {
         hash ^= u64::from(*byte);
@@ -467,7 +471,7 @@ fn stable_fnv1a64(bytes: &[u8]) -> u64 {
     hash
 }
 
-fn pair_count(len: usize) -> u64 {
+pub(crate) fn pair_count(len: usize) -> u64 {
     if len < 2 {
         0
     } else {
@@ -475,7 +479,7 @@ fn pair_count(len: usize) -> u64 {
     }
 }
 
-fn escape_html(value: &str) -> String {
+pub(crate) fn escape_html(value: &str) -> String {
     value
         .replace('&', "&amp;")
         .replace('<', "&lt;")
