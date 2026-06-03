@@ -61,3 +61,21 @@ Benchmark snapshot:
 - sequential: 1,540,832.05 synthetic tx/s, hash `ac90d19c91175700`.
 - access-list: 16,767.11 synthetic tx/s, 0.011x vs sequential, 309 waves, hash matched.
 - optimistic: 1,260,967.26 synthetic tx/s, 0.818x vs sequential, 731 re-executions, hash matched.
+
+## 2026-06-03 Just Follow-Up
+
+Plan:
+- Re-run the two justfile gates after `just` became available.
+- Update report-backed benchmark docs if `just bench-smoke` rewrites timing fields.
+- Invariant improved: the local justfile recipes are verified, not only documented.
+- Validation commands: `just validate`, `just bench-smoke`.
+
+Result:
+- `just --version`: passed with `just 1.51.0`.
+- `just validate`: passed.
+- `just bench-smoke`: passed and refreshed `reports/mixed-c50.json`.
+
+Updated benchmark snapshot:
+- sequential: 1,437,384.65 synthetic tx/s, hash `ac90d19c91175700`.
+- access-list: 16,435.95 synthetic tx/s, 0.011x vs sequential, 309 waves, hash matched.
+- optimistic: 1,206,029.67 synthetic tx/s, 0.839x vs sequential, 731 re-executions, hash matched.

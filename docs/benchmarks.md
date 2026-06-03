@@ -61,8 +61,8 @@ Workload:
 
 | mode | elapsed ns | synthetic tx/s | speedup vs sequential | state hash | key scheduler metric |
 | --- | ---: | ---: | ---: | --- | --- |
-| sequential | 649,000 | 1,540,832.05 | baseline | `ac90d19c91175700` | input-order baseline |
-| access-list | 59,640,584 | 16,767.11 | 0.011x | `ac90d19c91175700` | 309 waves, max width 245 |
-| optimistic | 793,042 | 1,260,967.26 | 0.818x | `ac90d19c91175700` | 731 re-executions |
+| sequential | 695,708 | 1,437,384.65 | baseline | `ac90d19c91175700` | input-order baseline |
+| access-list | 60,842,250 | 16,435.95 | 0.011x | `ac90d19c91175700` | 309 waves, max width 245 |
+| optimistic | 829,167 | 1,206,029.67 | 0.839x | `ac90d19c91175700` | 731 re-executions |
 
 All modes reported `deterministic_passed: true`. The access-list result is intentionally not dressed up: for this small synthetic batch, scheduling overhead dominates. The report is still useful because it shows honest degradation while preserving the sequential state hash.
