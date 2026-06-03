@@ -1,13 +1,13 @@
 # Base 38014901-38014910 Reproduction Notes
 
-This directory intentionally contains instructions only. No committed report in this directory is claimed to be real Base data.
+This directory intentionally contains full-range reproduction instructions only. No committed report in this directory is claimed to be the full `38014901-38014910` Base range.
 
 The target public range is:
 
 - start block: `38014901`
 - end block: `38014910`
 
-To collect real data, provide a Base RPC endpoint that supports `debug_traceTransaction` with custom Geth JavaScript tracers. This environment did not provide `BASE_RPC_URL`, so no real Base trace pack or real Base dossier was produced in this pass.
+To collect real data, provide a Base RPC endpoint that supports `debug_traceTransaction` with custom Geth JavaScript tracers. A real 25-transaction sample from block `38014901` is committed under `case-studies/base-38014901-real-sample/`.
 
 ## Capability Check
 
@@ -18,10 +18,10 @@ cargo run -p parallel-revm-lab -- rpc-capability-check \
   --rpc-url "$BASE_RPC_URL"
 ```
 
-Local result on June 3, 2026:
+Local result on June 3, 2026 after fixing the probe tracer:
 
 ```text
-missing RPC URL for rpc-capability-check: pass --rpc-url or set BASE_RPC_URL / ETH_RPC_URL
+rpc capability base block 38014901 status=ok txs=436 receipts=true js_tracer=true struct_logs=true
 ```
 
 The command checks block availability, transaction presence, receipt access, `debug_traceTransaction`, custom JavaScript tracer support, and struct-log fallback support. It redacts RPC URLs and tokens in provider errors.
@@ -113,4 +113,6 @@ cargo run -p parallel-revm-lab -- recommend-access-lists \
 
 ## Current Status
 
-Real Base collection is blocked in this environment by missing `BASE_RPC_URL`. The committed proof path is `case-studies/demo-trace-pack/`.
+Real Base sample collection succeeded for the first 25 transactions of block `38014901`; see `case-studies/base-38014901-real-sample/`.
+
+Full-range tracing was not attempted in this pass. A dry run found 3,676 transactions across blocks `38014901-38014910`, so tracing the entire range would require thousands of debug trace calls and likely produce much larger artifacts.

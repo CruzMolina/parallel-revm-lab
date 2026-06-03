@@ -56,4 +56,18 @@ Worker simulation reports a makespan in duration units, speedup versus one worke
 
 `overlapping_tx_percentage` is useful for public contention framing, but only as a same-family metric. Do not compare it as equal to another benchmark unless the trace scope, included transaction set, and access completeness model are the same.
 
+## Current Real Sample
+
+`case-studies/base-38014901-real-sample/` is a user-collected Base sample from block `38014901`.
+
+- Coverage: 25 of 436 transactions, 5.734%.
+- Conflict pairs: 1, 0.333%.
+- Overlapping transactions: 22 of 25, 88.000%.
+- Gas-weighted conflict percentage: 0.564%.
+- Waves: 2, max width 24.
+- Gas-weighted critical path: 563,160.
+- Theoretical gas ceiling: 6.365x.
+
+This is a real trace-backed storage-access sample, but it is partial and uses storage opcode observations only. It is the same metric family as public contention framing, not a full-block comparable measurement.
+
 CSV sidecars are emitted for hot contracts, hot slots, and worker simulation.

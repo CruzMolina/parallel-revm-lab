@@ -110,3 +110,9 @@ The capability check verifies block availability, transaction presence, receipt 
 ## Why Fixture Mode Exists
 
 Fixture mode gives reviewers deterministic artifacts with no secrets, no provider dependency, and no fabricated live-chain claim. The committed normalized fixture is synthetic and Base-shaped; the committed Geth fixture is sanitized and intentionally tiny.
+
+## Current Real Sample
+
+The committed real sample is `trace-packs/base-38014901-real-sample`, collected from Base block `38014901` with the compact Geth JavaScript storage tracer. It includes the first 25 transactions from a 436-transaction block and records `source_tx_count` so dossier coverage is explicit.
+
+The corresponding case study is `case-studies/base-38014901-real-sample/`. It should be cited as a partial storage-access contention sample, not a full block or full range analysis.

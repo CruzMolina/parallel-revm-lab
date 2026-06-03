@@ -588,7 +588,7 @@ fn rpc_capability_check(args: RpcCapabilityCheckArgs) -> Result<()> {
             serde_json::json!([
                 tx_hash,
                 {
-                    "tracer": "{ result: function(ctx, db) { return { ok: true }; } }",
+                    "tracer": "{ step: function(log, db) {}, fault: function(log, db) {}, result: function(ctx, db) { return { ok: true }; } }",
                     "timeout": "20s"
                 }
             ]),

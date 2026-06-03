@@ -187,8 +187,8 @@ Heavier low-contention storage transactions (`reports/storage-c0-vmsteps.json`):
 
 | mode | elapsed ns | synthetic tx/s | speedup vs sequential | declared conflicts | scheduler/validation metric |
 | --- | ---: | ---: | ---: | --- | --- |
-| sequential | 93,297,583 | 10,718.39 | baseline | 245 | input-order baseline |
-| access-list | 29,250,125 | 34,187.89 | 3.190x | 245 | 245 deferrals; 4 waves, max width 793 |
-| optimistic | 40,559,375 | 24,655.21 | 2.300x | 245 | 173 validation failures and re-executions |
+| sequential | 92,570,625 | 10,802.56 | baseline | 245 | input-order baseline |
+| access-list | 27,975,292 | 35,745.83 | 3.309x | 245 | 245 deferrals; 4 waves, max width 793 |
+| optimistic | 39,485,500 | 25,325.75 | 2.344x | 245 | 173 validation failures and re-executions |
 
 All modes reported `deterministic_passed: true` and state hash `1940c0cfba64e3cb`. This scenario shows that parallel execution can win when deterministic synthetic execution work is heavy enough and declared contention is low.

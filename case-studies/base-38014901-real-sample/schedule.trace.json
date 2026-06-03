@@ -1,0 +1,329 @@
+{
+  "traceEvents": [
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0xad2c8a6b8574f7bf614d6263f3b39d0acfe9ae7fff60dc7b6756ca57dd721d7a"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 46144,
+      "name": "block-38014901-tx-0",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x7c01bb23dcf339e94e20ad057bb041955029a444064d0c2f07c20b920546d0c4"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 129217,
+      "name": "block-38014901-tx-1",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x1bbead78fb10a6e7cdca4785f76c714f3a780aab232209093c7e771709676b3b"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 65862,
+      "name": "block-38014901-tx-2",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x6880b54fa7fb79f4a1982617c4427ccd10aab7477e58356787a65375946985f5"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 65862,
+      "name": "block-38014901-tx-3",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0xedc4c8f85f4e2cffdcea187537686f1e161499093af144811e2fd7e11b64dced"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 95677,
+      "name": "block-38014901-tx-4",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0xadf2face092f2e4db0f3c318945091ed7d6f0ac3d527285bfff54d10b6fe85f0"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 95677,
+      "name": "block-38014901-tx-5",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x463c449411c29b6b1d291c9eea49d234f04b328ed06215e4e410df043010333c"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 563160,
+      "name": "block-38014901-tx-6",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x28688ce193871759723eb92dcb882d27df10d116dd54d45ea407da8d7c51b8e4"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 401751,
+      "name": "block-38014901-tx-7",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0xbc079986a372e7cef03fdfa84c387d072012bd9fb64be34180a8440c1707d71d"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 209406,
+      "name": "block-38014901-tx-8",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x4f7601af99fa4048d05029adaf7b1ea145bdb0f0f5cb58f202c76227e553998b"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 308661,
+      "name": "block-38014901-tx-9",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x84a08b6ca08e6567f0238d99806daa3bc4a239a934cd417a674b34fbc78c91e7"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 65862,
+      "name": "block-38014901-tx-10",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x2ede90ceb631eeeb00e9d4edbe9fdc2c8a6e3cf640bd481f1b3687f4db6fc95e"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 65862,
+      "name": "block-38014901-tx-11",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x9ad5b59f0f146b6fa9bce10a61af2996bd3a9cd91a047ff136cfc3d2d3e0012e"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 65862,
+      "name": "block-38014901-tx-12",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0xda22c783872f2ee575e85716b689da34748fd431368a13310360086f848d1843"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 95677,
+      "name": "block-38014901-tx-13",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x2aa3fa474b1a19357618ac0793536a53becd9330368c77d9c7759deebfeca11d"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 95677,
+      "name": "block-38014901-tx-14",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x85e401187ac552a7432c3e7cf899f010ca6f08e9f41e9b85ccd78afdf4c377ad"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 95677,
+      "name": "block-38014901-tx-15",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x88fedd0d66022532aa52311bb251781922535c8de61e730139c1119b41ab848d"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 50664,
+      "name": "block-38014901-tx-16",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x4f77d30803f095915aa04366dce03a0fc920e0d2e3bd6ac4c7dfaee77454e2a7"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 50664,
+      "name": "block-38014901-tx-17",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x64ce9f81cfdf45ae167f7029a269b757e05f67d5b74c959d9802481a0f339900"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 50664,
+      "name": "block-38014901-tx-18",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x20ffd6a88b5ee1bd021712dbbecfb6eebeb62631b09bd5f5ab36c064f8556dc2"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 288096,
+      "name": "block-38014901-tx-19",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x983caabffe9bf00265f2bbb527a2dc84119dea4be9b3f91cc71284a4bedd3c8c"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 64255,
+      "name": "block-38014901-tx-20",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0xe6c6b1c63075005428a833b5864ded4ef94a9bb9c023b4ef65df268393d6b092"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 64255,
+      "name": "block-38014901-tx-21",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 0,
+        "tx_hash": "0x3e85fa7969eee7b976488e903f27b8c8eefef5444a339467cfefb7bdc12b4c07"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 64255,
+      "name": "block-38014901-tx-22",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 1,
+        "tx_hash": "0x009cd9a5c35c851ce4e38e94b7b1ed70aa2643ff040a7e72ddd4701ccf29da8d"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 175552,
+      "name": "block-38014901-tx-23",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-0",
+      "ts": 38014901000000
+    },
+    {
+      "args": {
+        "conflict_degree": 1,
+        "tx_hash": "0x0836dca8f01c33b320e570ea8a47687ca0a5f88a57af44d9cef3d7c9f30c9515"
+      },
+      "cat": "trace-pack-schedule",
+      "dur": 309838,
+      "name": "block-38014901-tx-24",
+      "ph": "X",
+      "pid": 38014901,
+      "tid": "wave-1",
+      "ts": 38014901001000
+    }
+  ]
+}

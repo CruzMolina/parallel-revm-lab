@@ -44,15 +44,45 @@ cargo run --release -p parallel-revm-lab -- bench \
   --out reports/storage-c0-vmsteps.json
 ```
 
-## Killer Case Study
+## Real Base Case Study
 
-The dossier path targets a public Base-style block range:
+Real Base trace-backed case study available:
+
+- `case-studies/base-38014901-real-sample/executive-summary.md`
+- `case-studies/base-38014901-real-sample/dossier.html`
+- `trace-packs/base-38014901-real-sample/`
+
+This is a 25-transaction real sample from Base block `38014901`, not a full-block analysis.
+
+Headline findings:
+
+| metric | value |
+| --- | ---: |
+| block | `38014901` |
+| txs covered | 25 of 436 (5.734%) |
+| gas covered | 3,584,277 |
+| conflict pairs | 1 (0.333%) |
+| gas-weighted conflict percentage | 0.564% |
+| overlapping transactions | 22 (88.000%) |
+| waves | 2 |
+| max wave width | 24 |
+| gas-weighted critical path | 563,160 |
+| theoretical ceiling by gas | 6.365x |
+| 16-worker simulated speedup | 6.168x |
+| top hot contract | `0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789` |
+| top conflict slot | `0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789:0x...0002` |
+
+The sample has high observed key overlap but only one write-related conflict pair under this repository's access model. Caveat: the tracer records storage opcodes only, and the sample covers 5.734% of the block's transactions.
+
+The larger public target range remains:
 
 - `case-studies/base-38014901-38014910/`
 - start block `38014901`
 - end block `38014910`
 
-No real Base report is committed for that range. The directory contains reproduction instructions only, because real collection requires a user-supplied Base RPC endpoint that supports `debug_traceTransaction` with custom Geth JavaScript tracers.
+No full-range real Base report is committed for that range. A dry run found 3,676 transactions across those ten blocks, so full tracing was deferred rather than committing a large, slow, partial artifact.
+
+## Offline Demo Dossier
 
 The committed proof path is:
 
@@ -79,7 +109,7 @@ Current demo dossier:
 
 Worker simulation reaches the gas critical-path bound at 2 workers in the demo. More workers do not help because observed dependencies are already binding.
 
-## Optional Real-Chain Collection
+## Real-Chain Collection
 
 First check provider capability without tracing the full range:
 
@@ -90,7 +120,7 @@ cargo run -p parallel-revm-lab -- rpc-capability-check \
   --rpc-url "$BASE_RPC_URL"
 ```
 
-If this environment does not provide `BASE_RPC_URL`, the command fails before network access with a clear missing-URL message. If a provider lacks `debug_traceTransaction` or custom JavaScript tracer support, the command reports that capability gap without printing the RPC URL.
+If the environment does not provide `BASE_RPC_URL`, the command fails before network access with a clear missing-URL message. If a provider lacks `debug_traceTransaction` or custom JavaScript tracer support, the command reports that capability gap without printing the RPC URL.
 
 Collect the smallest real sample first:
 
@@ -149,6 +179,7 @@ cargo run -p parallel-revm-lab -- recommend-access-lists \
 | synthetic scheduler | generated workload | sequential equivalence of implemented schedulers | EVM semantics |
 | demo trace pack | synthetic/demo fixture | dossier schema, gas-weighted scheduling, hot-state analysis | Base mainnet behavior |
 | Geth tracer | optional RPC collection tool | compact storage observation path where providers support JS tracers | provider-wide trace compatibility |
+| real Base sample | user-collected RPC trace pack | real observed storage contention for 25 txs from Base block 38014901 | full-block or full-range representativeness |
 | revm smoke | real `revm` bytecode | inspector storage observations can feed trace packs and dossiers | full block replay |
 
 ## What It Demonstrates
@@ -195,15 +226,17 @@ just validate
 - `crates/cli`: `parallel-revm-lab` command-line interface.
 - `tracers/geth-storage-access-tracer.js`: compact Geth JS storage tracer.
 - `trace-packs/demo-mini`: committed synthetic demo trace pack.
-- `case-studies/demo-trace-pack`: committed demo dossier.
-- `case-studies/base-38014901-38014910`: real-collection reproduction instructions.
+- `case-studies/base-38014901-real-sample`: committed real Base sample dossier.
+- `case-studies/demo-trace-pack`: committed offline demo dossier.
+- `case-studies/base-38014901-38014910`: full-range reproduction notes.
 
 ## What To Review In 90 Seconds
 
-1. `case-studies/demo-trace-pack/summary.md`
-2. `case-studies/demo-trace-pack/dossier.html`
-3. `crates/trace-model/src/trace_pack.rs`
-4. `crates/analyzer/src/dossier.rs`
-5. `crates/cli/src/main.rs`
-6. `tracers/geth-storage-access-tracer.js`
-7. `docs/geth-tracer.md`
+1. `case-studies/base-38014901-real-sample/executive-summary.md`
+2. `case-studies/base-38014901-real-sample/optimization-memo.md`
+3. `case-studies/base-38014901-real-sample/dossier.html`
+4. `case-studies/demo-trace-pack/summary.md`
+5. `crates/trace-model/src/trace_pack.rs`
+6. `crates/analyzer/src/dossier.rs`
+7. `crates/cli/src/main.rs`
+8. `tracers/geth-storage-access-tracer.js`

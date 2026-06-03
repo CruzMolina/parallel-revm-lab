@@ -1,0 +1,755 @@
+{
+  "report_version": "trace-pack-dossier-v1",
+  "chain": "base",
+  "provenance": "user-collected RPC trace pack",
+  "source": "rpc-debug_traceTransaction",
+  "tracer_kind": "geth-js-storage",
+  "start_block": 38014901,
+  "end_block": 38014901,
+  "block_count": 1,
+  "tx_count": 25,
+  "source_tx_count": 436,
+  "tx_coverage_percentage": 5.73394495412844,
+  "total_gas_used": 3584277,
+  "total_accesses": 680,
+  "unique_contracts": 62,
+  "unique_storage_slots": 226,
+  "conflict_pair_count": 1,
+  "conflict_percentage": 0.33333333333333337,
+  "overlapping_tx_count": 22,
+  "overlapping_tx_percentage": 88.0,
+  "wave_count": 2,
+  "max_wave_width": 24,
+  "gas_weighted_conflict_percentage": 0.5642583799559391,
+  "critical_path_length_by_tx": 2,
+  "gas_weighted_critical_path": 563160,
+  "theoretical_parallelism_ceiling_by_tx": 12.5,
+  "theoretical_parallelism_ceiling_by_gas": 6.364580225868314,
+  "top_hot_contracts": [
+    {
+      "address": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789",
+      "touching_txs": 2,
+      "unique_slots": 4,
+      "gas_of_touching_txs": 485390,
+      "conflict_contribution": 2
+    },
+    {
+      "address": "0x976a4d13a41581c5eda72c493038ac10cadf5e46",
+      "touching_txs": 10,
+      "unique_slots": 1,
+      "gas_of_touching_txs": 1189217,
+      "conflict_contribution": 0
+    },
+    {
+      "address": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0",
+      "touching_txs": 9,
+      "unique_slots": 2,
+      "gas_of_touching_txs": 880556,
+      "conflict_contribution": 0
+    },
+    {
+      "address": "0x22aee3699b6a0fed71490c103bd4e5f3309891d5",
+      "touching_txs": 9,
+      "unique_slots": 1,
+      "gas_of_touching_txs": 979811,
+      "conflict_contribution": 0
+    },
+    {
+      "address": "0x57135dd4b832645955422b28291302d697ea0900",
+      "touching_txs": 8,
+      "unique_slots": 1,
+      "gas_of_touching_txs": 671150,
+      "conflict_contribution": 0
+    },
+    {
+      "address": "0x498581ff718922c3f8e6a244956af099b2652b2b",
+      "touching_txs": 7,
+      "unique_slots": 6,
+      "gas_of_touching_txs": 847377,
+      "conflict_contribution": 0
+    },
+    {
+      "address": "0x0f12cb1f3e37375af09a248ca97c4a3eedf2f494",
+      "touching_txs": 6,
+      "unique_slots": 1,
+      "gas_of_touching_txs": 637971,
+      "conflict_contribution": 0
+    },
+    {
+      "address": "0x4c9f68e780523feb4c9bb1aad2e5cc3b6476892b",
+      "touching_txs": 6,
+      "unique_slots": 1,
+      "gas_of_touching_txs": 637971,
+      "conflict_contribution": 0
+    },
+    {
+      "address": "0x5b8bf0cd0fa5bf970ebe558d7551a668dadf3570",
+      "touching_txs": 6,
+      "unique_slots": 1,
+      "gas_of_touching_txs": 787046,
+      "conflict_contribution": 0
+    },
+    {
+      "address": "0x7631e2b08317f227bb2916ed0e9d69c64d73bdcd",
+      "touching_txs": 6,
+      "unique_slots": 1,
+      "gas_of_touching_txs": 687791,
+      "conflict_contribution": 0
+    }
+  ],
+  "top_hot_storage_slots": [
+    {
+      "key": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789:0x0000000000000000000000000000000000000000000000000000000000000002",
+      "address": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789",
+      "slot": "0x0000000000000000000000000000000000000000000000000000000000000002",
+      "touching_txs": 2,
+      "gas_of_touching_txs": 485390,
+      "conflict_contribution": 1
+    },
+    {
+      "key": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789:0x33a26eb216320a51847a061c8f256bd98ae96e1a1d67d2bbc4cd8c61adad2df0",
+      "address": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789",
+      "slot": "0x33a26eb216320a51847a061c8f256bd98ae96e1a1d67d2bbc4cd8c61adad2df0",
+      "touching_txs": 2,
+      "gas_of_touching_txs": 485390,
+      "conflict_contribution": 1
+    },
+    {
+      "key": "0x976a4d13a41581c5eda72c493038ac10cadf5e46:0x0000000000000000000000000000000000000000000000000000000000000006",
+      "address": "0x976a4d13a41581c5eda72c493038ac10cadf5e46",
+      "slot": "0x0000000000000000000000000000000000000000000000000000000000000006",
+      "touching_txs": 10,
+      "gas_of_touching_txs": 1189217,
+      "conflict_contribution": 0
+    },
+    {
+      "key": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0:0x0000000000000000000000000000000000000000000000000000000000000000",
+      "address": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0",
+      "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "touching_txs": 9,
+      "gas_of_touching_txs": 880556,
+      "conflict_contribution": 0
+    },
+    {
+      "key": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0:0x0000000000000000000000000000000000000000000000000000000000000001",
+      "address": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0",
+      "slot": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "touching_txs": 9,
+      "gas_of_touching_txs": 880556,
+      "conflict_contribution": 0
+    },
+    {
+      "key": "0x22aee3699b6a0fed71490c103bd4e5f3309891d5:0x0000000000000000000000000000000000000000000000000000000000000006",
+      "address": "0x22aee3699b6a0fed71490c103bd4e5f3309891d5",
+      "slot": "0x0000000000000000000000000000000000000000000000000000000000000006",
+      "touching_txs": 9,
+      "gas_of_touching_txs": 979811,
+      "conflict_contribution": 0
+    },
+    {
+      "key": "0x57135dd4b832645955422b28291302d697ea0900:0x0000000000000000000000000000000000000000000000000000000000000006",
+      "address": "0x57135dd4b832645955422b28291302d697ea0900",
+      "slot": "0x0000000000000000000000000000000000000000000000000000000000000006",
+      "touching_txs": 8,
+      "gas_of_touching_txs": 671150,
+      "conflict_contribution": 0
+    },
+    {
+      "key": "0x0f12cb1f3e37375af09a248ca97c4a3eedf2f494:0x0000000000000000000000000000000000000000000000000000000000000000",
+      "address": "0x0f12cb1f3e37375af09a248ca97c4a3eedf2f494",
+      "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "touching_txs": 6,
+      "gas_of_touching_txs": 637971,
+      "conflict_contribution": 0
+    },
+    {
+      "key": "0x498581ff718922c3f8e6a244956af099b2652b2b:0x934ff9aed835597de93bbfd6474d60d33c1e72493b62f8e1615cfda0908eeaef",
+      "address": "0x498581ff718922c3f8e6a244956af099b2652b2b",
+      "slot": "0x934ff9aed835597de93bbfd6474d60d33c1e72493b62f8e1615cfda0908eeaef",
+      "touching_txs": 6,
+      "gas_of_touching_txs": 637971,
+      "conflict_contribution": 0
+    },
+    {
+      "key": "0x4c9f68e780523feb4c9bb1aad2e5cc3b6476892b:0x0000000000000000000000000000000000000000000000000000000000000000",
+      "address": "0x4c9f68e780523feb4c9bb1aad2e5cc3b6476892b",
+      "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "touching_txs": 6,
+      "gas_of_touching_txs": 637971,
+      "conflict_contribution": 0
+    }
+  ],
+  "contention_concentration": {
+    "top_1_conflict_percent": 50.0,
+    "top_5_conflict_percent": 100.0,
+    "top_10_conflict_percent": 100.0
+  },
+  "parallelism_loss_decomposition": {
+    "hot_slot_conflict_contributions": 2,
+    "account_level_conflict_contributions": 0,
+    "unknown_incomplete_trace_warning_count": 26,
+    "max_worker_idle_percentage": 61.44724919845732,
+    "interpretation": "loss decomposition is based on observed access keys and theoretical list scheduling; incomplete traces may hide additional dependencies"
+  },
+  "worst_blocks_by_conflict_percentage": [
+    {
+      "block_number": 38014901,
+      "tx_count": 25,
+      "conflict_pair_count": 1,
+      "conflict_percentage": 0.33333333333333337,
+      "gas_weighted_critical_path": 563160
+    }
+  ],
+  "worst_blocks_by_gas_weighted_critical_path": [
+    {
+      "block_number": 38014901,
+      "tx_count": 25,
+      "conflict_pair_count": 1,
+      "conflict_percentage": 0.33333333333333337,
+      "gas_weighted_critical_path": 563160
+    }
+  ],
+  "worst_serializing_txs": [
+    {
+      "block_number": 38014901,
+      "tx_index": 24,
+      "tx_hash": "0x0836dca8f01c33b320e570ea8a47687ca0a5f88a57af44d9cef3d7c9f30c9515",
+      "wave": 1,
+      "conflict_degree": 1,
+      "duration_units": 309838
+    },
+    {
+      "block_number": 38014901,
+      "tx_index": 23,
+      "tx_hash": "0x009cd9a5c35c851ce4e38e94b7b1ed70aa2643ff040a7e72ddd4701ccf29da8d",
+      "wave": 0,
+      "conflict_degree": 1,
+      "duration_units": 175552
+    }
+  ],
+  "worker_simulation": [
+    {
+      "workers": 1,
+      "makespan": 3584277,
+      "speedup_vs_one_worker": 1.0,
+      "idle_percentage": 0.0,
+      "critical_path_bound": 563160,
+      "interpretation": "worker-bound: workers stay mostly occupied under observed dependencies"
+    },
+    {
+      "workers": 2,
+      "makespan": 2002461,
+      "speedup_vs_one_worker": 1.7899359837719686,
+      "idle_percentage": 10.503200811401571,
+      "critical_path_bound": 563160,
+      "interpretation": "mixed dependency/worker-bound: dependencies and idle capacity both matter"
+    },
+    {
+      "workers": 4,
+      "makespan": 1181384,
+      "speedup_vs_one_worker": 3.033964401075349,
+      "idle_percentage": 24.15088997311628,
+      "critical_path_bound": 563160,
+      "interpretation": "mixed dependency/worker-bound: dependencies and idle capacity both matter"
+    },
+    {
+      "workers": 8,
+      "makespan": 760948,
+      "speedup_vs_one_worker": 4.710278494719744,
+      "idle_percentage": 41.121518816003196,
+      "critical_path_bound": 563160,
+      "interpretation": "mixed dependency/worker-bound: dependencies and idle capacity both matter"
+    },
+    {
+      "workers": 16,
+      "makespan": 581067,
+      "speedup_vs_one_worker": 6.168440128246829,
+      "idle_percentage": 61.44724919845732,
+      "critical_path_bound": 563160,
+      "interpretation": "mixed dependency/worker-bound: dependencies and idle capacity both matter"
+    }
+  ],
+  "blocks": [
+    {
+      "block_number": 38014901,
+      "tx_count": 25,
+      "source_tx_count": 436,
+      "tx_coverage_percentage": 5.73394495412844,
+      "gas_used": 3584277,
+      "total_accesses": 680,
+      "conflict_pair_count": 1,
+      "conflict_percentage": 0.33333333333333337,
+      "overlapping_tx_count": 22,
+      "overlapping_tx_percentage": 88.0,
+      "gas_weighted_conflict_percentage": 0.5642583799559391,
+      "wave_count": 2,
+      "max_wave_width": 24,
+      "critical_path_length": 2,
+      "gas_critical_path": 563160,
+      "ceiling_by_tx": 12.5,
+      "ceiling_by_gas": 6.364580225868314,
+      "top_hot_slots": [
+        {
+          "key": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789:0x0000000000000000000000000000000000000000000000000000000000000002",
+          "address": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789",
+          "slot": "0x0000000000000000000000000000000000000000000000000000000000000002",
+          "touching_txs": 2,
+          "gas_of_touching_txs": 485390,
+          "conflict_contribution": 1
+        },
+        {
+          "key": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789:0x33a26eb216320a51847a061c8f256bd98ae96e1a1d67d2bbc4cd8c61adad2df0",
+          "address": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789",
+          "slot": "0x33a26eb216320a51847a061c8f256bd98ae96e1a1d67d2bbc4cd8c61adad2df0",
+          "touching_txs": 2,
+          "gas_of_touching_txs": 485390,
+          "conflict_contribution": 1
+        },
+        {
+          "key": "0x976a4d13a41581c5eda72c493038ac10cadf5e46:0x0000000000000000000000000000000000000000000000000000000000000006",
+          "address": "0x976a4d13a41581c5eda72c493038ac10cadf5e46",
+          "slot": "0x0000000000000000000000000000000000000000000000000000000000000006",
+          "touching_txs": 10,
+          "gas_of_touching_txs": 1189217,
+          "conflict_contribution": 0
+        },
+        {
+          "key": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0:0x0000000000000000000000000000000000000000000000000000000000000000",
+          "address": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0",
+          "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "touching_txs": 9,
+          "gas_of_touching_txs": 880556,
+          "conflict_contribution": 0
+        },
+        {
+          "key": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0:0x0000000000000000000000000000000000000000000000000000000000000001",
+          "address": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0",
+          "slot": "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "touching_txs": 9,
+          "gas_of_touching_txs": 880556,
+          "conflict_contribution": 0
+        }
+      ],
+      "top_hot_contracts": [
+        {
+          "address": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789",
+          "touching_txs": 2,
+          "unique_slots": 4,
+          "gas_of_touching_txs": 485390,
+          "conflict_contribution": 2
+        },
+        {
+          "address": "0x976a4d13a41581c5eda72c493038ac10cadf5e46",
+          "touching_txs": 10,
+          "unique_slots": 1,
+          "gas_of_touching_txs": 1189217,
+          "conflict_contribution": 0
+        },
+        {
+          "address": "0x20cb8f872ae894f7c9e32e621c186e5afce82fd0",
+          "touching_txs": 9,
+          "unique_slots": 2,
+          "gas_of_touching_txs": 880556,
+          "conflict_contribution": 0
+        },
+        {
+          "address": "0x22aee3699b6a0fed71490c103bd4e5f3309891d5",
+          "touching_txs": 9,
+          "unique_slots": 1,
+          "gas_of_touching_txs": 979811,
+          "conflict_contribution": 0
+        },
+        {
+          "address": "0x57135dd4b832645955422b28291302d697ea0900",
+          "touching_txs": 8,
+          "unique_slots": 1,
+          "gas_of_touching_txs": 671150,
+          "conflict_contribution": 0
+        }
+      ],
+      "worker_simulation": [
+        {
+          "workers": 1,
+          "makespan": 3584277,
+          "speedup_vs_one_worker": 1.0,
+          "idle_percentage": 0.0,
+          "critical_path_bound": 563160,
+          "interpretation": "worker-bound: workers stay mostly occupied under observed dependencies"
+        },
+        {
+          "workers": 2,
+          "makespan": 2002461,
+          "speedup_vs_one_worker": 1.7899359837719686,
+          "idle_percentage": 10.503200811401571,
+          "critical_path_bound": 563160,
+          "interpretation": "mixed dependency/worker-bound: dependencies and idle capacity both matter"
+        },
+        {
+          "workers": 4,
+          "makespan": 1181384,
+          "speedup_vs_one_worker": 3.033964401075349,
+          "idle_percentage": 24.15088997311628,
+          "critical_path_bound": 563160,
+          "interpretation": "mixed dependency/worker-bound: dependencies and idle capacity both matter"
+        },
+        {
+          "workers": 8,
+          "makespan": 760948,
+          "speedup_vs_one_worker": 4.710278494719744,
+          "idle_percentage": 41.121518816003196,
+          "critical_path_bound": 563160,
+          "interpretation": "mixed dependency/worker-bound: dependencies and idle capacity both matter"
+        },
+        {
+          "workers": 16,
+          "makespan": 581067,
+          "speedup_vs_one_worker": 6.168440128246829,
+          "idle_percentage": 61.44724919845732,
+          "critical_path_bound": 563160,
+          "interpretation": "mixed dependency/worker-bound: dependencies and idle capacity both matter"
+        }
+      ],
+      "tx_summaries": [
+        {
+          "tx_index": 0,
+          "tx_hash": "0xad2c8a6b8574f7bf614d6263f3b39d0acfe9ae7fff60dc7b6756ca57dd721d7a",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 46144
+        },
+        {
+          "tx_index": 1,
+          "tx_hash": "0x7c01bb23dcf339e94e20ad057bb041955029a444064d0c2f07c20b920546d0c4",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 129217
+        },
+        {
+          "tx_index": 2,
+          "tx_hash": "0x1bbead78fb10a6e7cdca4785f76c714f3a780aab232209093c7e771709676b3b",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 65862
+        },
+        {
+          "tx_index": 3,
+          "tx_hash": "0x6880b54fa7fb79f4a1982617c4427ccd10aab7477e58356787a65375946985f5",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 65862
+        },
+        {
+          "tx_index": 4,
+          "tx_hash": "0xedc4c8f85f4e2cffdcea187537686f1e161499093af144811e2fd7e11b64dced",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 95677
+        },
+        {
+          "tx_index": 5,
+          "tx_hash": "0xadf2face092f2e4db0f3c318945091ed7d6f0ac3d527285bfff54d10b6fe85f0",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 95677
+        },
+        {
+          "tx_index": 6,
+          "tx_hash": "0x463c449411c29b6b1d291c9eea49d234f04b328ed06215e4e410df043010333c",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 563160
+        },
+        {
+          "tx_index": 7,
+          "tx_hash": "0x28688ce193871759723eb92dcb882d27df10d116dd54d45ea407da8d7c51b8e4",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 401751
+        },
+        {
+          "tx_index": 8,
+          "tx_hash": "0xbc079986a372e7cef03fdfa84c387d072012bd9fb64be34180a8440c1707d71d",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 209406
+        },
+        {
+          "tx_index": 9,
+          "tx_hash": "0x4f7601af99fa4048d05029adaf7b1ea145bdb0f0f5cb58f202c76227e553998b",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 308661
+        },
+        {
+          "tx_index": 10,
+          "tx_hash": "0x84a08b6ca08e6567f0238d99806daa3bc4a239a934cd417a674b34fbc78c91e7",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 65862
+        },
+        {
+          "tx_index": 11,
+          "tx_hash": "0x2ede90ceb631eeeb00e9d4edbe9fdc2c8a6e3cf640bd481f1b3687f4db6fc95e",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 65862
+        },
+        {
+          "tx_index": 12,
+          "tx_hash": "0x9ad5b59f0f146b6fa9bce10a61af2996bd3a9cd91a047ff136cfc3d2d3e0012e",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 65862
+        },
+        {
+          "tx_index": 13,
+          "tx_hash": "0xda22c783872f2ee575e85716b689da34748fd431368a13310360086f848d1843",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 95677
+        },
+        {
+          "tx_index": 14,
+          "tx_hash": "0x2aa3fa474b1a19357618ac0793536a53becd9330368c77d9c7759deebfeca11d",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 95677
+        },
+        {
+          "tx_index": 15,
+          "tx_hash": "0x85e401187ac552a7432c3e7cf899f010ca6f08e9f41e9b85ccd78afdf4c377ad",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 95677
+        },
+        {
+          "tx_index": 16,
+          "tx_hash": "0x88fedd0d66022532aa52311bb251781922535c8de61e730139c1119b41ab848d",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 50664
+        },
+        {
+          "tx_index": 17,
+          "tx_hash": "0x4f77d30803f095915aa04366dce03a0fc920e0d2e3bd6ac4c7dfaee77454e2a7",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 50664
+        },
+        {
+          "tx_index": 18,
+          "tx_hash": "0x64ce9f81cfdf45ae167f7029a269b757e05f67d5b74c959d9802481a0f339900",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 50664
+        },
+        {
+          "tx_index": 19,
+          "tx_hash": "0x20ffd6a88b5ee1bd021712dbbecfb6eebeb62631b09bd5f5ab36c064f8556dc2",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 288096
+        },
+        {
+          "tx_index": 20,
+          "tx_hash": "0x983caabffe9bf00265f2bbb527a2dc84119dea4be9b3f91cc71284a4bedd3c8c",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 64255
+        },
+        {
+          "tx_index": 21,
+          "tx_hash": "0xe6c6b1c63075005428a833b5864ded4ef94a9bb9c023b4ef65df268393d6b092",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 64255
+        },
+        {
+          "tx_index": 22,
+          "tx_hash": "0x3e85fa7969eee7b976488e903f27b8c8eefef5444a339467cfefb7bdc12b4c07",
+          "wave": 0,
+          "conflict_degree": 0,
+          "duration_units": 64255
+        },
+        {
+          "tx_index": 23,
+          "tx_hash": "0x009cd9a5c35c851ce4e38e94b7b1ed70aa2643ff040a7e72ddd4701ccf29da8d",
+          "wave": 0,
+          "conflict_degree": 1,
+          "duration_units": 175552
+        },
+        {
+          "tx_index": 24,
+          "tx_hash": "0x0836dca8f01c33b320e570ea8a47687ca0a5f88a57af44d9cef3d7c9f30c9515",
+          "wave": 1,
+          "conflict_degree": 1,
+          "duration_units": 309838
+        }
+      ],
+      "warnings": [
+        "collection truncated to 25 of 436 transactions by --max-transactions",
+        "trace pack access observations may be incomplete; gas-weighted scheduling is theoretical",
+        "tx_index 0: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 0: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 0: trace marks read information as incomplete",
+        "tx_index 10: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 10: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 10: trace marks read information as incomplete",
+        "tx_index 11: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 11: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 11: trace marks read information as incomplete",
+        "tx_index 12: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 12: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 12: trace marks read information as incomplete",
+        "tx_index 13: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 13: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 13: trace marks read information as incomplete",
+        "tx_index 14: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 14: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 14: trace marks read information as incomplete",
+        "tx_index 15: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 15: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 15: trace marks read information as incomplete",
+        "tx_index 16: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 16: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 16: trace marks read information as incomplete",
+        "tx_index 17: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 17: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 17: trace marks read information as incomplete",
+        "tx_index 18: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 18: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 18: trace marks read information as incomplete",
+        "tx_index 19: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 19: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 19: trace marks read information as incomplete",
+        "tx_index 1: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 1: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 1: trace marks read information as incomplete",
+        "tx_index 20: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 20: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 20: trace marks read information as incomplete",
+        "tx_index 21: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 21: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 21: trace marks read information as incomplete",
+        "tx_index 22: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 22: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 22: trace marks read information as incomplete",
+        "tx_index 23: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 23: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 23: debug tracer reported 5 fault(s)",
+        "tx_index 23: trace marks read information as incomplete",
+        "tx_index 24: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 24: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 24: trace marks read information as incomplete",
+        "tx_index 2: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 2: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 2: trace marks read information as incomplete",
+        "tx_index 3: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 3: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 3: trace marks read information as incomplete",
+        "tx_index 4: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 4: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 4: trace marks read information as incomplete",
+        "tx_index 5: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 5: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 5: trace marks read information as incomplete",
+        "tx_index 6: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 6: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 6: debug tracer reported 8 fault(s)",
+        "tx_index 6: trace marks read information as incomplete",
+        "tx_index 7: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 7: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 7: trace marks read information as incomplete",
+        "tx_index 8: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 8: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 8: trace marks read information as incomplete",
+        "tx_index 9: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+        "tx_index 9: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+        "tx_index 9: trace marks read information as incomplete"
+      ]
+    }
+  ],
+  "warnings": [
+    "Provider trace completeness varies; verify tracer support before making claims",
+    "block 38014901: collection truncated to 25 of 436 transactions by --max-transactions",
+    "block 38014901: trace pack access observations may be incomplete; gas-weighted scheduling is theoretical",
+    "block 38014901: tx_index 0: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 0: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 0: trace marks read information as incomplete",
+    "block 38014901: tx_index 10: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 10: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 10: trace marks read information as incomplete",
+    "block 38014901: tx_index 11: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 11: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 11: trace marks read information as incomplete",
+    "block 38014901: tx_index 12: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 12: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 12: trace marks read information as incomplete",
+    "block 38014901: tx_index 13: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 13: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 13: trace marks read information as incomplete",
+    "block 38014901: tx_index 14: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 14: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 14: trace marks read information as incomplete",
+    "block 38014901: tx_index 15: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 15: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 15: trace marks read information as incomplete",
+    "block 38014901: tx_index 16: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 16: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 16: trace marks read information as incomplete",
+    "block 38014901: tx_index 17: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 17: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 17: trace marks read information as incomplete",
+    "block 38014901: tx_index 18: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 18: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 18: trace marks read information as incomplete",
+    "block 38014901: tx_index 19: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 19: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 19: trace marks read information as incomplete",
+    "block 38014901: tx_index 1: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 1: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 1: trace marks read information as incomplete",
+    "block 38014901: tx_index 20: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 20: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 20: trace marks read information as incomplete",
+    "block 38014901: tx_index 21: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 21: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 21: trace marks read information as incomplete",
+    "block 38014901: tx_index 22: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 22: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 22: trace marks read information as incomplete",
+    "block 38014901: tx_index 23: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 23: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 23: debug tracer reported 5 fault(s)",
+    "block 38014901: tx_index 23: trace marks read information as incomplete",
+    "block 38014901: tx_index 24: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 24: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 24: trace marks read information as incomplete",
+    "block 38014901: tx_index 2: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 2: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 2: trace marks read information as incomplete",
+    "block 38014901: tx_index 3: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 3: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 3: trace marks read information as incomplete",
+    "block 38014901: tx_index 4: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 4: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 4: trace marks read information as incomplete",
+    "block 38014901: tx_index 5: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 5: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 5: trace marks read information as incomplete",
+    "block 38014901: tx_index 6: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 6: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 6: debug tracer reported 8 fault(s)",
+    "block 38014901: tx_index 6: trace marks read information as incomplete",
+    "block 38014901: tx_index 7: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 7: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 7: trace marks read information as incomplete",
+    "block 38014901: tx_index 8: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 8: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 8: trace marks read information as incomplete",
+    "block 38014901: tx_index 9: Geth JavaScript tracer records SLOAD/SSTORE storage observations only.",
+    "block 38014901: tx_index 9: Provider support for debug_traceTransaction and JavaScript tracers varies.",
+    "block 38014901: tx_index 9: trace marks read information as incomplete"
+  ],
+  "deterministic_hash": "00509cb2a53d93ac"
+}

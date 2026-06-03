@@ -98,4 +98,10 @@ See `docs/engineering-log.md` for the current validation history and upgrade dec
 - Symptom: `--dry-run` sounded like a range check but only queried the start and end blocks.
 - Root cause: the collector used an endpoint set for the dry-run path.
 - Fix: dry-run now iterates every requested block in the inclusive range.
+
+## RPC Capability Probe Was Too Minimal
+
+- Symptom: a provider with custom JavaScript tracer support rejected the capability probe.
+- Root cause: the tiny probe tracer exposed `step` and `result` but not `fault`, while the real storage tracer does expose `fault`.
+- Fix: the probe tracer now includes `step`, `fault`, and `result`, so `rpc-capability-check` measures provider support instead of a malformed probe.
 - Test added: CLI unit test locks all-block dry-run iteration.
