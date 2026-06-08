@@ -17,6 +17,8 @@ Production Rust execution-client work is often private. This repository provides
 - `crates/revm-smoke`
 - `tracers/geth-storage-access-tracer.js`
 
+Optional walkthrough: [Loom walkthrough](https://www.loom.com/share/bb99b751f1934558abc33971ee535244) of the repo structure, validation path, and Base block dossier.
+
 ## Headline Real-Data Findings
 
 | metric | value |

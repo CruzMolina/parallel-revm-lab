@@ -13,6 +13,8 @@ This repository is a protocol-engineering lab for studying deterministic paralle
 - `case-studies/base-38014901-execution-dossier/optimization-memo.md`
 - `case-studies/base-38014901-execution-dossier/dossier.html`
 
+Optional walkthrough: [Loom walkthrough](https://www.loom.com/share/bb99b751f1934558abc33971ee535244) of the repo structure, validation path, and Base block dossier.
+
 ## Full-Block Base Case Study
 
 This is a full-block real trace-backed analysis of Base block `38014901`, collected as compact normalized trace-pack data under `trace-packs/base-38014901-full/`.
